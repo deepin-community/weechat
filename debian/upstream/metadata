@@ -1,0 +1,11 @@
+Name: WeeChat
+Repository: https://github.com/weechat/weechat.git
+Repository-Browse: https://github.com/weechat/weechat
+Changelog: https://github.com/weechat/weechat/blob/master/ChangeLog.adoc
+Bug-Database: https://github.com/weechat/weechat/issues
+Bug-Submit: https://github.com/weechat/weechat/issues/new
+Contact: By multiple ways, see https://weechat.org/dev/support/
+Security-Contact: flashcode@flashtux.org
+Screenshots: https://weechat.org/about/screenshots/
+FAQ: https://weechat.org/files/doc/devel/weechat_faq.en.html
+Donation: https://weechat.org/about/donate/
