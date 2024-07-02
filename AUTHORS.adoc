@@ -67,6 +67,7 @@ Alphabetically:
 * Jiri Golembiovsky (GolemJ)
 * Joey Pabalinas (alyptik)
 * Johan Rylander
+* Johannes Kuhn
 * Joram Schrijver
 * Jos Ahrens
 * Joseph Kichline
@@ -81,10 +82,12 @@ Alphabetically:
 * Lázaro A.
 * Leonid Evdokimov
 * Linus Heckemann
+* LuK1337
 * Maarten de Vries
 * Mantas Mikulėnas (grawity)
 * Marco Paolone
 * Marco Sirabella
+* Mario Campos
 * Mateusz Poszwa
 * Matt Robinson
 * Matthew Horan

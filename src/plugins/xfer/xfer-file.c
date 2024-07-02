@@ -1,7 +1,7 @@
 /*
  * xfer-file.c - file functions for xfer plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -216,10 +216,8 @@ error:
     rc = 1;
 
 end:
-    if (new_filename)
-        free (new_filename);
-    if (new_temp_filename)
-        free (new_temp_filename);
+    free (new_filename);
+    free (new_temp_filename);
     return rc;
 }
 
@@ -278,8 +276,7 @@ xfer_file_find_filename (struct t_xfer *xfer)
     path = weechat_string_eval_path_home (
         weechat_config_string (xfer_config_file_download_path),
         NULL, NULL, options);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
     if (!path)
         return;
 
@@ -299,8 +296,7 @@ xfer_file_find_filename (struct t_xfer *xfer)
     {
         strcat (xfer->local_filename, dir_separator);
     }
-    if (dir_separator)
-        free (dir_separator);
+    free (dir_separator);
     if (weechat_config_boolean (xfer_config_file_use_nick_in_filename))
     {
         strcat (xfer->local_filename, xfer->remote_nick);

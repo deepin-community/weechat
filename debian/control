@@ -6,7 +6,8 @@ Build-Depends:
     asciidoctor (>= 1.5.4),
     debhelper (>= 13),
     debhelper-compat (= 13),
-    cmake, pkg-config,
+    cmake,
+    pkgconf,
     libncurses-dev,
     ruby-dev,
     libperl-dev,
@@ -21,7 +22,8 @@ Build-Depends:
     libgcrypt20-dev,
     libgnutls28-dev,
     libzstd-dev,
-    zlib1g-dev
+    zlib1g-dev,
+    libcjson-dev
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
 Homepage: https://weechat.org/

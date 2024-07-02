@@ -1,7 +1,7 @@
 /*
  * gui-curses-color.c - color functions for Curses GUI
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,12 +29,12 @@
 #include <time.h>
 
 #include "../../core/weechat.h"
-#include "../../core/wee-config.h"
-#include "../../core/wee-hashtable.h"
-#include "../../core/wee-hook.h"
-#include "../../core/wee-list.h"
-#include "../../core/wee-string.h"
-#include "../../core/wee-utf8.h"
+#include "../../core/core-config.h"
+#include "../../core/core-hashtable.h"
+#include "../../core/core-hook.h"
+#include "../../core/core-list.h"
+#include "../../core/core-string.h"
+#include "../../core/core-utf8.h"
 #include "../../plugins/plugin.h"
 #include "../gui-buffer.h"
 #include "../gui-color.h"
@@ -669,7 +669,7 @@ gui_color_init_vars ()
         gui_color_num_pairs = (gui_color_term_color_pairs >= 32768) ?
             32767 : gui_color_term_color_pairs - 1;
         gui_color_pairs = calloc (
-            (gui_color_term_colors + 2) * (gui_color_term_colors + 2),
+            (size_t)(gui_color_term_colors + 2) * (gui_color_term_colors + 2),
             sizeof (gui_color_pairs[0]));
         gui_color_pairs_used = 0;
 
@@ -763,10 +763,8 @@ gui_color_init_pairs_weechat ()
                     init_pair (i, i, -1);
             }
         }
-        if (foregrounds)
-            free (foregrounds);
-        if (backgrounds)
-            free (backgrounds);
+        free (foregrounds);
+        free (backgrounds);
     }
 }
 
@@ -870,8 +868,8 @@ gui_color_info_term_colors (char *buffer, int size)
 void
 gui_color_buffer_display ()
 {
-    int y, i, lines, columns, line, col, color, max_color, num_items;
-    char str_line[1024], str_color[64], str_rgb[64], **items;
+    int y, i, lines, columns, line, col, color, max_color;
+    char str_line[1024], str_color[64], str_rgb[64];
     struct t_gui_color_palette *color_palette;
 
     if (!gui_color_buffer)
@@ -1011,47 +1009,70 @@ gui_color_buffer_display ()
         y++;
         gui_chat_printf_y (gui_color_buffer, y++,
                            _("Nick colors:"));
-        items = string_split (CONFIG_STRING(config_color_chat_nick_colors),
-                              ",",
-                              NULL,
-                              WEECHAT_STRING_SPLIT_STRIP_LEFT
-                              | WEECHAT_STRING_SPLIT_STRIP_RIGHT
-                              | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
-                              0,
-                              &num_items);
-        if (items)
+        if (config_num_nick_colors > 0)
         {
             str_line[0] = '\0';
-            for (i = 0; i < num_items; i++)
+            for (i = 0; i < config_num_nick_colors; i++)
             {
                 if (gui_color_use_term_colors)
                 {
                     snprintf (str_color, sizeof (str_color),
                               " %s",
-                              items[i]);
+                              config_nick_colors[i]);
                 }
                 else
                 {
                     snprintf (str_color, sizeof (str_color),
                               "%c %s%s",
                               GUI_COLOR_RESET_CHAR,
-                              gui_color_get_custom (items[i]),
-                              items[i]);
+                              gui_color_get_custom (config_nick_colors[i]),
+                              config_nick_colors[i]);
                 }
-                if (gui_chat_strlen_screen (str_line) + gui_chat_strlen_screen (str_color) > 80)
+                if (gui_chat_strlen_screen (str_line)
+                    + gui_chat_strlen_screen (str_color) > 80)
                 {
-                    gui_chat_printf_y (gui_color_buffer, y++,
-                                       " %s", str_line);
+                    gui_chat_printf_y (gui_color_buffer, y++, " %s", str_line);
                     str_line[0] = '\0';
                 }
                 strcat (str_line, str_color);
             }
             if (str_line[0])
+                gui_chat_printf_y (gui_color_buffer, y++, " %s", str_line);
+        }
+
+        /* display eval syntax highlighting colors */
+        y++;
+        gui_chat_printf_y (gui_color_buffer, y++,
+                           _("Syntax highlighting colors in evaluated strings:"));
+        if (config_num_eval_syntax_colors > 0)
+        {
+            str_line[0] = '\0';
+            for (i = 0; i < config_num_eval_syntax_colors; i++)
             {
-                gui_chat_printf_y (gui_color_buffer, y++,
-                                   " %s", str_line);
+                if (gui_color_use_term_colors)
+                {
+                    snprintf (str_color, sizeof (str_color),
+                              " %s",
+                              config_eval_syntax_colors[i]);
+                }
+                else
+                {
+                    snprintf (str_color, sizeof (str_color),
+                              "%c %s%s",
+                              GUI_COLOR_RESET_CHAR,
+                              gui_color_get_custom (config_eval_syntax_colors[i]),
+                              config_eval_syntax_colors[i]);
+                }
+                if (gui_chat_strlen_screen (str_line)
+                    + gui_chat_strlen_screen (str_color) > 80)
+                {
+                    gui_chat_printf_y (gui_color_buffer, y++, " %s", str_line);
+                    str_line[0] = '\0';
+                }
+                strcat (str_line, str_color);
             }
-            string_free_split (items);
+            if (str_line[0])
+                gui_chat_printf_y (gui_color_buffer, y++, " %s", str_line);
         }
 
         /* display palette colors */
@@ -1203,7 +1224,7 @@ gui_color_reset_pairs ()
     if (gui_color_pairs)
     {
         memset (gui_color_pairs, 0,
-                (gui_color_term_colors + 2)
+                (size_t)(gui_color_term_colors + 2)
                 * (gui_color_term_colors + 2)
                 * sizeof (gui_color_pairs[0]));
         gui_color_pairs_used = 0;
@@ -1274,8 +1295,7 @@ gui_color_buffer_assign ()
 {
     if (!gui_color_buffer)
     {
-        gui_color_buffer = gui_buffer_search_by_name (NULL,
-                                                      GUI_COLOR_BUFFER_NAME);
+        gui_color_buffer = gui_buffer_search (NULL, GUI_COLOR_BUFFER_NAME);
         if (gui_color_buffer)
         {
             gui_color_buffer->input_callback = &gui_color_buffer_input_cb;
@@ -1315,8 +1335,7 @@ gui_color_buffer_open ()
         if (gui_color_buffer && !gui_color_buffer->short_name)
             gui_color_buffer->short_name = strdup (GUI_COLOR_BUFFER_NAME);
 
-        if (properties)
-            hashtable_free (properties);
+        hashtable_free (properties);
     }
 
     if (!gui_color_buffer)
@@ -1511,8 +1530,7 @@ gui_color_palette_free (struct t_gui_color_palette *color_palette)
     if (!color_palette)
         return;
 
-    if (color_palette->alias)
-        free (color_palette->alias);
+    free (color_palette->alias);
 
     free (color_palette);
 }
@@ -1617,7 +1635,7 @@ void
 gui_color_dump ()
 {
     char str_line[1024];
-    int fg, bg, index, used;
+    int fg, bg, index;
 
     gui_color_info_term_colors (str_line, sizeof (str_line));
 
@@ -1629,7 +1647,6 @@ gui_color_dump ()
                      gui_color_num_pairs - gui_color_pairs_used);
     if (gui_color_pairs)
     {
-        used = 0;
         for (bg = -1; bg <= gui_color_term_colors; bg++)
         {
             for (fg = -1; fg <= gui_color_term_colors; fg++)
@@ -1640,7 +1657,6 @@ gui_color_dump ()
                     gui_chat_printf (NULL,
                                      "  fg:%3d, bg:%3d, pairs[%05d] = %hd",
                                      fg, bg, index, gui_color_pairs[index]);
-                    used++;
                 }
             }
         }

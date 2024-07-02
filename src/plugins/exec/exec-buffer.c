@@ -1,7 +1,7 @@
 /*
  * exec-buffer.c - buffers with output of commands
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -68,10 +68,8 @@ exec_buffer_input_cb (const void *pointer, void *data,
     if (argv && argv_eol)
         exec_command_run (buffer, argc, argv, argv_eol, 0);
 
-    if (argv)
-        weechat_string_free_split (argv);
-    if (argv_eol)
-        weechat_string_free_split (argv_eol);
+    weechat_string_free_split (argv);
+    weechat_string_free_split (argv_eol);
 
     return WEECHAT_RC_OK;
 }
@@ -189,8 +187,7 @@ exec_buffer_new (const char *name, int free_content, int clear_buffer,
                                            &exec_buffer_input_cb, NULL, NULL,
                                            &exec_buffer_close_cb, NULL, NULL);
 
-    if (buffer_props)
-        weechat_hashtable_free (buffer_props);
+    weechat_hashtable_free (buffer_props);
 
     /* failed to create buffer ? then return */
     if (!new_buffer)

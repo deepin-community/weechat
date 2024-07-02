@@ -1,7 +1,7 @@
 /*
  * weechat-perl.c - perl plugin for WeeChat
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2008 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -22,6 +22,7 @@
 
 #undef _
 
+#include <locale.h>
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
@@ -365,16 +366,16 @@ weechat_perl_exec (struct t_plugin_script *script,
             {
                 case 's': /* string or null */
                     if (argv[i])
-                        XPUSHs (sv_2mortal(newSVpv((char *)argv[i], 0)));
+                        XPUSHs (sv_2mortal (newSVpv((char *)argv[i], 0)));
                     else
-                        XPUSHs (sv_2mortal(&PL_sv_undef));
+                        XPUSHs (sv_2mortal (&PL_sv_undef));
                     break;
                 case 'i': /* integer */
-                    XPUSHs (sv_2mortal(newSViv(*((int *)argv[i]))));
+                    XPUSHs (sv_2mortal (newSViv (*((int *)argv[i]))));
                     break;
                 case 'h': /* hash */
                     hash = weechat_perl_hashtable_to_hash (argv[i]);
-                    XPUSHs (sv_2mortal(newRV_inc((SV *)hash)));
+                    XPUSHs (sv_2mortal (newRV_inc ((SV *)hash)));
                     break;
             }
         }
@@ -567,6 +568,10 @@ weechat_perl_load (const char *filename, const char *code)
     temp_script.interpreter = (PerlInterpreter *) perl_current_interpreter;
     perl_parse (perl_current_interpreter, weechat_perl_api_init,
                 perl_args_count, perl_args, NULL);
+#if PERL_REVISION >= 6 || (PERL_REVISION == 5 && PERL_VERSION >= 38)
+    /* restore the locale that could be changed by Perl >= 5.38 */
+    Perl_setlocale (LC_CTYPE, "");
+#endif
     length = strlen (perl_weechat_code) + strlen (str_warning) +
         strlen (str_error) - 2 + 4 + strlen ((code) ? code : filename) + 4 + 1;
     perl_code = malloc (length);
@@ -704,8 +709,7 @@ weechat_perl_unload (struct t_plugin_script *script)
                                        WEECHAT_SCRIPT_EXEC_INT,
                                        script->shutdown_func,
                                        NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -731,14 +735,12 @@ weechat_perl_unload (struct t_plugin_script *script)
         PERL_SET_CONTEXT (perl_current_script->interpreter);
     }
 #else
-    if (interpreter)
-        free (interpreter);
+    free (interpreter);
 #endif /* MULTIPLICITY */
 
     (void) weechat_hook_signal_send ("perl_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -854,8 +856,7 @@ weechat_perl_eval (struct t_gui_buffer *buffer, int send_to_buffer_as_input,
                                 "script_perl_eval",
                                 "s", func_argv);
     /* result is ignored */
-    if (result)
-        free (result);
+    free (result);
 
     weechat_perl_output_flush ();
 
@@ -958,11 +959,10 @@ weechat_perl_command_cb (const void *pointer, void *data,
             {
                 /* load perl script */
                 path_script = plugin_script_search_path (weechat_perl_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_perl_load ((path_script) ? path_script : ptr_name,
                                    NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -1259,6 +1259,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_perl_plugin = plugin;
 
+    perl_quiet = 0;
+    perl_eval_mode = 0;
+    perl_eval_send_input = 0;
+    perl_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -1290,6 +1295,10 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     perl_construct (perl_main);
     perl_parse (perl_main, weechat_perl_api_init, perl_args_count,
                 perl_args, NULL);
+#if PERL_REVISION >= 6 || (PERL_REVISION == 5 && PERL_VERSION >= 38)
+    /* restore the locale that could be changed by Perl >= 5.38 */
+    Perl_setlocale (LC_CTYPE, "");
+#endif
 #endif /* MULTIPLICITY */
 
     perl_data.config_file = &perl_config_file;
@@ -1359,12 +1368,22 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     /* free some data */
     if (perl_action_install_list)
+    {
         free (perl_action_install_list);
+        perl_action_install_list = NULL;
+    }
     if (perl_action_remove_list)
+    {
         free (perl_action_remove_list);
+        perl_action_remove_list = NULL;
+    }
     if (perl_action_autoload_list)
+    {
         free (perl_action_autoload_list);
+        perl_action_autoload_list = NULL;
+    }
     weechat_string_dyn_free (perl_buffer_output, 1);
+    perl_buffer_output = NULL;
 
     return WEECHAT_RC_OK;
 }

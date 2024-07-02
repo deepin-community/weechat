@@ -1,7 +1,7 @@
 /*
  * irc-message.c - functions for IRC messages
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -511,24 +511,16 @@ irc_message_parse_to_hashtable (struct t_irc_server *server,
     snprintf (str_pos, sizeof (str_pos), "%d", pos_text);
     weechat_hashtable_set (hashtable, "pos_text", str_pos);
 
-    if (tags)
-        free (tags);
-    if (message_without_tags)
-        free (message_without_tags);
-    if (nick)
-        free (nick);
-    if (user)
-        free (user);
-    if (host)
-        free (host);
-    if (command)
-        free (command);
-    if (channel)
-        free (channel);
-    if (arguments)
-        free (arguments);
-    if (text)
-        free (text);
+    free (tags);
+    free (message_without_tags);
+    free (nick);
+    free (user);
+    free (host);
+    free (command);
+    free (channel);
+    free (arguments);
+    free (text);
+    weechat_string_free_split (params);
 
     return hashtable;
 }
@@ -623,6 +615,7 @@ irc_message_parse_cap_multiline_value (struct t_irc_server *server,
     ptr_value = (const char *)weechat_hashtable_get (values, "max-bytes");
     if (ptr_value)
     {
+        error = NULL;
         number = strtol (ptr_value, &error, 10);
         if (error && !error[0])
             server->multiline_max_bytes = number;
@@ -631,6 +624,7 @@ irc_message_parse_cap_multiline_value (struct t_irc_server *server,
     ptr_value = (const char *)weechat_hashtable_get (values, "max-lines");
     if (ptr_value)
     {
+        error = NULL;
         number = strtol (ptr_value, &error, 10);
         if (error && !error[0])
             server->multiline_max_lines = number;
@@ -841,14 +835,10 @@ irc_message_ignored (struct t_irc_server *server, const char *message)
         nick,
         host_no_color);
 
-    if (nick)
-        free (nick);
-    if (host)
-        free (host);
-    if (host_no_color)
-        free (host_no_color);
-    if (channel)
-        free (channel);
+    free (nick);
+    free (host);
+    free (host_no_color);
+    free (channel);
 
     return ignored;
 }
@@ -1051,9 +1041,6 @@ irc_message_split_string (struct t_irc_message_split_context *context,
     if (suffix)
         max_length -= strlen (suffix);
 
-    if (max_length < 2)
-        return 0;
-
     /* debug message */
     if (weechat_irc_plugin->debug >= 2)
     {
@@ -1065,17 +1052,23 @@ irc_message_split_string (struct t_irc_message_split_context *context,
                         max_length);
     }
 
-    if (!arguments || !arguments[0])
+    if ((max_length < 2) || !arguments || !arguments[0])
     {
-        snprintf (message, sizeof (message), "%s%s%s %s%s%s%s",
+        /*
+         * max length is not known (server probably sent values that are not
+         * consistent), or no arguments => in this case, we just return message
+         * as-is (no split)
+         */
+        snprintf (message, sizeof (message), "%s%s%s %s%s%s%s%s",
                   (host) ? host : "",
                   (host) ? " " : "",
                   command,
                   (target) ? target : "",
                   (target && target[0]) ? " " : "",
                   (prefix) ? prefix : "",
+                  (arguments) ? arguments : "",
                   (suffix) ? suffix : "");
-        irc_message_split_add (context, tags, message, "");
+        irc_message_split_add (context, tags, message, (arguments) ? arguments : "");
         (context->number)++;
         return 1;
     }
@@ -1288,10 +1281,8 @@ irc_message_split_join (struct t_irc_message_split_context *context,
                                msg_to_send + length_no_channel + 1);
     }
 
-    if (channels)
-        weechat_string_free_split (channels);
-    if (keys)
-        weechat_string_free_split (keys);
+    weechat_string_free_split (channels);
+    weechat_string_free_split (keys);
 
     return 1;
 }
@@ -1676,8 +1667,9 @@ irc_message_split (struct t_irc_server *server, const char *message)
     }
 
     multiline = (
-        ((weechat_strcasecmp (command, "privmsg") == 0)
-         || (weechat_strcasecmp (command, "notice") == 0))
+        server
+        && ((weechat_strcasecmp (command, "privmsg") == 0)
+            || (weechat_strcasecmp (command, "notice") == 0))
         && message
         && strchr (message, '\n')
         && (index_args + 1 <= argc - 1)
@@ -1833,12 +1825,9 @@ end:
                                arguments);
     }
 
-    if (tags)
-        free (tags);
-    if (argv)
-        weechat_string_free_split (argv);
-    if (argv_eol)
-        weechat_string_free_split (argv_eol);
+    free (tags);
+    weechat_string_free_split (argv);
+    weechat_string_free_split (argv_eol);
 
     return split_context.hashtable;
 }

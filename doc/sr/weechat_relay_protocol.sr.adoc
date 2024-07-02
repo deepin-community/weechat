@@ -92,8 +92,7 @@ _клијенти_ су повезани са _релејем_ као што ј�
 [[command_handshake]]
 === handshake
 
-// TRANSLATION MISSING
-_WeeChat ≥ 2.9, updated in versions 3.5, 4.0.0._
+_WeeChat ≥ 2.9, ажурирано у верзијама 3.5, 4.0.0._
 
 Извршава руковање између клијента и програма WeeChat: ово је у већини случајева неопходно како би се сазнале поставке сесије и припремила аутентификација командом _init_.
 
@@ -123,11 +122,10 @@ _WeeChat ≥ 2.9, updated in versions 3.5, 4.0.0._
 *** _zstd_: компресија са https://facebook.github.io/zstd/[Zstandard ^↗^^]: боља
     компресија, као и много бржа компресија и декомпресија у односу на _zlib_
     _(WeeChat ≥ 3.5)_
-// TRANSLATION MISSING
-** _escape_commands_: commands sent by the client to relay must be escaped:
-   all backslashes are interpreted and a single backslash must be escaped (`\\`);
-   this allows for example the client to send multiline messages (chars `\n` are
-   converted to newlines, see <<command_input,input command>>)
+** _escape_commands_: команде које клијент шаље релеју морају да се означе:
+   све обрнуте косе црте се интерпретирају и једна обрнута коса црта мора да се означи (`\\`);
+   на овај начин клијент, на пример, може да шаље вишелинијске поруке (карактери `\n` се
+   претварају у преломе редова, погледајте <<command_input,input команду>>)
    _(WeeChat ≥ 4.0.0)_
 
 Напомене у вези опције _password_hash_algo_:
@@ -158,10 +156,9 @@ _WeeChat ≥ 2.9, updated in versions 3.5, 4.0.0._
 ** _off_: поруке се не компресују
 ** _zlib_: поруке су компресоване са https://zlib.net/[zlib ^↗^^]
 ** _zstd_: поруке су компресоване са https://facebook.github.io/zstd/[Zstandard ^↗^^]
-// TRANSLATION MISSING
 * _escape_commands_:
-** _on_: all backslashes are interpreted in the client messages
-** _off_: backslashes are *NOT* interpreted in the client messages and used as-is
+** _on_: све обрнуте косе црте у порукама клијента се интерпретирају
+** _off_: обрнуте косе црте у порукама клијента се *НЕ* интерпретирају и користе се онакве какве су
 
 [TIP]
 У програму WeeChat верзије ≤ 2.8, команда _handshake_ није имплементирана, програм WeeChat једноставно игнорише ову команду, чак и ако се пошаље пре _init_ команде. +
@@ -442,7 +439,9 @@ hda:
         'buffer': 'ptr',
         'y': 'int',
         'date': 'tim',
+        'date_usec': 'int',
         'date_printed': 'tim',
+        'date_usec_printed': 'int',
         'str_time': 'str',
         'tags_count': 'int',
         'tags_array': 'arr',
@@ -460,7 +459,9 @@ hda:
         buffer: '0x558d61ea3e60'
         y: -1
         date: 1588404926
+        date_usec: 118712
         date_printed: 1588404926
+        date_usec_printed: 118712
         str_time: 'F@0025209F@0024535F@0024026'
         tags_count: 0
         tags_array: []
@@ -476,7 +477,9 @@ hda:
         buffer: '0x558d61ea3e60'
         y: -1
         date: 1588404930
+        date_usec: 25
         date_printed: 1588404930
+        date_usec_printed: 25
         str_time: 'F@0025209F@0024535F@0024030'
         tags_count: 0
         tags_array: []
@@ -653,6 +656,7 @@ inl:
         nicklist_visible_count: 0
         title: 'WeeChat 2.9-dev (C) 2003-2020 - https://weechat.org/'
         input: 1
+        input_get_any_user_data: 0
         input_get_unknown_commands: 0
         input_get_empty: 0
         input_multiline: 0
@@ -664,11 +668,14 @@ inl:
         input_buffer_1st_display: 0
         num_history: 0
         text_search: 0
+        text_search_direction: 0
         text_search_exact: 0
         text_search_regex: 0
         text_search_regex_compiled: '0x0'
         text_search_where: 0
+        text_search_history: 0
         text_search_found: 0
+        text_search_ptr_history: '0x0'
         text_search_input: None
         highlight_words: None
         highlight_disable_regex: None
@@ -947,9 +954,8 @@ input core.weechat /help filter
 input irc.libera.#weechat здраво!
 ----
 
-// TRANSLATION MISSING
-* Send multiline message to #test channel (option _escape_commands_ must have
-  been enabled in <<command_handshake,handshake command>> and requires
+* Шаље вишелинијску поруку на #test канал (опција _escape_commands_ мора да буде
+  укључена у <<command_handshake,handshake команди>> и потребан је
   WeeChat ≥ 4.0.0):
 
 ----
@@ -1947,16 +1953,18 @@ hda:
 
 [width="100%", cols="3m,2,10", options="header"]
 |===
-| Име          | Тип              | Опис
-| buffer       | показивач        | Показивач на бафер.
-| date         | време            | Датум поруке.
-| date_printed | време            | Датум када је програм WeeChat приказао поруку.
-| displayed    | карактер         | 1 ако је порука приказана, 0 ако је порука филтрирана (скривена).
-| notify_level | карактер         | Ниво обавештења: -1 = обавештење искључено, 0 = ниски, 1 = порука, 2 = приватно, 3 = истицање.
-| highlight    | карактер         | 1 ако се у линији налази истицање, у супротном 0.
-| tags_array   | низ стрингова    | Листа ознака за линију.
-| prefix       | стринг           | Префикс.
-| message      | стринг           | Порука.
+| Име               | Тип              | Опис
+| buffer            | показивач        | Показивач на бафер.
+| date              | време            | Датум поруке.
+| date_usec         | цео број         | Микросекунде датума.
+| date_printed      | време            | Датум када је програм WeeChat приказао поруку.
+| date_usec_printed | цео број         | Микросекунде датума када је WeeChat приказао поруку.
+| displayed         | карактер         | 1 ако је порука приказана, 0 ако је порука филтрирана (скривена).
+| notify_level      | карактер         | Ниво обавештења: -1 = обавештење искључено, 0 = ниски, 1 = порука, 2 = приватно, 3 = истицање.
+| highlight         | карактер         | 1 ако се у линији налази истицање, у супротном 0.
+| tags_array        | низ стрингова    | Листа ознака за линију.
+| prefix            | стринг           | Префикс.
+| message           | стринг           | Порука.
 |===
 
 Пример: нова порука _здраво!_ од надимка _FlashCode_ у баферу _irc.libera.#weechat_:
@@ -1968,7 +1976,9 @@ hda:
     keys: {
         'buffer': 'ptr',
         'date': 'tim',
+        'date_usec': 'int',
         'date_printed': 'tim',
+        'date_usec_printed': 'int',
         'displayed': 'chr',
         'notify_level': 'chr',
         'highlight': 'chr',
@@ -1981,7 +1991,9 @@ hda:
         __path: ['0x4a49600']
         buffer: '0x4a715d0'
         date: 1362728993
+        date_usec: 902765
         date_printed: 1362728993
+        date_usec_printed: 902765
         displayed: 1
         notify_level: 1
         highlight: 0

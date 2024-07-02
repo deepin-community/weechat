@@ -1,7 +1,7 @@
 /*
  * buflist.c - Bar with list of buffers
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -28,6 +28,7 @@
 #include "buflist.h"
 #include "buflist-bar-item.h"
 #include "buflist-command.h"
+#include "buflist-completion.h"
 #include "buflist-config.h"
 #include "buflist-info.h"
 #include "buflist-mouse.h"
@@ -458,10 +459,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     buflist_config_change_sort (NULL, NULL, NULL);
 
     buflist_command_init ();
+    buflist_completion_init ();
 
     buflist_add_bar ();
 
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 
     buflist_mouse_init ();
 
@@ -531,6 +533,13 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     buflist_config_write ();
     buflist_config_free ();
+
+    buflist_hdata_window = NULL;
+    buflist_hdata_buffer = NULL;
+    buflist_hdata_hotlist = NULL;
+    buflist_hdata_bar = NULL;
+    buflist_hdata_bar_item = NULL;
+    buflist_hdata_bar_window = NULL;
 
     return WEECHAT_RC_OK;
 }

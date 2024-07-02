@@ -1,4 +1,3 @@
-#cmakedefine HAVE_LIBINTL_H
 #cmakedefine HAVE_SYS_RESOURCE_H
 #cmakedefine HAVE_FLOCK
 #cmakedefine HAVE_LANGINFO_CODESET
@@ -6,6 +5,8 @@
 #cmakedefine ICONV_2ARG_IS_CONST 1
 #cmakedefine HAVE_MALLINFO
 #cmakedefine HAVE_MALLINFO2
+#cmakedefine HAVE_MALLOC_H
+#cmakedefine HAVE_MALLOC_TRIM
 #cmakedefine HAVE_EAT_NEWLINE_GLITCH
 #cmakedefine HAVE_ASPELL_VERSION_STRING
 #cmakedefine HAVE_ENCHANT_GET_VERSION

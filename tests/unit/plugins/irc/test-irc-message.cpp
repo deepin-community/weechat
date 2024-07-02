@@ -1,7 +1,7 @@
 /*
  * test-irc-message.cpp - test IRC message functions
  *
- * Copyright (C) 2019-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2019-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -26,10 +26,10 @@
 extern "C"
 {
 #include "string.h"
-#include "src/core/wee-config-file.h"
-#include "src/core/wee-hashtable.h"
-#include "src/core/wee-hook.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-config-file.h"
+#include "src/core/core-hashtable.h"
+#include "src/core/core-hook.h"
+#include "src/core/core-string.h"
 #include "src/plugins/irc/irc-config.h"
 #include "src/plugins/irc/irc-ignore.h"
 #include "src/plugins/irc/irc-message.h"
@@ -775,8 +775,8 @@ TEST(IrcMessage, ParseToHashtable)
                  (const char *)hashtable_get (hashtable, "tags"));
     POINTERS_EQUAL(NULL,
                    (const char *)hashtable_get (hashtable, "tag_time"));
-    STRCMP_EQUAL(NULL,
-                 (const char *)hashtable_get (hashtable, "tag_tag2"));
+    POINTERS_EQUAL(NULL,
+                   (const char *)hashtable_get (hashtable, "tag_tag2"));
     STRCMP_EQUAL("PING :arguments here",
                  (const char *)hashtable_get (hashtable, "message_without_tags"));
     STRCMP_EQUAL("",
@@ -1137,6 +1137,7 @@ TEST(IrcMessage, Split)
     struct t_hashtable *hashtable;
     const char *ptr_msg, *pos1, *pos2;
     char batch_ref[512], msg[4096];
+    int old_nick_max_length;
 
     server = irc_server_alloc ("test_split_msg");
     CHECK(server);
@@ -1551,6 +1552,21 @@ TEST(IrcMessage, Split)
     STRCMP_EQUAL("test",
                  (const char *)hashtable_get (hashtable, "args1"));
     hashtable_free (hashtable);
+
+    /* PRIVMSG with small content but inconsistent max length: no split */
+    old_nick_max_length = server->nick_max_length;
+    server->nick_max_length = 4096;
+    hashtable = irc_message_split (server, "PRIVMSG #channel :test");
+    CHECK(hashtable);
+    LONGS_EQUAL(3, hashtable->items_count);
+    STRCMP_EQUAL("1",
+                 (const char *)hashtable_get (hashtable, "count"));
+    STRCMP_EQUAL("PRIVMSG #channel :test",
+                 (const char *)hashtable_get (hashtable, "msg1"));
+    STRCMP_EQUAL("test",
+                 (const char *)hashtable_get (hashtable, "args1"));
+    hashtable_free (hashtable);
+    server->nick_max_length = old_nick_max_length;
 
     /* PRIVMSG with 512 bytes of content: 1 split */
     hashtable = irc_message_split (server,
@@ -1980,6 +1996,21 @@ TEST(IrcMessage, Split)
     hashtable_free (hashtable);
     hashtable_remove (server->cap_list, "batch");
     hashtable_remove (server->cap_list, "draft/multiline");
+
+    /* PRIVMSG with newlines but no server: BATCH is not used */
+    hashtable = irc_message_split (NULL, "PRIVMSG #channel :test\n\nline 3");
+    CHECK(hashtable);
+    LONGS_EQUAL(7, hashtable->items_count);
+    STRCMP_EQUAL("3", (const char *)hashtable_get (hashtable, "count"));
+    STRCMP_EQUAL("PRIVMSG #channel :test",
+                 (const char *)hashtable_get (hashtable, "msg1"));
+    STRCMP_EQUAL("test", (const char *)hashtable_get (hashtable, "args1"));
+    STRCMP_EQUAL("PRIVMSG #channel :",
+                 (const char *)hashtable_get (hashtable, "msg2"));
+    STRCMP_EQUAL("", (const char *)hashtable_get (hashtable, "args2"));
+    STRCMP_EQUAL("PRIVMSG #channel :line 3",
+                 (const char *)hashtable_get (hashtable, "msg3"));
+    STRCMP_EQUAL("line 3", (const char *)hashtable_get (hashtable, "args3"));
 
     /* 005: no split */
     hashtable = irc_message_split (server, "005 nick " MSG_005);

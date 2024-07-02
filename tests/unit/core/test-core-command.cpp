@@ -1,7 +1,7 @@
 /*
  * test-core-command.cpp - test command functions
  *
- * Copyright (C) 2022-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,9 +30,9 @@ extern "C"
 #define HAVE_CONFIG_H
 #endif
 #include "src/core/weechat.h"
-#include "src/core/wee-command.h"
-#include "src/core/wee-input.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-command.h"
+#include "src/core/core-input.h"
+#include "src/core/core-string.h"
 #include "src/gui/gui-buffer.h"
 }
 
@@ -43,7 +43,7 @@ extern "C"
     command_record ("core.weechat", __command);
 
 #define WEE_CHECK_MSG_BUFFER(__buffer_name, __prefix, __message)        \
-    if (record_search (__buffer_name, __prefix, __message, NULL) < 0)   \
+    if (!record_search (__buffer_name, __prefix, __message, NULL))      \
     {                                                                   \
         char **msg = command_build_error (__buffer_name, __prefix,      \
                                           __message);                   \
@@ -53,8 +53,6 @@ extern "C"
 
 #define WEE_CHECK_MSG_CORE(__prefix, __message)                         \
     WEE_CHECK_MSG_BUFFER("core.weechat", __prefix, __message);
-#define WEE_SEARCH_MSG_CORE(__prefix, __message)                        \
-    record_search ("core.weechat", __prefix, __message, NULL)
 
 
 TEST_GROUP(CoreCommand)
@@ -69,7 +67,7 @@ TEST_GROUP(CoreCommand)
             FAIL("Buffer not found");
         }
         record_start ();
-        input_data (buffer, command, NULL, 0);
+        input_data (buffer, command, NULL, 0, 0);
         record_stop ();
     }
 
@@ -380,10 +378,10 @@ TEST(CoreCommand, Reload)
 {
     WEE_CMD_CORE("/save");
     WEE_CMD_CORE("/reload");
-    LONGS_EQUAL(0, WEE_SEARCH_MSG_CORE("", "Options reloaded from sec.conf"));
-    LONGS_EQUAL(1, WEE_SEARCH_MSG_CORE("", "Options reloaded from weechat.conf"));
-    LONGS_EQUAL(2, WEE_SEARCH_MSG_CORE("", "Options reloaded from plugins.conf"));
-    LONGS_EQUAL(3, WEE_SEARCH_MSG_CORE("", "Options reloaded from charset.conf"));
+    WEE_CHECK_MSG_CORE("", "Options reloaded from sec.conf");
+    WEE_CHECK_MSG_CORE("", "Options reloaded from weechat.conf");
+    WEE_CHECK_MSG_CORE("", "Options reloaded from plugins.conf");
+    WEE_CHECK_MSG_CORE("", "Options reloaded from charset.conf");
 }
 
 /*

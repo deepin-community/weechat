@@ -1,7 +1,7 @@
 /*
  * tests-record.cpp - record and search in messages displayed
  *
- * Copyright (C) 2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -31,10 +31,10 @@ extern "C"
 #define HAVE_CONFIG_H
 #endif
 #include "src/core/weechat.h"
-#include "src/core/wee-arraylist.h"
-#include "src/core/wee-hashtable.h"
-#include "src/core/wee-hook.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-arraylist.h"
+#include "src/core/core-hashtable.h"
+#include "src/core/core-hook.h"
+#include "src/core/core-string.h"
 #include "src/gui/gui-color.h"
 }
 
@@ -173,18 +173,16 @@ record_match (struct t_hashtable *recorded_msg,
 /*
  * Searches if a prefix/message has been displayed in a buffer.
  *
- * Returns index of message displayed (≥ 0), -1 if message has NOT been
- * displayed.
+ * Returns pointer to hashtable with the message found, NULL if the message
+ * has NOT been displayed.
  */
 
-int
+struct t_hashtable *
 record_search (const char *buffer, const char *prefix, const char *message,
                const char *tags)
 {
-    int i, rc, size;
+    int i, size;
     struct t_hashtable *rec_msg;
-
-    rc = -1;
 
     size = arraylist_size (recorded_messages);
 
@@ -198,12 +196,12 @@ record_search (const char *buffer, const char *prefix, const char *message,
             && record_match (rec_msg, "message_no_color", message)
             && (!tags || !tags[0] || record_match (rec_msg, "tags", tags)))
         {
-            rc = i;
-            break;
+            return rec_msg;
         }
     }
 
-    return rc;
+    /* message not displayed */
+    return NULL;
 }
 
 /*

@@ -1,7 +1,7 @@
 /*
- * test-relay-irc.cpp - test IRC protocol for relay to client
+ * test-relay-irc.cpp - test relay IRC protocol
  *
- * Copyright (C) 2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,17 +22,16 @@
 #include "CppUTest/TestHarness.h"
 
 #include "tests/tests.h"
-#include "tests/tests-record.h"
 
 extern "C"
 {
 #include <stdio.h>
 #include <string.h>
-#include "src/core/wee-arraylist.h"
-#include "src/core/wee-config-file.h"
-#include "src/core/wee-hashtable.h"
-#include "src/core/wee-hook.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-arraylist.h"
+#include "src/core/core-config-file.h"
+#include "src/core/core-hashtable.h"
+#include "src/core/core-hook.h"
+#include "src/core/core-string.h"
 #include "src/plugins/plugin.h"
 #include "src/plugins/irc/irc-server.h"
 #include "src/plugins/relay/relay.h"
@@ -49,6 +48,8 @@ extern void relay_irc_sendf (struct t_relay_client *client,
                              const char *format, ...);
 extern void relay_irc_parse_cap_message (struct t_relay_client *client,
                                          struct t_hashtable *parsed_msg);
+extern void relay_irc_parse_ctcp (const char *message,
+                                  char **ctcp_type, char **ctcp_params);
 extern int relay_irc_tag_relay_client_id (const char *tags);
 extern void relay_irc_input_send (struct t_relay_client *client,
                                   const char *irc_channel,
@@ -136,26 +137,18 @@ TEST_GROUP(RelayIrcWithClient)
 
     void test_client_recv (const char *data)
     {
-        record_start ();
-
         arraylist_clear (sent_messages_client);
         arraylist_clear (sent_messages_irc);
 
         relay_irc_recv (ptr_relay_client, data);
-
-        record_stop ();
     }
 
     void test_client_send (const char *data)
     {
-        record_start ();
-
         arraylist_clear (sent_messages_client);
         arraylist_clear (sent_messages_irc);
 
         relay_irc_sendf (ptr_relay_client, "%s", data);
-
-        record_stop ();
     }
 
     char **test_build_error (const char *msg1,
@@ -323,19 +316,19 @@ TEST_GROUP(RelayIrcWithClient)
                        "/server fakerecv "
                        "\":server 001 alice :Welcome on this server, nick1!\"");
 
-        /* create a fake server (no I/O) */
+        /* create a relay server */
         ptr_relay_server = relay_server_new (
             "irc.test",
             RELAY_PROTOCOL_IRC,
             "test",
-            9000,
+            9001,
             NULL,  /* path */
             1,  /* ipv4 */
             0,  /* ipv6 */
             0,  /* tls */
             0);  /* unix_socket */
 
-        /* create a fake client (no I/O) */
+        /* create a fake relay client (no I/O) */
         ptr_relay_client = relay_client_new (-1, "test", ptr_relay_server);
     }
 
@@ -365,7 +358,7 @@ TEST_GROUP(RelayIrcWithClient)
  *   relay_irc_command_relayed
  */
 
-TEST(RelayIrc, RelayIrcCommandRelayed)
+TEST(RelayIrc, CommandRelayed)
 {
     LONGS_EQUAL(0, relay_irc_command_relayed (NULL));
     LONGS_EQUAL(0, relay_irc_command_relayed (""));
@@ -382,7 +375,7 @@ TEST(RelayIrc, RelayIrcCommandRelayed)
  *   relay_irc_command_ignored
  */
 
-TEST(RelayIrc, RelayIrcCommandIgnored)
+TEST(RelayIrc, CommandIgnored)
 {
     LONGS_EQUAL(0, relay_irc_command_ignored (NULL));
     LONGS_EQUAL(0, relay_irc_command_ignored (""));
@@ -400,7 +393,7 @@ TEST(RelayIrc, RelayIrcCommandIgnored)
  *   relay_irc_search_backlog_commands_tags
  */
 
-TEST(RelayIrc, RelayIrcSearchBacklogCommandsTags)
+TEST(RelayIrc, SearchBacklogCommandsTags)
 {
     LONGS_EQUAL(-1, relay_irc_search_backlog_commands_tags (NULL));
     LONGS_EQUAL(-1, relay_irc_search_backlog_commands_tags (""));
@@ -416,7 +409,7 @@ TEST(RelayIrc, RelayIrcSearchBacklogCommandsTags)
  *   relay_irc_search_server_capability
  */
 
-TEST(RelayIrc, RelayIrcSearchServerCapability)
+TEST(RelayIrc, SearchServerCapability)
 {
     LONGS_EQUAL(-1, relay_irc_search_server_capability (NULL));
     LONGS_EQUAL(-1, relay_irc_search_server_capability (""));
@@ -431,7 +424,7 @@ TEST(RelayIrc, RelayIrcSearchServerCapability)
  *   relay_irc_message_parse
  */
 
-TEST(RelayIrc, RelayIrcMessageParse)
+TEST(RelayIrc, MessageParse)
 {
     struct t_hashtable *hashtable;
 
@@ -485,9 +478,8 @@ TEST(RelayIrc, RelayIrcMessageParse)
  *   relay_irc_sendf
  */
 
-TEST(RelayIrcWithClient, RelayIrcSendf)
+TEST(RelayIrcWithClient, Sendf)
 {
-
     relay_irc_sendf (NULL, NULL);
     relay_irc_sendf (NULL, "test");
     relay_irc_sendf (ptr_relay_client, NULL);
@@ -504,7 +496,7 @@ TEST(RelayIrcWithClient, RelayIrcSendf)
  *   relay_irc_parse_cap_message
  */
 
-TEST(RelayIrcWithClient, RelayIrcParseCapMessage)
+TEST(RelayIrcWithClient, ParseCapMessage)
 {
     struct t_hashtable *hashtable;
 
@@ -540,7 +532,7 @@ TEST(RelayIrcWithClient, RelayIrcParseCapMessage)
  *   relay_irc_signal_irc_in2_cb
  */
 
-TEST(RelayIrc, RelayIrcSignalIrcIn2Cb)
+TEST(RelayIrc, SignalIrcIn2Cb)
 {
     /* TODO: write tests */
 }
@@ -550,7 +542,7 @@ TEST(RelayIrc, RelayIrcSignalIrcIn2Cb)
  *   relay_irc_tag_relay_client_id
  */
 
-TEST(RelayIrc, RelayIrcTagRelayClientId)
+TEST(RelayIrc, TagRelayClientId)
 {
     LONGS_EQUAL(-1, relay_irc_tag_relay_client_id (NULL));
     LONGS_EQUAL(-1, relay_irc_tag_relay_client_id (""));
@@ -566,7 +558,7 @@ TEST(RelayIrc, RelayIrcTagRelayClientId)
  *   relay_irc_signal_irc_outtags_cb
  */
 
-TEST(RelayIrc, RelayIrcSignalIrcOuttagsCb)
+TEST(RelayIrc, SignalIrcOuttagsCb)
 {
     /* TODO: write tests */
 }
@@ -576,7 +568,7 @@ TEST(RelayIrc, RelayIrcSignalIrcOuttagsCb)
  *   relay_irc_signal_irc_disc_cb
  */
 
-TEST(RelayIrc, RelayIrcSignalIrcDiscCb)
+TEST(RelayIrc, SignalIrcDiscCb)
 {
     /* TODO: write tests */
 }
@@ -586,7 +578,7 @@ TEST(RelayIrc, RelayIrcSignalIrcDiscCb)
  *   relay_irc_hsignal_irc_redir_cb
  */
 
-TEST(RelayIrc, RelayIrcHsignalIrcRedirCb)
+TEST(RelayIrc, HsignalIrcRedirCb)
 {
     /* TODO: write tests */
 }
@@ -596,7 +588,7 @@ TEST(RelayIrc, RelayIrcHsignalIrcRedirCb)
  *   relay_irc_get_line_info
  */
 
-TEST(RelayIrc, RelayIrcGetLineInfo)
+TEST(RelayIrc, GetLineInfo)
 {
     /* TODO: write tests */
 }
@@ -606,7 +598,7 @@ TEST(RelayIrc, RelayIrcGetLineInfo)
  *   relay_irc_send_channel_backlog
  */
 
-TEST(RelayIrc, RelayIrcSendChannelBacklog)
+TEST(RelayIrc, SendChannelBacklog)
 {
     /* TODO: write tests */
 }
@@ -616,7 +608,7 @@ TEST(RelayIrc, RelayIrcSendChannelBacklog)
  *   relay_irc_send_join
  */
 
-TEST(RelayIrc, RelayIrcSendJoin)
+TEST(RelayIrc, SendJoin)
 {
     /* TODO: write tests */
 }
@@ -626,7 +618,7 @@ TEST(RelayIrc, RelayIrcSendJoin)
  *   relay_irc_send_join_channels
  */
 
-TEST(RelayIrc, RelayIrcSendJoinChannels)
+TEST(RelayIrc, SendJoinChannels)
 {
     /* TODO: write tests */
 }
@@ -636,7 +628,7 @@ TEST(RelayIrc, RelayIrcSendJoinChannels)
  *   relay_irc_input_send
  */
 
-TEST(RelayIrcWithClient, RelayIrcInputSend)
+TEST(RelayIrcWithClient, InputSend)
 {
     arraylist_clear (sent_messages_irc);
     relay_irc_input_send (ptr_relay_client, "#test", "priority_high",
@@ -649,7 +641,7 @@ TEST(RelayIrcWithClient, RelayIrcInputSend)
  *   relay_irc_hook_signals
  */
 
-TEST(RelayIrc, RelayIrcHookSignals)
+TEST(RelayIrc, HookSignals)
 {
     /* TODO: write tests */
 }
@@ -659,7 +651,7 @@ TEST(RelayIrc, RelayIrcHookSignals)
  *   relay_irc_capability_compare_cb
  */
 
-TEST(RelayIrc, RelayIrcCapabilityCompareCb)
+TEST(RelayIrc, CapabilityCompareCb)
 {
     /* TODO: write tests */
 }
@@ -669,7 +661,7 @@ TEST(RelayIrc, RelayIrcCapabilityCompareCb)
  *   relay_irc_capability_free_db
  */
 
-TEST(RelayIrc, RelayIrcCapabilityFreeDb)
+TEST(RelayIrc, CapabilityFreeDb)
 {
     /* TODO: write tests */
 }
@@ -679,7 +671,7 @@ TEST(RelayIrc, RelayIrcCapabilityFreeDb)
  *   relay_irc_cap_enabled
  */
 
-TEST(RelayIrcWithClient, RelayIrcCapEnabled)
+TEST(RelayIrcWithClient, CapEnabled)
 {
     LONGS_EQUAL(0, relay_irc_cap_enabled (NULL, NULL));
     LONGS_EQUAL(0, relay_irc_cap_enabled (NULL, "echo-message"));
@@ -700,7 +692,7 @@ TEST(RelayIrcWithClient, RelayIrcCapEnabled)
  *   relay_irc_get_supported_caps
  */
 
-TEST(RelayIrcWithClient, RelayIrcGetSupportedCaps)
+TEST(RelayIrcWithClient, GetSupportedCaps)
 {
     int supported_caps;
 
@@ -745,7 +737,7 @@ TEST(RelayIrc, RelayGetListCaps)
  *   relay_irc_recv_command_capab
  */
 
-TEST(RelayIrcWithClient, RelayIrcRecvCommandCapab)
+TEST(RelayIrcWithClient, RecvCommandCapab)
 {
     relay_client_set_status (ptr_relay_client, RELAY_STATUS_CONNECTING);
 
@@ -815,10 +807,76 @@ TEST(RelayIrcWithClient, RelayIrcRecvCommandCapab)
 
 /*
  * Tests functions:
+ *   relay_irc_parse_ctcp
+ */
+
+TEST(RelayIrcWithClient, ParseCtcp)
+{
+    char *ctcp_type, *ctcp_params;
+
+    relay_irc_parse_ctcp (NULL, NULL, NULL);
+    relay_irc_parse_ctcp ("test", NULL, NULL);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp (NULL, &ctcp_type, &ctcp_params);
+    POINTERS_EQUAL(NULL, ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("\01ACTION is testing\01", &ctcp_type, &ctcp_params);
+    STRCMP_EQUAL("ACTION", ctcp_type);
+    STRCMP_EQUAL("is testing", ctcp_params);
+    free (ctcp_type);
+    free (ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("\01ACTION   is testing  \01 extra", &ctcp_type, &ctcp_params);
+    STRCMP_EQUAL("ACTION", ctcp_type);
+    STRCMP_EQUAL("  is testing  ", ctcp_params);
+    free (ctcp_type);
+    free (ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("\01VERSION\01", &ctcp_type, &ctcp_params);
+    STRCMP_EQUAL("VERSION", ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+    free (ctcp_type);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("\01ACTION is testing", &ctcp_type, &ctcp_params);
+    POINTERS_EQUAL(NULL, ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("\01VERSION", &ctcp_type, &ctcp_params);
+    POINTERS_EQUAL(NULL, ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("test", &ctcp_type, &ctcp_params);
+    POINTERS_EQUAL(NULL, ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+
+    ctcp_type = (char *)0x01;
+    ctcp_params = (char *)0x01;
+    relay_irc_parse_ctcp ("", &ctcp_type, &ctcp_params);
+    POINTERS_EQUAL(NULL, ctcp_type);
+    POINTERS_EQUAL(NULL, ctcp_params);
+}
+
+/*
+ * Tests functions:
  *   relay_irc_recv
  */
 
-TEST(RelayIrcWithClient, RelayIrcRecv)
+TEST(RelayIrcWithClient, Recv)
 {
     relay_client_set_status (ptr_relay_client, RELAY_STATUS_CONNECTING);
 
@@ -897,7 +955,7 @@ TEST(RelayIrcWithClient, RelayIrcRecv)
  *   relay_irc_close_connection
  */
 
-TEST(RelayIrc, RelayIrcCloseConnection)
+TEST(RelayIrc, CloseConnection)
 {
     /* TODO: write tests */
 }
@@ -907,7 +965,7 @@ TEST(RelayIrc, RelayIrcCloseConnection)
  *   relay_irc_alloc
  */
 
-TEST(RelayIrc, RelayIrcAlloc)
+TEST(RelayIrc, Alloc)
 {
     /* TODO: write tests */
 }
@@ -917,7 +975,7 @@ TEST(RelayIrc, RelayIrcAlloc)
  *   relay_irc_alloc_with_infolist
  */
 
-TEST(RelayIrc, RelayIrcAllocWithInfolist)
+TEST(RelayIrc, AllocWithInfolist)
 {
     /* TODO: write tests */
 }
@@ -927,7 +985,7 @@ TEST(RelayIrc, RelayIrcAllocWithInfolist)
  *   relay_irc_get_initial_status
  */
 
-TEST(RelayIrc, RelayIrcGetInitialStatus)
+TEST(RelayIrc, GetInitialStatus)
 {
     /* TODO: write tests */
 }
@@ -937,7 +995,7 @@ TEST(RelayIrc, RelayIrcGetInitialStatus)
  *   relay_irc_free
  */
 
-TEST(RelayIrc, RelayIrcFree)
+TEST(RelayIrc, Free)
 {
     /* TODO: write tests */
 }
@@ -947,7 +1005,7 @@ TEST(RelayIrc, RelayIrcFree)
  *   relay_irc_add_to_infolist
  */
 
-TEST(RelayIrc, RelayIrcAddToInfolist)
+TEST(RelayIrc, AddToInfolist)
 {
     /* TODO: write tests */
 }
@@ -957,7 +1015,7 @@ TEST(RelayIrc, RelayIrcAddToInfolist)
  *   relay_irc_print_log
  */
 
-TEST(RelayIrc, RelayIrcPrintLog)
+TEST(RelayIrc, PrintLog)
 {
     /* TODO: write tests */
 }

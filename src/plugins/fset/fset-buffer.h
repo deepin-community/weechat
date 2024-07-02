@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,7 +37,7 @@ extern int fset_buffer_window_scrolled_cb (const void *pointer,
                                            const char *signal,
                                            const char *type_data,
                                            void *signal_data);
-extern void fset_buffer_set_keys ();
+extern void fset_buffer_set_keys (struct t_hashtable *hashtable);
 extern void fset_buffer_set_localvar_filter ();
 extern void fset_buffer_open ();
 extern int fset_buffer_init ();

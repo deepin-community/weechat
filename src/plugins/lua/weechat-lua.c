@@ -2,7 +2,7 @@
  * weechat-lua.c - lua plugin for WeeChat
  *
  * Copyright (C) 2006-2007 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -257,24 +257,42 @@ weechat_lua_output_flush ()
 int
 weechat_lua_output (lua_State *L)
 {
-    const char *msg, *ptr_msg, *ptr_newline;
+    int i, argument_count;
+    const char *stringified_result;
+    char *ptr_msg, *ptr_newline;
 
-    if (lua_gettop (L) < 1)
-        return 0;
-
-    msg = lua_tostring (L, -1);
-    ptr_msg = msg;
-    while ((ptr_newline = strchr (ptr_msg, '\n')) != NULL)
+    argument_count = lua_gettop (L);
+    for (i = 1; i <= argument_count; ++i)
     {
-        weechat_string_dyn_concat (lua_buffer_output,
-                                   ptr_msg,
-                                   ptr_newline - ptr_msg);
-        weechat_lua_output_flush ();
-        ptr_msg = ++ptr_newline;
-    }
-    weechat_string_dyn_concat (lua_buffer_output, ptr_msg, -1);
+        /* call tostring with the given value */
+        lua_getglobal (L, "tostring");
+        lua_pushvalue (L, i);
+        lua_call (L, 1, 1);
+        /* get the stringified value */
+        stringified_result = lua_tostring (L, -1);
+        /* handle stringification failure */
+        if (!stringified_result)
+        {
+            return luaL_error (L, "%s must return a string to %s",
+                               "tostring", "print");
+        }
 
-    return 0;
+        /* discard tostring's value */
+        lua_remove (L, -1);
+
+        ptr_msg = (char *)stringified_result;
+
+        while ((ptr_newline = strchr(ptr_msg, '\n')) != NULL)
+        {
+            weechat_string_dyn_concat (lua_buffer_output,
+                                       ptr_msg,
+                                       ptr_newline - ptr_msg);
+            weechat_lua_output_flush ();
+            ptr_msg = ++ptr_newline;
+        }
+        weechat_string_dyn_concat (lua_buffer_output, ptr_msg, -1);
+  }
+  return 0;
 }
 
 /*
@@ -423,25 +441,6 @@ weechat_lua_exec (struct t_plugin_script *script, int ret_type,
 }
 
 /*
- * Adds a constant.
- */
-
-void
-weechat_lua_add_constant (lua_State *L, struct t_lua_const *ptr_const)
-{
-    lua_pushstring (L, ptr_const->name);
-    if (ptr_const->str_value)
-        lua_pushstring (L, ptr_const->str_value);
-    else
-#if LUA_VERSION_NUM >= 503
-        lua_pushinteger (L, ptr_const->int_value);
-#else
-        lua_pushnumber (L, ptr_const->int_value);
-#endif /* LUA_VERSION_NUM >= 503 */
-    lua_settable (L, -3);
-}
-
-/*
  * Called when a constant is modified.
  */
 
@@ -459,8 +458,7 @@ weechat_lua_newindex (lua_State *L)
 
 void
 weechat_lua_register_lib (lua_State *L, const char *libname,
-                          const luaL_Reg *lua_api_funcs,
-                          struct t_lua_const lua_api_consts[])
+                          const luaL_Reg *lua_api_funcs)
 {
     int i;
 
@@ -482,10 +480,21 @@ weechat_lua_register_lib (lua_State *L, const char *libname,
     lua_pushliteral (L, "__index");
     lua_newtable (L);
 
-    for (i= 0; lua_api_consts[i].name; i++)
+    /* define constants */
+    for (i = 0; weechat_script_constants[i].name; i++)
     {
-        weechat_lua_add_constant (L, &lua_api_consts[i]);
+        lua_pushstring (L, weechat_script_constants[i].name);
+        if (weechat_script_constants[i].value_string)
+            lua_pushstring (L, weechat_script_constants[i].value_string);
+        else
+#if LUA_VERSION_NUM >= 503
+            lua_pushinteger (L, weechat_script_constants[i].value_integer);
+#else
+            lua_pushnumber (L, weechat_script_constants[i].value_integer);
+#endif /* LUA_VERSION_NUM >= 503 */
+        lua_settable (L, -3);
     }
+
     lua_settable (L, -3);
 
     lua_pushliteral (L, "__newindex");
@@ -509,18 +518,6 @@ struct t_plugin_script *
 weechat_lua_load (const char *filename, const char *code)
 {
     FILE *fp;
-    char *lua_redirect_output = {
-        "function weechat_output_string(str)\n"
-        "    weechat.__output__(tostring(str))\n"
-        "end\n"
-        "weechat_outputs = {\n"
-        "    write = weechat_output_string\n"
-        "}\n"
-        "io.stdout = weechat_outputs\n"
-        "io.stderr = weechat_outputs\n"
-        "io.write = weechat_output_string\n"
-        "print = weechat_output_string\n"
-    };
 
     fp = NULL;
 
@@ -560,32 +557,51 @@ weechat_lua_load (const char *filename, const char *code)
         return NULL;
     }
 
-#ifdef LUA_VERSION_NUM /* LUA_VERSION_NUM is defined only in lua >= 5.1.0 */
-    luaL_openlibs (lua_current_interpreter);
-#else
+#ifndef LUA_VERSION_NUM /* Lua ≤ 5.0 */
     luaopen_base (lua_current_interpreter);
     luaopen_string (lua_current_interpreter);
     luaopen_table (lua_current_interpreter);
     luaopen_math (lua_current_interpreter);
     luaopen_io (lua_current_interpreter);
     luaopen_debug (lua_current_interpreter);
+#else
+    luaL_openlibs (lua_current_interpreter);
 #endif /* LUA_VERSION_NUM */
 
     weechat_lua_register_lib (lua_current_interpreter, "weechat",
-                              weechat_lua_api_funcs,
-                              weechat_lua_api_consts);
+                              weechat_lua_api_funcs);
 
-#ifdef LUA_VERSION_NUM
-    if (luaL_dostring (lua_current_interpreter, lua_redirect_output) != 0)
-#else
-    if (lua_dostring (lua_current_interpreter, lua_redirect_output) != 0)
-#endif /* LUA_VERSION_NUM */
+    /* Remove references to stdout and stderr */
+    lua_getglobal (lua_current_interpreter, "io");
+    if (lua_istable (lua_current_interpreter, -1))
     {
-        weechat_printf (NULL,
-                        weechat_gettext ("%s%s: unable to redirect stdout "
-                                         "and stderr"),
-                        weechat_prefix ("error"), LUA_PLUGIN_NAME);
+        /*
+         * io.stdout = nil
+         * io.stderr = nil
+        */
+        lua_pushnil (lua_current_interpreter);
+        lua_setfield (lua_current_interpreter, -2, "stdout");
+        lua_pushnil (lua_current_interpreter);
+        lua_setfield (lua_current_interpreter, -2, "stderr");
+
+        /* io.write = weechat_lua_output [C] */
+        lua_pushcfunction (lua_current_interpreter, weechat_lua_output);
+        lua_setfield (lua_current_interpreter, -2, "write");
     }
+    lua_pop (lua_current_interpreter, 1); /* remove the `ìo` table|(nil value) from the stack */
+
+    /* print = weechat_lua_output [C] */
+    lua_pushcfunction (lua_current_interpreter, weechat_lua_output);
+    lua_setglobal (lua_current_interpreter, "print");
+
+    /* debug.debug = nil */
+    lua_getglobal (lua_current_interpreter, "debug");
+    if (lua_istable (lua_current_interpreter, -1))
+    {
+        lua_pushnil (lua_current_interpreter);
+        lua_setfield (lua_current_interpreter, -2, "debug");
+    }
+    lua_pop (lua_current_interpreter, 1); /* remove the `debug` table|(nil value) from the stack */
 
     lua_current_script_filename = filename;
 
@@ -733,8 +749,7 @@ weechat_lua_unload (struct t_plugin_script *script)
                                       WEECHAT_SCRIPT_EXEC_INT,
                                       script->shutdown_func,
                                       NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -754,8 +769,7 @@ weechat_lua_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("lua_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -871,8 +885,7 @@ weechat_lua_eval (struct t_gui_buffer *buffer, int send_to_buffer_as_input,
                                "script_lua_eval",
                                "s", func_argv);
     /* result is ignored */
-    if (result)
-        free (result);
+    free (result);
 
     weechat_lua_output_flush ();
 
@@ -975,11 +988,10 @@ weechat_lua_command_cb (const void *pointer, void *data,
             {
                 /* load lua script */
                 path_script = plugin_script_search_path (weechat_lua_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_lua_load ((path_script) ? path_script : ptr_name,
                                   NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -1243,6 +1255,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_lua_plugin = plugin;
 
+    lua_quiet = 0;
+    lua_eval_mode = 0;
+    lua_eval_send_input = 0;
+    lua_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -1304,12 +1321,22 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     /* free some data */
     if (lua_action_install_list)
+    {
         free (lua_action_install_list);
+        lua_action_install_list = NULL;
+    }
     if (lua_action_remove_list)
+    {
         free (lua_action_remove_list);
+        lua_action_remove_list = NULL;
+    }
     if (lua_action_autoload_list)
+    {
         free (lua_action_autoload_list);
+        lua_action_autoload_list = NULL;
+    }
     weechat_string_dyn_free (lua_buffer_output, 1);
+    lua_buffer_output = NULL;
 
     return WEECHAT_RC_OK;
 }

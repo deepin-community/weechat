@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2017 Adam Saponara <as@php.net>
-# Copyright (C) 2017-2023 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -48,7 +48,7 @@ if(NOT PHP_FOUND)
     execute_process(COMMAND ${PHP_CONFIG_EXECUTABLE} --version OUTPUT_VARIABLE PHP_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(${PHP_VERSION} MATCHES "^[78]")
       find_library(PHP_LIB
-        NAMES php8.2 php8.1 php8.0 php8 php7.4 php7.3 php7.2 php7.1 php7.0 php7 php
+        NAMES php8.2 php82 php8.1 php81 php8.0 php80 php8 php7.4 php74 php7.3 php73 php7.2 php72 php7.1 php71 php7.0 php70 php7 php
         HINTS ${PHP_LIB_PREFIX} ${PHP_LIB_PREFIX}/lib ${PHP_LIB_PREFIX}/lib64
       )
       if(PHP_LIB)

@@ -1,7 +1,7 @@
 /*
  * script-config.c - script configuration options (file script.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -143,8 +143,7 @@ script_config_get_diff_command ()
                 weechat_string_free_split (paths);
             }
         }
-        if (dir_separator)
-            free (dir_separator);
+        free (dir_separator);
         if (!result[0])
             snprintf (result, sizeof (result), "diff");
         return result;
@@ -175,8 +174,7 @@ script_config_get_xml_filename ()
         weechat_hashtable_set (options, "directory", "cache");
     path = weechat_string_eval_path_home (
         weechat_config_string (script_config_scripts_path), NULL, NULL, options);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
     length = strlen (path) + 64;
     filename = malloc (length);
     if (filename)
@@ -209,8 +207,7 @@ script_config_get_script_download_filename (struct t_script_repo *script,
         weechat_hashtable_set (options, "directory", "cache");
     path = weechat_string_eval_path_home (
         weechat_config_string (script_config_scripts_path), NULL, NULL, options);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
     length = strlen (path) + 1 + strlen (script->name_with_extension)
         + ((suffix) ? strlen (suffix) : 0) + 1;
     filename = malloc (length);
@@ -279,7 +276,7 @@ script_config_change_use_keys_cb (const void *pointer, void *data,
     (void) option;
 
     if (script_buffer)
-        script_buffer_set_keys ();
+        script_buffer_set_keys (NULL);
 }
 
 /*
@@ -840,4 +837,5 @@ void
 script_config_free ()
 {
     weechat_config_free (script_config_file);
+    script_config_file = NULL;
 }

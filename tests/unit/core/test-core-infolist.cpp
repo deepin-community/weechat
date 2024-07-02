@@ -1,7 +1,7 @@
 /*
  * test-core-infolist.cpp - test infolist functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,8 +24,8 @@
 
 extern "C"
 {
-#include "src/core/wee-hook.h"
-#include "src/core/wee-infolist.h"
+#include "src/core/core-hook.h"
+#include "src/core/core-infolist.h"
 }
 
 struct t_hook *hook_test_infolist = NULL;
@@ -222,7 +222,7 @@ TEST(CoreInfolist, New)
     /* check content of variable */
     STRCMP_EQUAL("test_time", var_time->name);
     LONGS_EQUAL(INFOLIST_TIME, var_time->type);
-    LONGS_EQUAL(1234567890, *((int *)var_time->value));
+    LONGS_EQUAL(1234567890, *((time_t *)var_time->value));
     LONGS_EQUAL(0, var_time->size);
     POINTERS_EQUAL(var_buf, var_time->prev_var);
     POINTERS_EQUAL(NULL, var_time->next_var);
@@ -253,6 +253,9 @@ TEST(CoreInfolist, Valid)
     infolist_free (infolist);
 
     LONGS_EQUAL(0, infolist_valid (infolist));
+
+    /* test free of NULL infolist */
+    infolist_free (NULL);
 }
 
 /*

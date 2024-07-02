@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -76,15 +76,15 @@ enum t_irc_server_option
     IRC_SERVER_OPTION_REALNAME,      /* real name                            */
     IRC_SERVER_OPTION_LOCAL_HOSTNAME,/* custom local hostname                */
     IRC_SERVER_OPTION_USERMODE,      /* usermode to set once connected       */
+    IRC_SERVER_OPTION_COMMAND_DELAY, /* delay before execution of command    */
     IRC_SERVER_OPTION_COMMAND,       /* command to run once connected        */
-    IRC_SERVER_OPTION_COMMAND_DELAY, /* delay after execution of command     */
-    IRC_SERVER_OPTION_AUTOJOIN,      /* channels to automatically join       */
+    IRC_SERVER_OPTION_AUTOJOIN_DELAY, /* delay before autojoin               */
+    IRC_SERVER_OPTION_AUTOJOIN,       /* channels to automatically join      */
     IRC_SERVER_OPTION_AUTOJOIN_DYNAMIC, /* auto set autojoin option          */
     IRC_SERVER_OPTION_AUTOREJOIN,    /* auto rejoin channels when kicked     */
     IRC_SERVER_OPTION_AUTOREJOIN_DELAY,     /* delay before auto rejoin      */
     IRC_SERVER_OPTION_CONNECTION_TIMEOUT,   /* timeout for connection        */
-    IRC_SERVER_OPTION_ANTI_FLOOD_PRIO_HIGH, /* anti-flood (high priority)    */
-    IRC_SERVER_OPTION_ANTI_FLOOD_PRIO_LOW,  /* anti-flood (low priority)     */
+    IRC_SERVER_OPTION_ANTI_FLOOD,           /* anti-flood (in ms)            */
     IRC_SERVER_OPTION_AWAY_CHECK,           /* delay between away checks     */
     IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS, /* max nicks for away check      */
     IRC_SERVER_OPTION_MSG_KICK,             /* default kick message          */
@@ -99,26 +99,17 @@ enum t_irc_server_option
     IRC_SERVER_NUM_OPTIONS,
 };
 
-#define IRC_SERVER_OPTION_BOOLEAN(__server, __index)                          \
-    ((!weechat_config_option_is_null(__server->options[__index])) ?           \
-     weechat_config_boolean(__server->options[__index]) :                     \
-     ((!weechat_config_option_is_null(irc_config_server_default[__index])) ?  \
-      weechat_config_boolean(irc_config_server_default[__index])              \
-      : weechat_config_boolean_default(irc_config_server_default[__index])))
+#define IRC_SERVER_OPTION_BOOLEAN(__server, __index)                    \
+    weechat_config_boolean_inherited (__server->options[__index])
 
-#define IRC_SERVER_OPTION_INTEGER(__server, __index)                          \
-    ((!weechat_config_option_is_null(__server->options[__index])) ?           \
-     weechat_config_integer(__server->options[__index]) :                     \
-     ((!weechat_config_option_is_null(irc_config_server_default[__index])) ?  \
-      weechat_config_integer(irc_config_server_default[__index])              \
-      : weechat_config_integer_default(irc_config_server_default[__index])))
+#define IRC_SERVER_OPTION_INTEGER(__server, __index)                    \
+    weechat_config_integer_inherited (__server->options[__index])
 
-#define IRC_SERVER_OPTION_STRING(__server, __index)                           \
-    ((!weechat_config_option_is_null(__server->options[__index])) ?           \
-     weechat_config_string(__server->options[__index]) :                      \
-     ((!weechat_config_option_is_null(irc_config_server_default[__index])) ?  \
-      weechat_config_string(irc_config_server_default[__index])               \
-      : weechat_config_string_default(irc_config_server_default[__index])))
+#define IRC_SERVER_OPTION_STRING(__server, __index)                     \
+    weechat_config_string_inherited (__server->options[__index])
+
+#define IRC_SERVER_OPTION_ENUM(__server, __index)                       \
+    weechat_config_enum_inherited (__server->options[__index])
 
 #define IRC_SERVER_DEFAULT_PORT_CLEARTEXT 6667
 #define IRC_SERVER_DEFAULT_PORT_TLS       6697
@@ -133,6 +124,7 @@ enum t_irc_server_option
 #define IRC_SERVER_SEND_OUTQ_PRIO_HIGH      (1 << 1)
 #define IRC_SERVER_SEND_OUTQ_PRIO_LOW       (1 << 2)
 #define IRC_SERVER_SEND_RETURN_LIST         (1 << 3)
+#define IRC_SERVER_SEND_MULTILINE           (1 << 4)
 
 /* version strings */
 #define IRC_SERVER_VERSION_CAP "302"
@@ -209,6 +201,7 @@ struct t_irc_server
     struct t_hook *hook_fd;         /* hook for server socket                */
     struct t_hook *hook_timer_connection; /* timer for connection            */
     struct t_hook *hook_timer_sasl; /* timer for SASL authentication         */
+    struct t_hook *hook_timer_anti_flood; /* anti-flood timer                */
     char *sasl_scram_client_first;  /* first message sent for SASL SCRAM     */
     char *sasl_scram_salted_pwd;    /* salted password for SASL SCRAM        */
     int sasl_scram_salted_pwd_size; /* size of salted password for SASL SCRAM*/
@@ -261,7 +254,9 @@ struct t_irc_server
     int reconnect_delay;            /* current reconnect delay (growing)     */
     time_t reconnect_start;         /* this time + delay = reconnect time    */
     time_t command_time;            /* this time + command_delay = time to   */
-                                    /* autojoin channels                     */
+                                    /* execute command                       */
+    time_t autojoin_time;           /* this time + autojoin_delay = time to  */
+                                    /* auto-join channels                    */
     int autojoin_done;              /* 1 if autojoin has been done           */
     int disable_autojoin;           /* 1 if user asked to not autojoin chans */
     int is_away;                    /* 1 is user is marked as away           */
@@ -273,7 +268,7 @@ struct t_irc_server
     time_t lag_next_check;          /* time for next check                   */
     time_t lag_last_refresh;        /* last refresh of lag item              */
     regex_t *cmd_list_regexp;       /* compiled Regular Expression for /list */
-    time_t last_user_message;       /* time of last user message (anti flood)*/
+    struct t_irc_list *list;        /* /list buffer management               */
     time_t last_away_check;         /* time of last away check on server     */
     time_t last_data_purge;         /* time of last purge (some hashtables)  */
     struct t_irc_outqueue *outqueue[IRC_SERVER_NUM_OUTQUEUES_PRIO];
@@ -290,6 +285,7 @@ struct t_irc_server
     struct t_hashtable *join_channel_key;    /* keys pending for joins       */
     struct t_hashtable *join_noswitch;       /* joins w/o switch to buffer   */
     struct t_hashtable *echo_msg_recv;    /* msg received with echo-message  */
+    struct t_hashtable *names_channel_filter; /* filter for /names on channel*/
     struct t_irc_batch *batches;          /* batched events (cap "batch")    */
     struct t_irc_batch *last_batch;       /* last batch                      */
     struct t_gui_buffer *buffer;          /* GUI buffer allocated for server */
@@ -320,6 +316,7 @@ enum t_irc_fingerprint_digest_algo
     IRC_FINGERPRINT_NUM_ALGOS,
 };
 
+extern int irc_server_casemapping_range[];
 extern char *irc_server_prefix_modes_default;
 extern char *irc_server_prefix_chars_default;
 extern char *irc_server_chanmodes_default;
@@ -385,8 +382,10 @@ extern char *irc_server_get_default_msg (const char *default_msg,
                                          struct t_irc_server *server,
                                          const char *channel_name,
                                          const char *target_nick);
-extern void irc_server_buffer_set_input_multiline (struct t_irc_server *server,
+extern void irc_server_set_buffer_input_prompt (struct t_irc_server *server);
+extern void irc_server_set_buffer_input_multiline (struct t_irc_server *server,
                                                    int multiline);
+extern int irc_server_has_channels (struct t_irc_server *server);
 extern struct t_irc_server *irc_server_alloc (const char *name);
 extern struct t_irc_server *irc_server_alloc_with_url (const char *irc_url);
 extern void irc_server_apply_command_line_options (struct t_irc_server *server,
@@ -401,6 +400,8 @@ extern int irc_server_send_signal (struct t_irc_server *server,
                                    const char *full_message,
                                    const char *tags);
 extern void irc_server_set_send_default_tags (const char *tags);
+extern void irc_server_outqueue_timer_remove (struct t_irc_server *server);
+extern void irc_server_outqueue_timer_add (struct t_irc_server *server);
 extern struct t_arraylist *irc_server_sendf (struct t_irc_server *server,
                                              int flags,
                                              const char *tags,
@@ -410,7 +411,6 @@ extern void irc_server_msgq_add_buffer (struct t_irc_server *server,
 extern void irc_server_msgq_flush ();
 extern void irc_server_set_buffer_title (struct t_irc_server *server);
 extern struct t_gui_buffer *irc_server_create_buffer (struct t_irc_server *server);
-int irc_server_fingerprint_search_algo_with_size (int size);
 char *irc_server_fingerprint_str_sizes ();
 extern int irc_server_connect (struct t_irc_server *server);
 extern void irc_server_auto_connect (int auto_connect);
@@ -433,6 +433,7 @@ extern void irc_server_switch_address (struct t_irc_server *server,
 extern void irc_server_disconnect (struct t_irc_server *server,
                                    int switch_address, int reconnect);
 extern void irc_server_disconnect_all ();
+extern void irc_server_execute_command (struct t_irc_server *server);
 extern void irc_server_free_sasl_data (struct t_irc_server *server);
 extern void irc_server_free (struct t_irc_server *server);
 extern int irc_server_xfer_send_ready_cb (const void *pointer, void *data,

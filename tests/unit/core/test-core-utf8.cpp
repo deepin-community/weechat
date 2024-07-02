@@ -1,7 +1,7 @@
 /*
  * test-core-utf8.cpp - test UTF-8 string functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -28,8 +28,8 @@ extern "C"
 #include <stdio.h>
 #include <string.h>
 #include <wctype.h>
-#include "src/core/wee-utf8.h"
-#include "src/core/wee-config.h"
+#include "src/core/core-utf8.h"
+#include "src/core/core-config.h"
 }
 
 #define TEST_STRNCPY(__result, __dest, __string, __length)              \

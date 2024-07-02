@@ -2,7 +2,7 @@
  * weechat-js.cpp - javascript plugin for WeeChat
  *
  * Copyright (C) 2013 Koka El Kiwi <kokakiwi@kokakiwi.net>
- * Copyright (C) 2015-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2015-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -452,8 +452,7 @@ weechat_js_unload (struct t_plugin_script *script)
     {
         rc = (int *)weechat_js_exec (script, WEECHAT_SCRIPT_EXEC_INT,
                                      script->shutdown_func, NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -473,8 +472,7 @@ weechat_js_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("javascript_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -657,11 +655,10 @@ weechat_js_command_cb (const void *pointer, void *data,
             {
                 /* load javascript script */
                 path_script = plugin_script_search_path (weechat_js_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_js_load ((path_script) ? path_script : ptr_name,
                                  NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -930,6 +927,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_js_plugin = plugin;
 
+    js_quiet = 0;
+    js_eval_mode = 0;
+    js_eval_send_input = 0;
+    js_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     snprintf (str_interpreter, sizeof (str_interpreter),
               "%s (v8)", plugin->name);
@@ -980,11 +982,20 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     /* free some data */
     if (js_action_install_list)
+    {
         free (js_action_install_list);
+        js_action_install_list = NULL;
+    }
     if (js_action_remove_list)
+    {
         free (js_action_remove_list);
+        js_action_remove_list = NULL;
+    }
     if (js_action_autoload_list)
+    {
         free (js_action_autoload_list);
+        js_action_autoload_list = NULL;
+    }
     /* weechat_string_dyn_free (js_buffer_output, 1); */
 
     return WEECHAT_RC_OK;

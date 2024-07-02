@@ -1,7 +1,7 @@
 /*
  * test-core-hashtable.cpp - test hashtable functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -25,9 +25,9 @@ extern "C"
 {
 #include <stdio.h>
 #include <string.h>
-#include "src/core/wee-hashtable.h"
-#include "src/core/wee-infolist.h"
-#include "src/core/wee-list.h"
+#include "src/core/core-hashtable.h"
+#include "src/core/core-infolist.h"
+#include "src/core/core-list.h"
 #include "src/plugins/plugin.h"
 }
 
@@ -176,6 +176,9 @@ TEST(CoreHashtable, SetGetRemove)
     const char *ptr_value;
     unsigned long long hash;
     int i;
+
+    /* free hashtable with NULL pointer */
+    hashtable_free (NULL);
 
     hashtable = hashtable_new (32,
                                WEECHAT_HASHTABLE_STRING,
@@ -540,8 +543,8 @@ TEST(CoreHashtable, MapString)
                              value_buffer, sizeof (value_buffer));
     hashtable_map_string (hashtable, &test_hashtable_map_string_cb, NULL);
     snprintf (result, sizeof (result),
-              "1624693124:0x%lx",
-              (unsigned long)(hashtable->newest_item->value));
+              "1624693124:%p",
+              hashtable->newest_item->value);
     STRCMP_EQUAL(result, test_map_string);
 
     free (test_map_string);

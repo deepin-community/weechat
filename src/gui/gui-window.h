@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -139,6 +139,8 @@ extern void gui_window_get_context_at_xy (struct t_gui_window *window,
                                           int *line_x,
                                           char **word,
                                           char **focused_line,
+                                          char **focused_line_beginning,
+                                          char **focused_line_end,
                                           char **beginning,
                                           char **end);
 extern void gui_window_ask_refresh (int refresh);
@@ -186,10 +188,10 @@ extern void gui_window_scroll_previous_highlight (struct t_gui_window *window);
 extern void gui_window_scroll_next_highlight (struct t_gui_window *window);
 extern void gui_window_scroll_unread (struct t_gui_window *window);
 extern void gui_window_search_start (struct t_gui_window *window,
+                                     int search,
                                      struct t_gui_line *text_search_start_line);
 extern void gui_window_search_restart (struct t_gui_window *window);
-extern void gui_window_search_stop_here (struct t_gui_window *window);
-extern void gui_window_search_stop (struct t_gui_window *window);
+extern void gui_window_search_stop (struct t_gui_window *window, int stop_here);
 extern int gui_window_search_text (struct t_gui_window *window);
 extern void gui_window_zoom (struct t_gui_window *window);
 extern struct t_hdata *gui_window_hdata_window_cb (const void *pointer,

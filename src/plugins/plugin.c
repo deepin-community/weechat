@@ -1,7 +1,7 @@
 /*
  * plugin.c - WeeChat plugins management (load/unload dynamic C libraries)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,21 +36,21 @@
 #include <dlfcn.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-arraylist.h"
-#include "../core/wee-config.h"
-#include "../core/wee-dir.h"
-#include "../core/wee-eval.h"
-#include "../core/wee-hashtable.h"
-#include "../core/wee-hdata.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-infolist.h"
-#include "../core/wee-list.h"
-#include "../core/wee-log.h"
-#include "../core/wee-network.h"
-#include "../core/wee-string.h"
-#include "../core/wee-upgrade-file.h"
-#include "../core/wee-utf8.h"
-#include "../core/wee-util.h"
+#include "../core/core-arraylist.h"
+#include "../core/core-config.h"
+#include "../core/core-dir.h"
+#include "../core/core-eval.h"
+#include "../core/core-hashtable.h"
+#include "../core/core-hdata.h"
+#include "../core/core-hook.h"
+#include "../core/core-infolist.h"
+#include "../core/core-list.h"
+#include "../core/core-log.h"
+#include "../core/core-network.h"
+#include "../core/core-string.h"
+#include "../core/core-upgrade-file.h"
+#include "../core/core-utf8.h"
+#include "../core/core-util.h"
 #include "../gui/gui-bar.h"
 #include "../gui/gui-bar-item.h"
 #include "../gui/gui-buffer.h"
@@ -382,8 +382,7 @@ plugin_call_init (struct t_weechat_plugin *plugin, int argc, char **argv)
     weechat_auto_connect = old_auto_connect;
     weechat_auto_load_scripts = old_auto_load_scripts;
 
-    if (plugin_argv)
-        free (plugin_argv);
+    free (plugin_argv);
 
     return (rc == WEECHAT_RC_OK) ? 1 : 0;
 }
@@ -608,6 +607,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->iconv_from_internal = &string_iconv_from_internal;
         new_plugin->gettext = &plugin_api_gettext;
         new_plugin->ngettext = &plugin_api_ngettext;
+        new_plugin->asprintf = &string_asprintf;
         new_plugin->strndup = &string_strndup;
         new_plugin->string_cut = &string_cut;
         new_plugin->string_tolower = &string_tolower;
@@ -658,6 +658,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->string_dyn_copy = &string_dyn_copy;
         new_plugin->string_dyn_concat = &string_dyn_concat;
         new_plugin->string_dyn_free = &string_dyn_free;
+        new_plugin->string_concat = &string_concat;
 
         new_plugin->utf8_has_8bits = &utf8_has_8bits;
         new_plugin->utf8_is_valid = &utf8_is_valid;
@@ -693,6 +694,8 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->util_timeval_diff = &util_timeval_diff;
         new_plugin->util_timeval_add = &util_timeval_add;
         new_plugin->util_get_time_string = &util_get_time_string;
+        new_plugin->util_strftimeval = &util_strftimeval;
+        new_plugin->util_parse_time = &util_parse_time;
         new_plugin->util_version_number = &util_version_number;
 
         new_plugin->list_new = &weelist_new;
@@ -758,12 +761,19 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->config_option_is_null = &config_file_option_is_null;
         new_plugin->config_option_default_is_null = &config_file_option_default_is_null;
         new_plugin->config_boolean = &config_file_option_boolean;
+        new_plugin->config_boolean_inherited = &config_file_option_boolean_inherited;
         new_plugin->config_boolean_default = &config_file_option_boolean_default;
         new_plugin->config_integer = &config_file_option_integer;
+        new_plugin->config_integer_inherited = &config_file_option_integer_inherited;
         new_plugin->config_integer_default = &config_file_option_integer_default;
+        new_plugin->config_enum = &config_file_option_enum;
+        new_plugin->config_enum_inherited = &config_file_option_enum_inherited;
+        new_plugin->config_enum_default = &config_file_option_enum_default;
         new_plugin->config_string = &config_file_option_string;
+        new_plugin->config_string_inherited = &config_file_option_string_inherited;
         new_plugin->config_string_default = &config_file_option_string_default;
         new_plugin->config_color = &config_file_option_color;
+        new_plugin->config_color_inherited = &config_file_option_color_inherited;
         new_plugin->config_color_default = &config_file_option_color_default;
         new_plugin->config_write_option = &config_file_write_option;
         new_plugin->config_write_line = &config_file_write_line;
@@ -786,8 +796,8 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
 
         new_plugin->prefix = &plugin_api_prefix;
         new_plugin->color = &plugin_api_color;
-        new_plugin->printf_date_tags = &gui_chat_printf_date_tags;
-        new_plugin->printf_y_date_tags = &gui_chat_printf_y_date_tags;
+        new_plugin->printf_datetime_tags = &gui_chat_printf_datetime_tags;
+        new_plugin->printf_y_datetime_tags = &gui_chat_printf_y_datetime_tags;
         new_plugin->log_printf = &log_printf;
 
         new_plugin->hook_command = &hook_command;
@@ -796,6 +806,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->hook_fd = &hook_fd;
         new_plugin->hook_process = &hook_process;
         new_plugin->hook_process_hashtable = &hook_process_hashtable;
+        new_plugin->hook_url = &hook_url;
         new_plugin->hook_connect = &hook_connect;
         new_plugin->hook_line = &hook_line;
         new_plugin->hook_print = &hook_print;
@@ -820,7 +831,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
 
         new_plugin->buffer_new = &gui_buffer_new;
         new_plugin->buffer_new_props = &gui_buffer_new_props;
-        new_plugin->buffer_search = &gui_buffer_search_by_name;
+        new_plugin->buffer_search = &gui_buffer_search;
         new_plugin->buffer_search_main = &gui_buffer_search_main;
         new_plugin->buffer_clear = &gui_buffer_clear;
         new_plugin->buffer_close = &gui_buffer_close;
@@ -921,6 +932,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->hdata_char = &hdata_char;
         new_plugin->hdata_integer = &hdata_integer;
         new_plugin->hdata_long = &hdata_long;
+        new_plugin->hdata_longlong = &hdata_longlong;
         new_plugin->hdata_string = &hdata_string;
         new_plugin->hdata_pointer = &hdata_pointer;
         new_plugin->hdata_time = &hdata_time;
@@ -1075,8 +1087,7 @@ plugin_auto_load (char *force_plugin_autoload,
             hashtable_set (options, "directory", "data");
         plugin_path = string_eval_path_home (CONFIG_STRING(config_plugin_path),
                                              NULL, NULL, options);
-        if (options)
-            hashtable_free (options);
+        hashtable_free (options);
         if (plugin_path)
         {
             dir_exec_on_files (plugin_path, 1, 0,
@@ -1208,22 +1219,15 @@ plugin_remove (struct t_weechat_plugin *plugin)
     gui_bar_item_free_all_plugin (plugin);
 
     /* free data */
-    if (plugin->filename)
-        free (plugin->filename);
+    free (plugin->filename);
     if (!weechat_plugin_no_dlclose)
         dlclose (plugin->handle);
-    if (plugin->name)
-        free (plugin->name);
-    if (plugin->description)
-        free (plugin->description);
-    if (plugin->author)
-        free (plugin->author);
-    if (plugin->version)
-        free (plugin->version);
-    if (plugin->license)
-        free (plugin->license);
-    if (plugin->charset)
-        free (plugin->charset);
+    free (plugin->name);
+    free (plugin->description);
+    free (plugin->author);
+    free (plugin->version);
+    free (plugin->license);
+    free (plugin->charset);
     hashtable_free (plugin->variables);
 
     free (plugin);
@@ -1260,8 +1264,7 @@ plugin_unload (struct t_weechat_plugin *plugin)
     }
     (void) hook_signal_send ("plugin_unloaded",
                              WEECHAT_HOOK_SIGNAL_STRING, name);
-    if (name)
-        free (name);
+    free (name);
 }
 
 /*
@@ -1534,21 +1537,21 @@ plugin_print_log ()
          ptr_plugin = ptr_plugin->next_plugin)
     {
         log_printf ("");
-        log_printf ("[plugin (addr:0x%lx)]", ptr_plugin);
-        log_printf ("  filename . . . . . . . : '%s'",  ptr_plugin->filename);
-        log_printf ("  handle . . . . . . . . : 0x%lx", ptr_plugin->handle);
-        log_printf ("  name . . . . . . . . . : '%s'",  ptr_plugin->name);
-        log_printf ("  description. . . . . . : '%s'",  ptr_plugin->description);
-        log_printf ("  author . . . . . . . . : '%s'",  ptr_plugin->author);
-        log_printf ("  version. . . . . . . . : '%s'",  ptr_plugin->version);
-        log_printf ("  license. . . . . . . . : '%s'",  ptr_plugin->license);
-        log_printf ("  charset. . . . . . . . : '%s'",  ptr_plugin->charset);
-        log_printf ("  priority . . . . . . . : %d",    ptr_plugin->priority);
-        log_printf ("  initialized. . . . . . : %d",    ptr_plugin->initialized);
-        log_printf ("  debug. . . . . . . . . : %d",    ptr_plugin->debug);
-        log_printf ("  upgrading. . . . . . . : %d",    ptr_plugin->upgrading);
+        log_printf ("[plugin (addr:%p)]", ptr_plugin);
+        log_printf ("  filename . . . . . . . : '%s'", ptr_plugin->filename);
+        log_printf ("  handle . . . . . . . . : %p", ptr_plugin->handle);
+        log_printf ("  name . . . . . . . . . : '%s'", ptr_plugin->name);
+        log_printf ("  description. . . . . . : '%s'", ptr_plugin->description);
+        log_printf ("  author . . . . . . . . : '%s'", ptr_plugin->author);
+        log_printf ("  version. . . . . . . . : '%s'", ptr_plugin->version);
+        log_printf ("  license. . . . . . . . : '%s'", ptr_plugin->license);
+        log_printf ("  charset. . . . . . . . : '%s'", ptr_plugin->charset);
+        log_printf ("  priority . . . . . . . : %d", ptr_plugin->priority);
+        log_printf ("  initialized. . . . . . : %d", ptr_plugin->initialized);
+        log_printf ("  debug. . . . . . . . . : %d", ptr_plugin->debug);
+        log_printf ("  upgrading. . . . . . . : %d", ptr_plugin->upgrading);
         hashtable_print_log (ptr_plugin->variables, "variables");
-        log_printf ("  prev_plugin. . . . . . : 0x%lx", ptr_plugin->prev_plugin);
-        log_printf ("  next_plugin. . . . . . : 0x%lx", ptr_plugin->next_plugin);
+        log_printf ("  prev_plugin. . . . . . : %p", ptr_plugin->prev_plugin);
+        log_printf ("  next_plugin. . . . . . : %p", ptr_plugin->next_plugin);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * irc-info.c - info, infolist and hdata hooks for IRC plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,6 +30,7 @@
 #include "irc-color.h"
 #include "irc-config.h"
 #include "irc-ignore.h"
+#include "irc-list.h"
 #include "irc-message.h"
 #include "irc-modelist.h"
 #include "irc-nick.h"
@@ -56,7 +57,7 @@ irc_info_create_string_with_pointer (char **string, void *pointer)
         *string = malloc (64);
         if (*string)
         {
-            snprintf (*string, 64, "0x%lx", (unsigned long)pointer);
+            snprintf (*string, 64, "%p", pointer);
         }
     }
 }
@@ -299,12 +300,9 @@ irc_info_info_irc_buffer_cb (const void *pointer, void *data,
     if (server && ptr_server && channel)
         ptr_channel = irc_channel_search (ptr_server, channel);
 
-    if (server)
-        free (server);
-    if (channel)
-        free (channel);
-    if (host)
-        free (host);
+    free (server);
+    free (channel);
+    free (host);
 
     if (ptr_channel)
     {
@@ -342,6 +340,9 @@ irc_info_info_irc_server_isupport_cb (const void *pointer, void *data,
     (void) pointer;
     (void) data;
     (void) info_name;
+
+    if (!arguments || !arguments[0])
+        return NULL;
 
     isupport_value = NULL;
     pos_comma = strchr (arguments, ',');
@@ -381,6 +382,9 @@ irc_info_info_irc_server_isupport_value_cb (const void *pointer, void *data,
     (void) data;
     (void) info_name;
 
+    if (!arguments || !arguments[0])
+        return NULL;
+
     isupport_value = NULL;
     pos_comma = strchr (arguments, ',');
     if (pos_comma)
@@ -419,6 +423,9 @@ irc_info_info_irc_server_cap_cb (const void *pointer, void *data,
     (void) data;
     (void) info_name;
 
+    if (!arguments || !arguments[0])
+        return NULL;
+
     has_cap = 0;
     pos_comma = strchr (arguments, ',');
     if (pos_comma)
@@ -456,6 +463,9 @@ irc_info_info_irc_server_cap_value_cb (const void *pointer, void *data,
     (void) pointer;
     (void) data;
     (void) info_name;
+
+    if (!arguments || !arguments[0])
+        return NULL;
 
     cap_value = NULL;
     pos_comma = strchr (arguments, ',');
@@ -1261,7 +1271,7 @@ irc_info_init ()
         "irc_is_message_ignored",
         N_("1 if the nick is ignored (message is not displayed)"),
         N_("server,message (message is the raw IRC message)"),
-        &irc_info_info_irc_is_channel_cb, NULL, NULL);
+        &irc_info_info_irc_is_message_ignored_cb, NULL, NULL);
 
     /* info_hashtable hooks */
     weechat_hook_info_hashtable (
@@ -1384,4 +1394,10 @@ irc_info_init ()
     weechat_hook_hdata (
         "irc_batch", N_("irc batch"),
         &irc_batch_hdata_batch_cb, NULL, NULL);
+    weechat_hook_hdata (
+        "irc_list_channel", N_("irc channel on /list buffer"),
+        &irc_list_hdata_list_channel_cb, NULL, NULL);
+    weechat_hook_hdata (
+        "irc_list", N_("irc data for /list buffer"),
+        &irc_list_hdata_list_cb, NULL, NULL);
 }

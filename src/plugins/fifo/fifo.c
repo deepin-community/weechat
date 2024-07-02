@@ -1,7 +1,7 @@
 /*
  * fifo.c - fifo plugin for WeeChat: remote control with FIFO pipe
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -83,8 +83,7 @@ fifo_create ()
         fifo_filename = weechat_string_eval_path_home (
             weechat_config_string (fifo_config_file_path),
             NULL, NULL, options);
-        if (options)
-            weechat_hashtable_free (options);
+        weechat_hashtable_free (options);
     }
 
     if (!fifo_filename)
@@ -168,11 +167,8 @@ fifo_remove ()
     }
 
     /* remove any unterminated message */
-    if (fifo_unterminated)
-    {
-        free (fifo_unterminated);
-        fifo_unterminated = NULL;
-    }
+    free (fifo_unterminated);
+    fifo_unterminated = NULL;
 
     /* remove FIFO from disk */
     if (fifo_filename)
@@ -260,8 +256,7 @@ fifo_exec (const char *text)
     weechat_command (ptr_buffer, pos_msg);
 
     free (text2);
-    if (command_unescaped)
-        free(command_unescaped);
+    free (command_unescaped);
 }
 
 /*
@@ -332,8 +327,7 @@ fifo_fd_cb (const void *pointer, void *data, int fd)
             ptr_buf = next_ptr_buf;
         }
 
-        if (buf2)
-            free (buf2);
+        free (buf2);
     }
     else if (num_read < 0)
     {
@@ -366,6 +360,9 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     (void) argv;
 
     weechat_plugin = plugin;
+
+    fifo_quiet = 0;
+    fifo_fd = -1;
 
     if (!fifo_config_init ())
         return WEECHAT_RC_ERROR;

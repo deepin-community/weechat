@@ -1,7 +1,7 @@
 /*
  * irc-ignore.c - ignore (nicks/hosts) management for IRC plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -309,17 +309,14 @@ irc_ignore_free (struct t_irc_ignore *ignore)
     }
 
     /* free data */
-    if (ignore->mask)
-        free (ignore->mask);
+    free (ignore->mask);
     if (ignore->regex_mask)
     {
         regfree (ignore->regex_mask);
         free (ignore->regex_mask);
     }
-    if (ignore->server)
-        free (ignore->server);
-    if (ignore->channel)
-        free (ignore->channel);
+    free (ignore->server);
+    free (ignore->channel);
 
     /* remove ignore from list */
     if (ignore->prev_ignore)
@@ -425,13 +422,13 @@ irc_ignore_print_log ()
          ptr_ignore = ptr_ignore->next_ignore)
     {
         weechat_log_printf ("");
-        weechat_log_printf ("[ignore (addr:0x%lx)]", ptr_ignore);
-        weechat_log_printf ("  number . . . . . . . : %d",    ptr_ignore->number);
-        weechat_log_printf ("  mask . . . . . . . . : '%s'",  ptr_ignore->mask);
-        weechat_log_printf ("  regex_mask . . . . . : 0x%lx", ptr_ignore->regex_mask);
-        weechat_log_printf ("  server . . . . . . . : '%s'",  ptr_ignore->server);
-        weechat_log_printf ("  channel. . . . . . . : '%s'",  ptr_ignore->channel);
-        weechat_log_printf ("  prev_ignore. . . . . : 0x%lx", ptr_ignore->prev_ignore);
-        weechat_log_printf ("  next_ignore. . . . . : 0x%lx", ptr_ignore->next_ignore);
+        weechat_log_printf ("[ignore (addr:%p)]", ptr_ignore);
+        weechat_log_printf ("  number . . . . . . . : %d", ptr_ignore->number);
+        weechat_log_printf ("  mask . . . . . . . . : '%s'", ptr_ignore->mask);
+        weechat_log_printf ("  regex_mask . . . . . : %p", ptr_ignore->regex_mask);
+        weechat_log_printf ("  server . . . . . . . : '%s'", ptr_ignore->server);
+        weechat_log_printf ("  channel. . . . . . . : '%s'", ptr_ignore->channel);
+        weechat_log_printf ("  prev_ignore. . . . . : %p", ptr_ignore->prev_ignore);
+        weechat_log_printf ("  next_ignore. . . . . : %p", ptr_ignore->next_ignore);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * gui-curses-main.c - main loop for Curses GUI
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -31,14 +31,14 @@
 #include <time.h>
 
 #include "../../core/weechat.h"
-#include "../../core/wee-command.h"
-#include "../../core/wee-config.h"
-#include "../../core/wee-hook.h"
-#include "../../core/wee-log.h"
-#include "../../core/wee-signal.h"
-#include "../../core/wee-string.h"
-#include "../../core/wee-utf8.h"
-#include "../../core/wee-version.h"
+#include "../../core/core-command.h"
+#include "../../core/core-config.h"
+#include "../../core/core-hook.h"
+#include "../../core/core-log.h"
+#include "../../core/core-signal.h"
+#include "../../core/core-string.h"
+#include "../../core/core-utf8.h"
+#include "../../core/core-version.h"
 #include "../../plugins/plugin.h"
 #include "../gui-main.h"
 #include "../gui-bar.h"
@@ -457,8 +457,7 @@ gui_main_loop ()
     }
 
     /* remove keyboard hook */
-    if (hook_fd_keyboard)
-        unhook (hook_fd_keyboard);
+    unhook (hook_fd_keyboard);
 }
 
 /*
@@ -498,8 +497,7 @@ gui_main_end (int clean_exit)
         gui_filter_free_all ();
 
         /* free clipboard buffer */
-        if (gui_input_clipboard)
-            free (gui_input_clipboard);
+        free (gui_input_clipboard);
 
         /* delete layouts */
         gui_layout_remove_all ();

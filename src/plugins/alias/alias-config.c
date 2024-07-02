@@ -1,7 +1,7 @@
 /*
  * alias-config.c - alias configuration options (file alias.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -113,11 +113,9 @@ alias_config_cmd_delete_cb (const void *pointer, void *data,
                                                           weechat_config_option_get_pointer (option, "name"));
 
     ptr_alias = alias_search (weechat_config_option_get_pointer (option, "name"));
-    if (ptr_alias)
-        alias_free (ptr_alias);
+    alias_free (ptr_alias);
 
-    if (ptr_option_completion)
-        weechat_config_option_free (ptr_option_completion);
+    weechat_config_option_free (ptr_option_completion);
 }
 
 /*
@@ -250,8 +248,7 @@ alias_config_cmd_create_option_cb (const void *pointer, void *data,
 
     /* create alias */
     ptr_alias = alias_search (option_name);
-    if (ptr_alias)
-        alias_free (ptr_alias);
+    alias_free (ptr_alias);
     if (value && value[0])
         rc = (alias_new (option_name, value, NULL)) ?
             WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE : WEECHAT_CONFIG_OPTION_SET_ERROR;
@@ -384,7 +381,7 @@ alias_config_update_cb (const void *pointer, void *data,
     if (version_read < 2)
     {
         /*
-         * changes in v2:
+         * changes in v2 (WeeChat 4.0.0):
          *   - aliases are in lower case by default
          *     (default aliases and those created by users are automatically
          *     converted to lower case)

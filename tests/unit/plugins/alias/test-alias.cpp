@@ -1,7 +1,7 @@
 /*
  * test-alias.cpp - test alias functions
  *
- * Copyright (C) 2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -228,7 +228,8 @@ TEST(Alias, Rename)
 
 TEST(Alias, Free)
 {
-    /* TODO: write tests */
+    /* test free of NULL alias */
+    alias_free (NULL);
 }
 
 /*

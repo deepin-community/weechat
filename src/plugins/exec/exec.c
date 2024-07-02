@@ -1,7 +1,7 @@
 /*
  * exec.c - execution of external commands in WeeChat
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -350,10 +350,11 @@ exec_display_line (struct t_exec_cmd *exec_cmd, struct t_gui_buffer *buffer,
         {
             snprintf (str_number, sizeof (str_number),
                       "%d. ", exec_cmd->output_line_nb);
-            weechat_printf_y (buffer, -1,
-                              "%s%s",
-                              (exec_cmd->line_numbers) ? str_number : " ",
-                              line_color);
+            weechat_printf_y_date_tags (
+                buffer, -1, 0, str_tags,
+                "%s%s",
+                (exec_cmd->line_numbers) ? str_number : "",
+                line_color);
         }
         else
         {
@@ -416,11 +417,8 @@ exec_concat_output (struct t_exec_cmd *exec_cmd, struct t_gui_buffer *buffer,
                 line = weechat_strndup (ptr_text, pos - ptr_text);
             if (!line)
                 break;
-            if (exec_cmd->output[out])
-            {
-                free (exec_cmd->output[out]);
-                exec_cmd->output[out] = NULL;
-            }
+            free (exec_cmd->output[out]);
+            exec_cmd->output[out] = NULL;
             exec_cmd->output_size[out] = 0;
             exec_display_line (exec_cmd, buffer, out, line);
             free (line);
@@ -470,12 +468,10 @@ exec_end_command (struct t_exec_cmd *exec_cmd, int return_code)
             weechat_hashtable_set (hashtable, "name", exec_cmd->name);
             output = exec_decode_color (exec_cmd, exec_cmd->output[EXEC_STDOUT]);
             weechat_hashtable_set (hashtable, "out", output);
-            if (output)
-                free (output);
+            free (output);
             output = exec_decode_color (exec_cmd, exec_cmd->output[EXEC_STDERR]);
             weechat_hashtable_set (hashtable, "err", output);
-            if (output)
-                free (output);
+            free (output);
             snprintf (str_number, sizeof (str_number), "%d", return_code);
             weechat_hashtable_set (hashtable, "rc", str_number);
             weechat_hook_hsignal_send (exec_cmd->hsignal, hashtable);
@@ -505,11 +501,12 @@ exec_end_command (struct t_exec_cmd *exec_cmd, int return_code)
             {
                 if (buffer_type == 1)
                 {
-                    weechat_printf_y (ptr_buffer, -1,
-                                      _("%s: end of command %ld (\"%s\"), "
-                                        "return code: %d"),
-                                      EXEC_PLUGIN_NAME, exec_cmd->number,
-                                      exec_cmd->command, return_code);
+                    weechat_printf_y_date_tags (
+                        ptr_buffer, -1, 0, "exec_rc",
+                        _("%s: end of command %ld (\"%s\"), "
+                          "return code: %d"),
+                        EXEC_PLUGIN_NAME, exec_cmd->number,
+                        exec_cmd->command, return_code);
                 }
                 else
                 {
@@ -525,11 +522,12 @@ exec_end_command (struct t_exec_cmd *exec_cmd, int return_code)
             {
                 if (buffer_type == 1)
                 {
-                    weechat_printf_y (ptr_buffer, -1,
-                                      _("%s: unexpected end of command %ld "
-                                        "(\"%s\")"),
-                                      EXEC_PLUGIN_NAME, exec_cmd->number,
-                                      exec_cmd->command);
+                    weechat_printf_y_date_tags (
+                        ptr_buffer, -1, 0, "exec_rc",
+                        _("%s: unexpected end of command %ld "
+                          "(\"%s\")"),
+                        EXEC_PLUGIN_NAME, exec_cmd->number,
+                        exec_cmd->command);
                 }
                 else
                 {
@@ -551,11 +549,8 @@ exec_end_command (struct t_exec_cmd *exec_cmd, int return_code)
     exec_cmd->return_code = return_code;
     for (i = 0; i < 2; i++)
     {
-        if (exec_cmd->output[i])
-        {
-            free (exec_cmd->output[i]);
-            exec_cmd->output[i] = NULL;
-        }
+        free (exec_cmd->output[i]);
+        exec_cmd->output[i] = NULL;
         exec_cmd->output_size[i] = 0;
     }
 
@@ -640,23 +635,16 @@ exec_free (struct t_exec_cmd *exec_cmd)
         last_exec_cmd = exec_cmd->prev_cmd;
 
     /* free data */
-    if (exec_cmd->hook)
-        weechat_unhook (exec_cmd->hook);
-    if (exec_cmd->name)
-        free (exec_cmd->name);
-    if (exec_cmd->command)
-        free (exec_cmd->command);
-    if (exec_cmd->buffer_full_name)
-        free (exec_cmd->buffer_full_name);
+    weechat_unhook (exec_cmd->hook);
+    free (exec_cmd->name);
+    free (exec_cmd->command);
+    free (exec_cmd->buffer_full_name);
     for (i = 0; i < 2; i++)
     {
-        if (exec_cmd->output[i])
-            free (exec_cmd->output[i]);
+        free (exec_cmd->output[i]);
     }
-    if (exec_cmd->pipe_command)
-        free (exec_cmd->pipe_command);
-    if (exec_cmd->hsignal)
-        free (exec_cmd->hsignal);
+    free (exec_cmd->pipe_command);
+    free (exec_cmd->hsignal);
 
     free (exec_cmd);
 
@@ -689,31 +677,31 @@ exec_print_log ()
          ptr_exec_cmd = ptr_exec_cmd->next_cmd)
     {
         weechat_log_printf ("");
-        weechat_log_printf ("[exec command (addr:0x%lx)]", ptr_exec_cmd);
-        weechat_log_printf ("  number. . . . . . . . . . : %ld",   ptr_exec_cmd->number);
-        weechat_log_printf ("  name. . . . . . . . . . . : '%s'",  ptr_exec_cmd->name);
-        weechat_log_printf ("  hook. . . . . . . . . . . : 0x%lx", ptr_exec_cmd->hook);
-        weechat_log_printf ("  command . . . . . . . . . : '%s'",  ptr_exec_cmd->command);
-        weechat_log_printf ("  pid . . . . . . . . . . . : %d",    ptr_exec_cmd->pid);
-        weechat_log_printf ("  detached. . . . . . . . . : %d",    ptr_exec_cmd->detached);
-        weechat_log_printf ("  start_time. . . . . . . . : %lld",  (long long)ptr_exec_cmd->start_time);
-        weechat_log_printf ("  end_time. . . . . . . . . : %lld",  (long long)ptr_exec_cmd->end_time);
-        weechat_log_printf ("  output_to_buffer. . . . . : %d",    ptr_exec_cmd->output_to_buffer);
-        weechat_log_printf ("  output_to_buffer_exec_cmd : %d",    ptr_exec_cmd->output_to_buffer_exec_cmd);
-        weechat_log_printf ("  output_to_buffer_stderr . : %d",    ptr_exec_cmd->output_to_buffer_stderr);
-        weechat_log_printf ("  buffer_full_name. . . . . : '%s'",  ptr_exec_cmd->buffer_full_name);
-        weechat_log_printf ("  line_numbers. . . . . . . : %d",    ptr_exec_cmd->line_numbers);
-        weechat_log_printf ("  display_rc. . . . . . . . : %d",    ptr_exec_cmd->display_rc);
-        weechat_log_printf ("  output_line_nb. . . . . . : %d",    ptr_exec_cmd->output_line_nb);
-        weechat_log_printf ("  output_size[stdout] . . . : %d",    ptr_exec_cmd->output_size[EXEC_STDOUT]);
-        weechat_log_printf ("  output[stdout]. . . . . . : '%s'",  ptr_exec_cmd->output[EXEC_STDOUT]);
-        weechat_log_printf ("  output_size[stderr] . . . : %d",    ptr_exec_cmd->output_size[EXEC_STDERR]);
-        weechat_log_printf ("  output[stderr]. . . . . . : '%s'",  ptr_exec_cmd->output[EXEC_STDERR]);
-        weechat_log_printf ("  return_code . . . . . . . : %d",    ptr_exec_cmd->return_code);
-        weechat_log_printf ("  pipe_command. . . . . . . : '%s'",  ptr_exec_cmd->pipe_command);
-        weechat_log_printf ("  hsignal . . . . . . . . . : '%s'",  ptr_exec_cmd->hsignal);
-        weechat_log_printf ("  prev_cmd. . . . . . . . . : 0x%lx", ptr_exec_cmd->prev_cmd);
-        weechat_log_printf ("  next_cmd. . . . . . . . . : 0x%lx", ptr_exec_cmd->next_cmd);
+        weechat_log_printf ("[exec command (addr:%p)]", ptr_exec_cmd);
+        weechat_log_printf ("  number. . . . . . . . . . : %ld", ptr_exec_cmd->number);
+        weechat_log_printf ("  name. . . . . . . . . . . : '%s'", ptr_exec_cmd->name);
+        weechat_log_printf ("  hook. . . . . . . . . . . : %p", ptr_exec_cmd->hook);
+        weechat_log_printf ("  command . . . . . . . . . : '%s'", ptr_exec_cmd->command);
+        weechat_log_printf ("  pid . . . . . . . . . . . : %d", ptr_exec_cmd->pid);
+        weechat_log_printf ("  detached. . . . . . . . . : %d", ptr_exec_cmd->detached);
+        weechat_log_printf ("  start_time. . . . . . . . : %lld", (long long)ptr_exec_cmd->start_time);
+        weechat_log_printf ("  end_time. . . . . . . . . : %lld", (long long)ptr_exec_cmd->end_time);
+        weechat_log_printf ("  output_to_buffer. . . . . : %d", ptr_exec_cmd->output_to_buffer);
+        weechat_log_printf ("  output_to_buffer_exec_cmd : %d", ptr_exec_cmd->output_to_buffer_exec_cmd);
+        weechat_log_printf ("  output_to_buffer_stderr . : %d", ptr_exec_cmd->output_to_buffer_stderr);
+        weechat_log_printf ("  buffer_full_name. . . . . : '%s'", ptr_exec_cmd->buffer_full_name);
+        weechat_log_printf ("  line_numbers. . . . . . . : %d", ptr_exec_cmd->line_numbers);
+        weechat_log_printf ("  display_rc. . . . . . . . : %d", ptr_exec_cmd->display_rc);
+        weechat_log_printf ("  output_line_nb. . . . . . : %d", ptr_exec_cmd->output_line_nb);
+        weechat_log_printf ("  output_size[stdout] . . . : %d", ptr_exec_cmd->output_size[EXEC_STDOUT]);
+        weechat_log_printf ("  output[stdout]. . . . . . : '%s'", ptr_exec_cmd->output[EXEC_STDOUT]);
+        weechat_log_printf ("  output_size[stderr] . . . : %d", ptr_exec_cmd->output_size[EXEC_STDERR]);
+        weechat_log_printf ("  output[stderr]. . . . . . : '%s'", ptr_exec_cmd->output[EXEC_STDERR]);
+        weechat_log_printf ("  return_code . . . . . . . : %d", ptr_exec_cmd->return_code);
+        weechat_log_printf ("  pipe_command. . . . . . . : '%s'", ptr_exec_cmd->pipe_command);
+        weechat_log_printf ("  hsignal . . . . . . . . . : '%s'", ptr_exec_cmd->hsignal);
+        weechat_log_printf ("  prev_cmd. . . . . . . . . : %p", ptr_exec_cmd->prev_cmd);
+        weechat_log_printf ("  next_cmd. . . . . . . . . : %p", ptr_exec_cmd->next_cmd);
     }
 }
 

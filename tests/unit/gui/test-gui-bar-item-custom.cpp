@@ -1,7 +1,7 @@
 /*
  * test-gui-bar-item-custom.cpp - test custom bar item functions
  *
- * Copyright (C) 2022-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,7 +24,7 @@
 extern "C"
 {
 #include <string.h>
-#include "src/core/wee-config.h"
+#include "src/core/core-config.h"
 #include "src/gui/gui-bar-item.h"
 #include "src/gui/gui-bar-item-custom.h"
 #include "src/gui/gui-buffer.h"
@@ -455,12 +455,16 @@ TEST(GuiBarItemCustom, Rename)
     CHECK(new_item->bar_item);
     STRCMP_EQUAL("test3", new_item->bar_item->name);
 
+    STRCMP_EQUAL("test3.conditions", new_item->options[GUI_BAR_ITEM_CUSTOM_OPTION_CONDITIONS]->name);
+    STRCMP_EQUAL("test3.content", new_item->options[GUI_BAR_ITEM_CUSTOM_OPTION_CONTENT]->name);
+
     gui_bar_item_custom_free (new_item);
     gui_bar_item_custom_free (new_item2);
 }
 
 /*
  * Tests functions:
+ *   gui_bar_item_custom_free_data
  *   gui_bar_item_custom_free
  *   gui_bar_item_custom_free_all
  */

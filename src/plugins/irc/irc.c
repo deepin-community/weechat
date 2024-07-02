@@ -1,7 +1,7 @@
 /*
  * irc.c - IRC (Internet Relay Chat) plugin for WeeChat
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,6 +37,7 @@
 #include "irc-ignore.h"
 #include "irc-info.h"
 #include "irc-input.h"
+#include "irc-list.h"
 #include "irc-nick.h"
 #include "irc-notify.h"
 #include "irc-protocol.h"
@@ -192,10 +193,15 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_plugin = plugin;
 
+    irc_signal_quit_received = 0;
+    irc_signal_upgrade_received = 0;
+
     if (!irc_config_init ())
         return WEECHAT_RC_ERROR;
 
     irc_config_read ();
+
+    irc_list_init ();
 
     irc_raw_init ();
 
@@ -223,12 +229,16 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
                          &irc_input_send_cb, NULL, NULL);
     weechat_hook_signal ("typing_self_*",
                          &irc_typing_signal_typing_self_cb, NULL, NULL);
+    weechat_hook_signal ("window_scrolled",
+                         &irc_list_window_scrolled_cb, NULL, NULL);
 
     /* hook hsignals for redirection */
     weechat_hook_hsignal ("irc_redirect_pattern",
                           &irc_redirect_pattern_hsignal_cb, NULL, NULL);
     weechat_hook_hsignal ("irc_redirect_command",
                           &irc_redirect_command_hsignal_cb, NULL, NULL);
+    weechat_hook_hsignal ("irc_redirection_server_*_list",
+                          &irc_list_hsignal_redirect_list_cb, NULL, NULL);
 
     /* modifiers */
     weechat_hook_modifier ("irc_color_decode",
@@ -253,8 +263,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     info_auto_connect = weechat_info_get ("auto_connect", NULL);
     auto_connect = (info_auto_connect && (strcmp (info_auto_connect, "1") == 0)) ?
         1 : 0;
-    if (info_auto_connect)
-        free (info_auto_connect);
+    free (info_auto_connect);
 
     /* look at arguments */
     for (i = 0; i < argc; i++)
@@ -307,7 +316,10 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     (void) plugin;
 
     if (irc_hook_timer)
+    {
         weechat_unhook (irc_hook_timer);
+        irc_hook_timer = NULL;
+    }
 
     if (irc_signal_upgrade_received)
     {
@@ -321,6 +333,8 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     }
 
     irc_ignore_free_all ();
+
+    irc_list_end ();
 
     irc_raw_end ();
 

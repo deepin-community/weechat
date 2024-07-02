@@ -1,7 +1,7 @@
 /*
  * exec-config.c - exec configuration options (file exec.conf)
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -63,9 +63,7 @@ exec_config_change_command_default_options (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    if (exec_config_cmd_options)
-        weechat_string_free_split (exec_config_cmd_options);
-
+    weechat_string_free_split (exec_config_cmd_options);
     exec_config_cmd_options = weechat_string_split (
         weechat_config_string (exec_config_command_default_options),
         " ",
@@ -206,6 +204,7 @@ void
 exec_config_free ()
 {
     weechat_config_free (exec_config_file);
+    exec_config_file = NULL;
 
     if (exec_config_cmd_options)
     {

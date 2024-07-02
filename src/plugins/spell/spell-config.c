@@ -2,7 +2,7 @@
  * spell-config.c - spell checker configuration options (file spell.conf)
  *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -654,9 +654,16 @@ void
 spell_config_free ()
 {
     weechat_config_free (spell_config_file);
+    spell_config_file = NULL;
 
     if (spell_commands_to_check)
+    {
         weechat_string_free_split (spell_commands_to_check);
+        spell_commands_to_check = NULL;
+    }
     if (spell_length_commands_to_check)
+    {
         free (spell_length_commands_to_check);
+        spell_length_commands_to_check = NULL;
+    }
 }

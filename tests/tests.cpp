@@ -1,7 +1,7 @@
 /*
  * tests.cpp - run WeeChat tests
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,11 +36,11 @@ extern "C"
 #define HAVE_CONFIG_H
 #endif
 #include "src/core/weechat.h"
-#include "src/core/wee-arraylist.h"
-#include "src/core/wee-dir.h"
-#include "src/core/wee-hook.h"
-#include "src/core/wee-input.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-arraylist.h"
+#include "src/core/core-dir.h"
+#include "src/core/core-hook.h"
+#include "src/core/core-input.h"
+#include "src/core/core-string.h"
 #include "src/plugins/plugin.h"
 #include "src/gui/gui-main.h"
 #include "src/gui/gui-buffer.h"
@@ -77,6 +77,27 @@ IMPORT_TEST_GROUP(CoreString);
 IMPORT_TEST_GROUP(CoreUrl);
 IMPORT_TEST_GROUP(CoreUtf8);
 IMPORT_TEST_GROUP(CoreUtil);
+IMPORT_TEST_GROUP(CoreSys);
+/* core/hook */
+IMPORT_TEST_GROUP(HookCommand);
+IMPORT_TEST_GROUP(HookCommandRun);
+IMPORT_TEST_GROUP(HookCompletion);
+IMPORT_TEST_GROUP(HookConfig);
+IMPORT_TEST_GROUP(HookConnect);
+IMPORT_TEST_GROUP(HookFd);
+IMPORT_TEST_GROUP(HookFocus);
+IMPORT_TEST_GROUP(HookHdata);
+IMPORT_TEST_GROUP(HookHsignal);
+IMPORT_TEST_GROUP(HookInfo);
+IMPORT_TEST_GROUP(HookInfoHashtable);
+IMPORT_TEST_GROUP(HookInfolist);
+IMPORT_TEST_GROUP(HookLine);
+IMPORT_TEST_GROUP(HookModifier);
+IMPORT_TEST_GROUP(HookPrint);
+IMPORT_TEST_GROUP(HookProcess);
+IMPORT_TEST_GROUP(HookSignal);
+IMPORT_TEST_GROUP(HookTimer);
+IMPORT_TEST_GROUP(HookUrl);
 /* GUI */
 IMPORT_TEST_GROUP(GuiBar);
 IMPORT_TEST_GROUP(GuiBarItem);
@@ -86,10 +107,14 @@ IMPORT_TEST_GROUP(GuiBuffer);
 IMPORT_TEST_GROUP(GuiChat);
 IMPORT_TEST_GROUP(GuiColor);
 IMPORT_TEST_GROUP(GuiFilter);
+IMPORT_TEST_GROUP(GuiHotlist);
 IMPORT_TEST_GROUP(GuiInput);
 IMPORT_TEST_GROUP(GuiKey);
 IMPORT_TEST_GROUP(GuiLine);
 IMPORT_TEST_GROUP(GuiNick);
+IMPORT_TEST_GROUP(GuiNicklist);
+/* GUI - Curses */
+IMPORT_TEST_GROUP(GuiCursesMouse);
 /* scripts */
 IMPORT_TEST_GROUP(Scripts);
 
@@ -115,14 +140,16 @@ exec_on_files_cb (void *data, const char *filename)
 
 int
 test_print_cb (const void *pointer, void *data, struct t_gui_buffer *buffer,
-               time_t date, int tags_count, const char **tags, int displayed,
-               int highlight, const char *prefix, const char *message)
+               time_t date, int date_usec, int tags_count, const char **tags,
+               int displayed, int highlight,
+               const char *prefix, const char *message)
 {
     /* make C++ compiler happy */
     (void) pointer;
     (void) data;
     (void) buffer;
     (void) date;
+    (void) date_usec;
     (void) tags_count;
     (void) tags;
     (void) displayed;
@@ -175,7 +202,7 @@ void
 run_cmd (const char *command)
 {
     printf (">>> Running command: %s\n", command);
-    input_data (ptr_core_buffer, command, NULL, 0);
+    input_data (ptr_core_buffer, command, NULL, 0, 0);
 }
 
 /*
@@ -185,7 +212,7 @@ run_cmd (const char *command)
 void
 run_cmd_quiet (const char *command)
 {
-    input_data (ptr_core_buffer, command, NULL, 0);
+    input_data (ptr_core_buffer, command, NULL, 0, 0);
 }
 
 /*

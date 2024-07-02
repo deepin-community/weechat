@@ -1,7 +1,7 @@
 /*
  * weechat-python-api.c - python API functions
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -59,7 +59,7 @@
     plugin_script_str2ptr (weechat_python_plugin,                       \
                            PYTHON_CURRENT_SCRIPT_NAME,                  \
                            python_function_name, __string)
-#define API_RETURN_OK return PyLong_FromLong((long)1)
+#define API_RETURN_OK return PyLong_FromLong ((long)1)
 #define API_RETURN_ERROR return PyLong_FromLong ((long)0)
 #define API_RETURN_EMPTY                                                \
     Py_INCREF (Py_None);                                                \
@@ -77,9 +77,13 @@
     }                                                                   \
     return Py_BuildValue ("s", "")
 #define API_RETURN_INT(__int)                                           \
-    return PyLong_FromLong((long)__int)
+    return PyLong_FromLong ((long)__int)
 #define API_RETURN_LONG(__long)                                         \
-    return PyLong_FromLong(__long)
+    return PyLong_FromLong (__long)
+#define API_RETURN_LONGLONG(__longlong)                                 \
+    return PyLong_FromLongLong (__longlong)
+#define API_RETURN_ULONGLONG(__ulonglong)                               \
+    return PyLong_FromUnsignedLongLong (__ulonglong)
 
 
 /*
@@ -374,14 +378,14 @@ API_FUNC(string_parse_size)
     char *size;
     unsigned long long value;
 
-    API_INIT_FUNC(1, "string_parse_size", API_RETURN_LONG(0));
+    API_INIT_FUNC(1, "string_parse_size", API_RETURN_ULONGLONG(0));
     size = NULL;
     if (!PyArg_ParseTuple (args, "s", &size))
-        API_WRONG_ARGS(API_RETURN_LONG(0));
+        API_WRONG_ARGS(API_RETURN_ULONGLONG(0));
 
     value = weechat_string_parse_size (size);
 
-    API_RETURN_LONG(value);
+    API_RETURN_ULONGLONG(value);
 }
 
 API_FUNC(string_color_code_size)
@@ -473,12 +477,9 @@ API_FUNC(string_eval_expression)
                                                 WEECHAT_HASHTABLE_STRING);
     result = weechat_string_eval_expression (expr, pointers, extra_vars,
                                              options);
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -511,12 +512,9 @@ API_FUNC(string_eval_path_home)
                                                 WEECHAT_HASHTABLE_STRING);
     result = weechat_string_eval_path_home (path, pointers, extra_vars,
                                             options);
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -1269,9 +1267,7 @@ weechat_python_api_config_option_change_cb (const void *pointer, void *data,
                                   WEECHAT_SCRIPT_EXEC_IGNORE,
                                   ptr_function,
                                   "ss", func_argv);
-
-        if (rc)
-            free (rc);
+        free (rc);
     }
 }
 
@@ -1296,9 +1292,7 @@ weechat_python_api_config_option_delete_cb (const void *pointer, void *data,
                                   WEECHAT_SCRIPT_EXEC_IGNORE,
                                   ptr_function,
                                   "ss", func_argv);
-
-        if (rc)
-            free (rc);
+        free (rc);
     }
 }
 
@@ -1478,6 +1472,39 @@ API_FUNC(config_option_rename)
     API_RETURN_OK;
 }
 
+API_FUNC(config_option_get_string)
+{
+    char *option, *property;
+    const char *result;
+
+    API_INIT_FUNC(1, "config_option_get_string", API_RETURN_EMPTY);
+    option = NULL;
+    property = NULL;
+    if (!PyArg_ParseTuple (args, "ss", &option, &property))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = weechat_config_option_get_string (API_STR2PTR(option), property);
+
+    API_RETURN_STRING(result);
+}
+
+API_FUNC(config_option_get_pointer)
+{
+    char *option, *property;
+    const char *result;
+
+    API_INIT_FUNC(1, "config_option_get_pointer", API_RETURN_EMPTY);
+    option = NULL;
+    property = NULL;
+    if (!PyArg_ParseTuple (args, "ss", &option, &property))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = API_PTR2STR(weechat_config_option_get_pointer (API_STR2PTR(option),
+                                                            property));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(config_option_is_null)
 {
     char *option;
@@ -1538,6 +1565,21 @@ API_FUNC(config_boolean_default)
     API_RETURN_INT(value);
 }
 
+API_FUNC(config_boolean_inherited)
+{
+    char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_boolean_inherited", API_RETURN_INT(0));
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_config_boolean_inherited (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
 API_FUNC(config_integer)
 {
     char *option;
@@ -1564,6 +1606,21 @@ API_FUNC(config_integer_default)
         API_WRONG_ARGS(API_RETURN_INT(0));
 
     value = weechat_config_integer_default (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_integer_inherited)
+{
+    char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_integer_inherited", API_RETURN_INT(0));
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_config_integer_inherited (API_STR2PTR(option));
 
     API_RETURN_INT(value);
 }
@@ -1598,6 +1655,21 @@ API_FUNC(config_string_default)
     API_RETURN_STRING(result);
 }
 
+API_FUNC(config_string_inherited)
+{
+    char *option;
+    const char *result;
+
+    API_INIT_FUNC(1, "config_string_inherited", API_RETURN_EMPTY);
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = weechat_config_string_inherited (API_STR2PTR(option));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(config_color)
 {
     char *option;
@@ -1626,6 +1698,66 @@ API_FUNC(config_color_default)
     result = weechat_config_color_default (API_STR2PTR(option));
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(config_color_inherited)
+{
+    char *option;
+    const char *result;
+
+    API_INIT_FUNC(1, "config_color_inherited", API_RETURN_EMPTY);
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = weechat_config_color_inherited (API_STR2PTR(option));
+
+    API_RETURN_STRING(result);
+}
+
+API_FUNC(config_enum)
+{
+    char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum", API_RETURN_INT(0));
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_config_enum (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_enum_default)
+{
+    char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum_default", API_RETURN_INT(0));
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_config_enum_default (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_enum_inherited)
+{
+    char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum_inherited", API_RETURN_INT(0));
+    option = NULL;
+    if (!PyArg_ParseTuple (args, "s", &option))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_config_enum_inherited (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
 }
 
 API_FUNC(config_write_option)
@@ -1887,8 +2019,7 @@ API_FUNC(key_bind)
 
     num_keys = weechat_key_bind (context, hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(num_keys);
 }
@@ -1980,6 +2111,33 @@ API_FUNC(prnt_date_tags)
     API_RETURN_OK;
 }
 
+API_FUNC(prnt_datetime_tags)
+{
+    char *buffer, *tags, *message;
+    long date;
+    int date_usec;
+
+    API_INIT_FUNC(1, "prnt_datetime_tags", API_RETURN_ERROR);
+    buffer = NULL;
+    date = 0;
+    date_usec = 0;
+    tags = NULL;
+    message = NULL;
+    if (!PyArg_ParseTuple (args, "sliss", &buffer, &date, &date_usec, &tags,
+                           &message))
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    plugin_script_api_printf_datetime_tags (weechat_python_plugin,
+                                            python_current_script,
+                                            API_STR2PTR(buffer),
+                                            (time_t)date,
+                                            date_usec,
+                                            tags,
+                                            "%s", message);
+
+    API_RETURN_OK;
+}
+
 API_FUNC(prnt_y)
 {
     char *buffer, *message;
@@ -2023,6 +2181,36 @@ API_FUNC(prnt_y_date_tags)
                                           (time_t)date,
                                           tags,
                                           "%s", message);
+
+    API_RETURN_OK;
+}
+
+API_FUNC(prnt_y_datetime_tags)
+{
+    char *buffer, *tags, *message;
+    int y;
+    long date;
+    int date_usec;
+
+    API_INIT_FUNC(1, "prnt_y_datetime_tags", API_RETURN_ERROR);
+    buffer = NULL;
+    y = 0;
+    date = 0;
+    date_usec = 0;
+    tags = NULL;
+    message = NULL;
+    if (!PyArg_ParseTuple (args, "siliss", &buffer, &y, &date, &date_usec,
+                           &tags, &message))
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    plugin_script_api_printf_y_datetime_tags (weechat_python_plugin,
+                                              python_current_script,
+                                              API_STR2PTR(buffer),
+                                              y,
+                                              (time_t)date,
+                                              date_usec,
+                                              tags,
+                                              "%s", message);
 
     API_RETURN_OK;
 }
@@ -2541,8 +2729,84 @@ API_FUNC(hook_process_hashtable)
                                                                    &weechat_python_api_hook_process_cb,
                                                                    function,
                                                                    data));
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
+
+    API_RETURN_STRING(result);
+}
+
+int
+weechat_python_api_hook_url_cb (const void *pointer, void *data,
+                                const char *url,
+                                struct t_hashtable *options,
+                                struct t_hashtable *output)
+{
+    struct t_plugin_script *script;
+    void *func_argv[4];
+    char empty_arg[1] = { '\0' };
+    const char *ptr_function, *ptr_data;
+    int *rc, ret;
+
+    script = (struct t_plugin_script *)pointer;
+    plugin_script_get_function_and_data (data, &ptr_function, &ptr_data);
+
+    if (ptr_function && ptr_function[0])
+    {
+        func_argv[0] = (ptr_data) ? (char *)ptr_data : empty_arg;
+        func_argv[1] = (url) ? (char *)url : empty_arg;
+        func_argv[2] = options;
+        func_argv[3] = output;
+
+        rc = (int *) weechat_python_exec (script,
+                                          WEECHAT_SCRIPT_EXEC_INT,
+                                          ptr_function,
+                                          "sshh", func_argv);
+
+        if (!rc)
+            ret = WEECHAT_RC_ERROR;
+        else
+        {
+            ret = *rc;
+            free (rc);
+        }
+
+        return ret;
+    }
+
+    return WEECHAT_RC_ERROR;
+}
+
+API_FUNC(hook_url)
+{
+    char *url, *function, *data;
+    const char *result;
+    int timeout;
+    struct t_hashtable *options;
+    PyObject *dict;
+
+    API_INIT_FUNC(1, "hook_url", API_RETURN_EMPTY);
+    url = NULL;
+    dict = NULL;
+    options = NULL;
+    timeout = 0;
+    function = NULL;
+    data = NULL;
+    if (!PyArg_ParseTuple (args, "sOiss", &url, &dict, &timeout, &function,
+                           &data))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    options = weechat_python_dict_to_hashtable (dict,
+                                                WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                WEECHAT_HASHTABLE_STRING,
+                                                WEECHAT_HASHTABLE_STRING);
+    result = API_PTR2STR(plugin_script_api_hook_url (weechat_python_plugin,
+                                                     python_current_script,
+                                                     url,
+                                                     options,
+                                                     timeout,
+                                                     &weechat_python_api_hook_url_cb,
+                                                     function,
+                                                     data));
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING(result);
 }
@@ -2687,7 +2951,7 @@ API_FUNC(hook_line)
 int
 weechat_python_api_hook_print_cb (const void *pointer, void *data,
                                   struct t_gui_buffer *buffer,
-                                  time_t date,
+                                  time_t date, int date_usec,
                                   int tags_count, const char **tags,
                                   int displayed, int highlight,
                                   const char *prefix, const char *message)
@@ -2700,6 +2964,7 @@ weechat_python_api_hook_print_cb (const void *pointer, void *data,
     int *rc, ret;
 
     /* make C compiler happy */
+    (void) date_usec;
     (void) tags_count;
 
     script = (struct t_plugin_script *)pointer;
@@ -2732,8 +2997,7 @@ weechat_python_api_hook_print_cb (const void *pointer, void *data,
             ret = *rc;
             free (rc);
         }
-        if (func_argv[3])
-            free (func_argv[3]);
+        free (func_argv[3]);
 
         return ret;
     }
@@ -2970,8 +3234,7 @@ API_FUNC(hook_hsignal_send)
 
     rc = weechat_hook_hsignal_send (signal, hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(rc);
 }
@@ -3519,8 +3782,7 @@ API_FUNC(buffer_new_props)
             function_close,
             data_close));
 
-    if (properties)
-        weechat_hashtable_free (properties);
+    weechat_hashtable_free (properties);
 
     API_RETURN_STRING(result);
 }
@@ -4381,8 +4643,7 @@ API_FUNC(command_options)
                                             API_STR2PTR(buffer),
                                             command,
                                             options);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
 
     API_RETURN_INT(rc);
 }
@@ -4512,10 +4773,8 @@ API_FUNC(info_get_hashtable)
     result_hashtable = weechat_info_get_hashtable (info_name, hashtable);
     result_dict = weechat_python_hashtable_to_dict (result_hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
-    if (result_hashtable)
-        weechat_hashtable_free (result_hashtable);
+    weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (result_hashtable);
 
     return result_dict;
 }
@@ -5002,12 +5261,9 @@ API_FUNC(hdata_search)
                                                options,
                                                move));
 
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING(result);
 }
@@ -5067,6 +5323,25 @@ API_FUNC(hdata_long)
                                 name);
 
     API_RETURN_LONG(value);
+}
+
+API_FUNC(hdata_longlong)
+{
+    char *hdata, *pointer, *name;
+    long long value;
+
+    API_INIT_FUNC(1, "hdata_longlong", API_RETURN_LONGLONG(0));
+    hdata = NULL;
+    pointer = NULL;
+    name = NULL;
+    if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
+        API_WRONG_ARGS(API_RETURN_LONGLONG(0));
+
+    value = weechat_hdata_longlong (API_STR2PTR(hdata),
+                                    API_STR2PTR(pointer),
+                                    name);
+
+    API_RETURN_LONGLONG(value);
 }
 
 API_FUNC(hdata_string)
@@ -5192,8 +5467,7 @@ API_FUNC(hdata_update)
                                   API_STR2PTR(pointer),
                                   hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(value);
 }
@@ -5384,16 +5658,25 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(config_option_set_null),
     API_DEF_FUNC(config_option_unset),
     API_DEF_FUNC(config_option_rename),
+    API_DEF_FUNC(config_option_get_string),
+    API_DEF_FUNC(config_option_get_pointer),
     API_DEF_FUNC(config_option_is_null),
     API_DEF_FUNC(config_option_default_is_null),
     API_DEF_FUNC(config_boolean),
     API_DEF_FUNC(config_boolean_default),
+    API_DEF_FUNC(config_boolean_inherited),
     API_DEF_FUNC(config_integer),
     API_DEF_FUNC(config_integer_default),
+    API_DEF_FUNC(config_integer_inherited),
     API_DEF_FUNC(config_string),
     API_DEF_FUNC(config_string_default),
+    API_DEF_FUNC(config_string_inherited),
     API_DEF_FUNC(config_color),
     API_DEF_FUNC(config_color_default),
+    API_DEF_FUNC(config_color_inherited),
+    API_DEF_FUNC(config_enum),
+    API_DEF_FUNC(config_enum_default),
+    API_DEF_FUNC(config_enum_inherited),
     API_DEF_FUNC(config_write_option),
     API_DEF_FUNC(config_write_line),
     API_DEF_FUNC(config_write),
@@ -5415,8 +5698,10 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(color),
     API_DEF_FUNC(prnt),
     API_DEF_FUNC(prnt_date_tags),
+    API_DEF_FUNC(prnt_datetime_tags),
     API_DEF_FUNC(prnt_y),
     API_DEF_FUNC(prnt_y_date_tags),
+    API_DEF_FUNC(prnt_y_datetime_tags),
     API_DEF_FUNC(log_print),
     API_DEF_FUNC(hook_command),
     API_DEF_FUNC(hook_completion),
@@ -5427,6 +5712,7 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(hook_fd),
     API_DEF_FUNC(hook_process),
     API_DEF_FUNC(hook_process_hashtable),
+    API_DEF_FUNC(hook_url),
     API_DEF_FUNC(hook_connect),
     API_DEF_FUNC(hook_line),
     API_DEF_FUNC(hook_print),
@@ -5528,6 +5814,7 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(hdata_char),
     API_DEF_FUNC(hdata_integer),
     API_DEF_FUNC(hdata_long),
+    API_DEF_FUNC(hdata_longlong),
     API_DEF_FUNC(hdata_string),
     API_DEF_FUNC(hdata_pointer),
     API_DEF_FUNC(hdata_time),

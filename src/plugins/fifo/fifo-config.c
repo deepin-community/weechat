@@ -1,7 +1,7 @@
 /*
  * fifo-config.c - fifo configuration options (file fifo.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -157,4 +157,5 @@ void
 fifo_config_free ()
 {
     weechat_config_free (fifo_config_file);
+    fifo_config_file = NULL;
 }

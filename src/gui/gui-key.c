@@ -1,7 +1,7 @@
 /*
  * gui-key.c - keyboard functions (used by all GUI)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,18 +30,18 @@
 #include <time.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-config-file.h"
-#include "../core/wee-eval.h"
-#include "../core/wee-hashtable.h"
-#include "../core/wee-hdata.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-infolist.h"
-#include "../core/wee-input.h"
-#include "../core/wee-list.h"
-#include "../core/wee-log.h"
-#include "../core/wee-string.h"
-#include "../core/wee-utf8.h"
+#include "../core/core-config.h"
+#include "../core/core-config-file.h"
+#include "../core/core-eval.h"
+#include "../core/core-hashtable.h"
+#include "../core/core-hdata.h"
+#include "../core/core-hook.h"
+#include "../core/core-infolist.h"
+#include "../core/core-input.h"
+#include "../core/core-list.h"
+#include "../core/core-log.h"
+#include "../core/core-string.h"
+#include "../core/core-utf8.h"
 #include "../plugins/plugin.h"
 #include "gui-key.h"
 #include "gui-bar.h"
@@ -66,7 +66,7 @@ int gui_keys_count[GUI_KEY_NUM_CONTEXTS];            /* keys number         */
 int gui_default_keys_count[GUI_KEY_NUM_CONTEXTS];    /* default keys number */
 
 char *gui_key_context_string[GUI_KEY_NUM_CONTEXTS] =
-{ "default", "search", "cursor", "mouse" };
+{ "default", "search", "histsearch", "cursor", "mouse" };
 
 char *gui_key_focus_string[GUI_KEY_NUM_FOCUS] =
 { "*", "chat", "bar", "item" };
@@ -75,8 +75,8 @@ char *gui_key_modifier_list[] =
 { "meta-", "ctrl-", "shift-", NULL };
 
 char *gui_key_alias_list[] =
-{ "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11",
-  "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20",
+{ "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20",
+  "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9",
   "home", "insert", "delete", "end", "backspace", "pgup", "pgdn",
   "up", "down", "right", "left", "tab", "return", "comma", "space", NULL };
 
@@ -94,6 +94,7 @@ int gui_key_grab_delay = 0;         /* delay for grab (default is 500)      */
 int *gui_key_buffer = NULL;         /* input buffer (for paste detection)   */
 int gui_key_buffer_alloc = 0;       /* input buffer allocated size          */
 int gui_key_buffer_size = 0;        /* input buffer size in bytes           */
+int gui_key_last_key_pressed_sent = -1;
 
 int gui_key_paste_pending = 0;      /* 1 is big paste was detected and      */
                                     /* WeeChat is asking user what to do    */
@@ -172,9 +173,13 @@ gui_key_get_current_context ()
     if (gui_cursor_mode)
         return GUI_KEY_CONTEXT_CURSOR;
 
-    if (gui_current_window
-        && (gui_current_window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
-        return GUI_KEY_CONTEXT_SEARCH;
+    if (gui_current_window)
+    {
+        if (gui_current_window->buffer->text_search == GUI_BUFFER_SEARCH_LINES)
+            return GUI_KEY_CONTEXT_SEARCH;
+        if (gui_current_window->buffer->text_search == GUI_BUFFER_SEARCH_HISTORY)
+            return GUI_KEY_CONTEXT_HISTSEARCH;
+    }
 
     return GUI_KEY_CONTEXT_DEFAULT;
 }
@@ -814,10 +819,8 @@ gui_key_expand (const char *key, char **key_name, char **key_name_alias)
     return 1;
 
 error:
-    if (str_dyn_key)
-        string_dyn_free (str_dyn_key, 1);
-    if (str_dyn_key_alias)
-        string_dyn_free (str_dyn_key_alias, 1);
+    string_dyn_free (str_dyn_key, 1);
+    string_dyn_free (str_dyn_key_alias, 1);
     return 0;
 }
 
@@ -874,7 +877,7 @@ gui_key_legacy_to_alias (const char *key)
  *   - transform "ctrl-alt-" to "alt-ctrl-"
  *
  * Example:
- *   "@chat:ctrl-alt-button1" => "@chat:meta-ctrl-wheelup"
+ *   "@chat:ctrl-alt-button1" => "@chat:alt-ctrl-button1"
  */
 
 char *
@@ -928,7 +931,7 @@ gui_key_fix_mouse (const char *key)
  *   " "                      => "space"
  *   "meta- "                 => "meta-space"
  *   "meta2-A"                => "meta-[A"
- *   "@chat:ctrl-alt-button1" => "@chat:alt-ctrl-wheelup"
+ *   "@chat:ctrl-alt-button1" => "@chat:alt-ctrl-button1"
  *
  * Note: result must be freed after use.
  */
@@ -1156,10 +1159,8 @@ gui_key_set_areas (struct t_gui_key *key)
                                     &(key->area_name[area]));
     }
 
-    if (areas[0])
-        free (areas[0]);
-    if (areas[1])
-        free (areas[1]);
+    free (areas[0]);
+    free (areas[1]);
 }
 
 /*
@@ -1408,8 +1409,7 @@ gui_key_option_change_cb (const void *pointer, void *data,
     if (!ptr_key)
         return;
 
-    if (ptr_key->command)
-        free (ptr_key->command);
+    free (ptr_key->command);
     ptr_key->command = strdup (CONFIG_STRING(option));
 }
 
@@ -1563,10 +1563,8 @@ error:
                          key,
                          gui_key_context_string[context]);
     }
-    if (key_fixed)
-        free (key_fixed);
-    if (ptr_option)
-        config_file_option_free (ptr_option, 0);
+    free (key_fixed);
+    config_file_option_free (ptr_option, 0);
     return NULL;
 }
 
@@ -1652,6 +1650,10 @@ gui_key_search_part (struct t_gui_buffer *buffer, int context,
     for (ptr_key = (buffer) ? buffer->keys : gui_keys[context]; ptr_key;
          ptr_key = ptr_key->next_key)
     {
+        /* ignore keys with no command */
+        if (!ptr_key->command || !ptr_key->command[0])
+            continue;
+
         if (ptr_key->key
             && ((context != GUI_KEY_CONTEXT_CURSOR)
                 || (ptr_key->key[0] != '@')))
@@ -2002,6 +2004,31 @@ gui_key_focus_matching (struct t_gui_key *key,
 }
 
 /*
+ * Displays focus hashtable (for debug).
+ */
+
+void
+gui_key_focus_display_hashtable (struct t_hashtable *hashtable)
+{
+    struct t_weelist *list_keys;
+    struct t_weelist_item *ptr_item;
+
+    gui_chat_printf (NULL, _("Hashtable focus:"));
+    list_keys = hashtable_get_list_keys (hashtable);
+    if (list_keys)
+    {
+        for (ptr_item = list_keys->items; ptr_item;
+             ptr_item = ptr_item->next_item)
+        {
+            gui_chat_printf (NULL, "  %s: \"%s\"",
+                             ptr_item->data,
+                             hashtable_get (hashtable, ptr_item->data));
+        }
+        weelist_free (list_keys);
+    }
+}
+
+/*
  * Runs command according to focus.
  *
  * Returns:
@@ -2019,8 +2046,6 @@ gui_key_focus_command (const char *key, int context,
     char *command, **commands;
     const char *str_buffer;
     struct t_hashtable *hashtable;
-    struct t_weelist *list_keys;
-    struct t_weelist_item *ptr_item;
     struct t_gui_buffer *ptr_buffer;
 
     debug = 0;
@@ -2087,24 +2112,10 @@ gui_key_focus_command (const char *key, int context,
             gui_input_delete_line (gui_current_window->buffer);
         }
 
-        if (debug > 1)
-        {
-            gui_chat_printf (NULL, _("Hashtable focus:"));
-            list_keys = hashtable_get_list_keys (hashtable);
-            if (list_keys)
-            {
-                for (ptr_item = list_keys->items; ptr_item;
-                     ptr_item = ptr_item->next_item)
-                {
-                    gui_chat_printf (NULL, "  %s: \"%s\"",
-                                     ptr_item->data,
-                                     hashtable_get (hashtable, ptr_item->data));
-                }
-                weelist_free (list_keys);
-            }
-        }
         if (debug)
         {
+            if (debug > 1)
+                gui_key_focus_display_hashtable (hashtable);
             gui_chat_printf (NULL, _("Command for key: \"%s\""),
                              ptr_key->command);
         }
@@ -2143,7 +2154,7 @@ gui_key_focus_command (const char *key, int context,
                                                  command,
                                                  ptr_buffer->full_name);
                             }
-                            (void) input_data (ptr_buffer, command, NULL, 0);
+                            (void) input_data (ptr_buffer, command, NULL, 0, 0);
                             free (command);
                         }
                     }
@@ -2153,6 +2164,17 @@ gui_key_focus_command (const char *key, int context,
         }
         hashtable_free (hashtable);
         return 1;
+    }
+
+    if (debug > 1)
+    {
+        hashtable = hook_focus_get_data (hashtable_focus[0],
+                                         hashtable_focus[1]);
+        if (hashtable)
+        {
+            gui_key_focus_display_hashtable (hashtable);
+            hashtable_free (hashtable);
+        }
     }
 
     return 0;
@@ -2221,14 +2243,10 @@ gui_key_focus (const char *key, int context)
     rc = gui_key_focus_command (key, context, hashtable_focus);
 
 end:
-    if (focus_info1)
-        gui_focus_free_info (focus_info1);
-    if (focus_info2)
-        gui_focus_free_info (focus_info2);
-    if (hashtable_focus[0])
-        hashtable_free (hashtable_focus[0]);
-    if (hashtable_focus[1])
-        hashtable_free (hashtable_focus[1]);
+    gui_focus_free_info (focus_info1);
+    gui_focus_free_info (focus_info2);
+    hashtable_free (hashtable_focus[0]);
+    hashtable_free (hashtable_focus[1]);
 
     return rc;
 }
@@ -2324,9 +2342,10 @@ int
 gui_key_pressed (const char *key_str)
 {
     int i, insert_into_input, context, length, length_key, signal_sent;
-    int rc, rc_expand, exact_match, chunks1_count, chunks2_count;
+    int rc, rc_expand, exact_match, chunks1_count, chunks2_count, event_size;
+    int buffer_key;
     struct t_gui_key *ptr_key;
-    char *pos, signal_name[128], **commands;
+    char saved_char, signal_name[128], **commands;
     char *key_name, *key_name_alias, **chunks1, **chunks2;
 
     signal_sent = 0;
@@ -2363,30 +2382,48 @@ gui_key_pressed (const char *key_str)
         goto end_no_input;
     }
 
+    /* check if we have a mouse event */
+    if (!gui_mouse_event_pending)
+    {
+        /* "<" = SGR event, "M" = UTF-8 event */
+        if ((strncmp (gui_key_combo, "\x01[[<", 4) == 0)
+            || (strncmp (gui_key_combo, "\x01[[M", 4) == 0))
+        {
+            gui_mouse_event_pending = 1;
+        }
+    }
+
     /* mouse event pending */
     if (gui_mouse_event_pending)
     {
-        pos = strstr (gui_key_combo, "\x1B[M");
-        if (pos)
+        event_size = gui_mouse_event_size (gui_key_combo);
+        if (event_size == 0)
         {
-            pos[0] = '\0';
-            if (!gui_window_bare_display)
-                gui_mouse_event_end ();
-            gui_mouse_event_init ();
+            /* incomplete event */
+            goto end_no_input;
         }
-        goto end_no_input;
-    }
-
-    if (strstr (gui_key_combo, "\x01[[M"))
-    {
-        if (gui_key_debug)
-            gui_key_debug_print_key (gui_key_combo, NULL, NULL, NULL, 1);
-        gui_key_combo[0] = '\0';
-        gui_mouse_event_init ();
-        goto end_no_input;
+        if (event_size > 0)
+        {
+            /* complete event */
+            saved_char = gui_key_combo[event_size];
+            gui_key_combo[event_size] = '\0';
+            if (gui_key_debug)
+                gui_key_debug_print_key (gui_key_combo, NULL, NULL, NULL, 1);
+            if (!gui_window_bare_display)
+                gui_mouse_event_process (gui_key_combo);
+            gui_key_combo[event_size] = saved_char;
+            memmove (gui_key_combo, gui_key_combo + event_size,
+                     strlen (gui_key_combo + event_size) + 1);
+            gui_mouse_event_pending = 0;
+            goto end_no_input;
+        }
+        /* not a mouse event, just go on and process gui_key_combo */
     }
 
     rc_expand = gui_key_expand (gui_key_combo, &key_name, &key_name_alias);
+
+    if (!rc_expand)
+        goto end_no_input;
 
     ptr_key = NULL;
     exact_match = 0;
@@ -2402,6 +2439,7 @@ gui_key_pressed (const char *key_str)
         chunks2_count = 0;
     }
 
+    buffer_key = 0;
     context = gui_key_get_current_context ();
     switch (context)
     {
@@ -2409,30 +2447,34 @@ gui_key_pressed (const char *key_str)
             /* look for key combo in key table for current buffer */
             ptr_key = gui_key_search_part (
                 gui_current_window->buffer,
-                GUI_KEY_CONTEXT_DEFAULT,
+                context,
                 (const char **)chunks1, chunks1_count,
                 (const char **)chunks2, chunks2_count,
                 &exact_match);
+            if (ptr_key)
+                buffer_key = 1;
             /* if key is not found for buffer, then look in general table */
             if (!ptr_key)
             {
                 ptr_key = gui_key_search_part (
                     NULL,
-                    GUI_KEY_CONTEXT_DEFAULT,
+                    context,
                     (const char **)chunks1, chunks1_count,
                     (const char **)chunks2, chunks2_count,
                     &exact_match);
             }
             break;
         case GUI_KEY_CONTEXT_SEARCH:
+        case GUI_KEY_CONTEXT_HISTSEARCH:
             ptr_key = gui_key_search_part (
                 NULL,
-                GUI_KEY_CONTEXT_SEARCH,
+                context,
                 (const char **)chunks1, chunks1_count,
                 (const char **)chunks2, chunks2_count,
                 &exact_match);
             if (!ptr_key)
             {
+                /* fallback to default context */
                 ptr_key = gui_key_search_part (
                     NULL,
                     GUI_KEY_CONTEXT_DEFAULT,
@@ -2444,17 +2486,15 @@ gui_key_pressed (const char *key_str)
         case GUI_KEY_CONTEXT_CURSOR:
             ptr_key = gui_key_search_part (
                 NULL,
-                GUI_KEY_CONTEXT_CURSOR,
+                context,
                 (const char **)chunks1, chunks1_count,
                 (const char **)chunks2, chunks2_count,
                 &exact_match);
             break;
     }
 
-    if (chunks1)
-        string_free_split (chunks1);
-    if (chunks2)
-        string_free_split (chunks2);
+    string_free_split (chunks1);
+    string_free_split (chunks2);
 
     if (ptr_key)
     {
@@ -2487,8 +2527,12 @@ gui_key_pressed (const char *key_str)
                     {
                         for (i = 0; commands[i]; i++)
                         {
-                            (void) input_data (gui_current_window->buffer,
-                                               commands[i], NULL, 0);
+                            (void) input_data (
+                                gui_current_window->buffer,
+                                commands[i],
+                                NULL,
+                                0,
+                                (buffer_key) ? 1 : 0);
                         }
                         string_free_split (commands);
                     }
@@ -2558,10 +2602,8 @@ end_no_input:
     rc = 0;
 
 end:
-    if (key_name)
-        free (key_name);
-    if (key_name_alias)
-        free (key_name_alias);
+    free (key_name);
+    free (key_name_alias);
     return rc;
 }
 
@@ -2588,24 +2630,18 @@ gui_key_free (int context,
             weechat_config_file,
             weechat_config_section_key[context],
             key->key);
-        if (ptr_option)
-            config_file_option_free (ptr_option, 1);
+        config_file_option_free (ptr_option, 1);
     }
 
     /* free memory */
-    if (key->key)
-        free (key->key);
-    if (key->chunks)
-        string_free_split (key->chunks);
+    free (key->key);
+    string_free_split (key->chunks);
     for (i = 0; i < 2; i++)
     {
-        if (key->area_name[i])
-            free (key->area_name[i]);
+        free (key->area_name[i]);
     }
-    if (key->area_key)
-        free (key->area_key);
-    if (key->command)
-        free (key->command);
+    free (key->area_key);
+    free (key->command);
 
     /* remove key from keys list */
     if (key->prev_key)
@@ -2690,6 +2726,7 @@ gui_key_buffer_reset ()
         gui_key_buffer_optimize ();
     }
     gui_key_paste_lines = 0;
+    gui_key_last_key_pressed_sent = -1;
 }
 
 /*
@@ -3013,8 +3050,7 @@ gui_key_end ()
     int context;
 
     /* free key buffer */
-    if (gui_key_buffer)
-        free (gui_key_buffer);
+    free (gui_key_buffer);
 
     for (context = 0; context < GUI_KEY_NUM_CONTEXTS; context++)
     {
@@ -3141,7 +3177,7 @@ gui_key_print_log_key (struct t_gui_key *key, const char *prefix)
 {
     int area;
 
-    log_printf ("%s[key (addr:0x%lx)]", prefix, key);
+    log_printf ("%s[key (addr:%p)]", prefix, key);
     log_printf ("%s  key. . . . . . . . : '%s'", prefix, key->key);
     for (area = 0; area < 2; area++)
     {
@@ -3151,11 +3187,11 @@ gui_key_print_log_key (struct t_gui_key *key, const char *prefix)
         log_printf ("%s  area_name[%d] . . . : '%s'",
                     prefix, area, key->area_name[area]);
     }
-    log_printf ("%s  area_key . . . . . : '%s'",  prefix, key->area_key);
-    log_printf ("%s  command. . . . . . : '%s'",  prefix, key->command);
-    log_printf ("%s  score. . . . . . . : %d",    prefix, key->score);
-    log_printf ("%s  prev_key . . . . . : 0x%lx", prefix, key->prev_key);
-    log_printf ("%s  next_key . . . . . : 0x%lx", prefix, key->next_key);
+    log_printf ("%s  area_key . . . . . : '%s'", prefix, key->area_key);
+    log_printf ("%s  command. . . . . . : '%s'", prefix, key->command);
+    log_printf ("%s  score. . . . . . . : %d", prefix, key->score);
+    log_printf ("%s  prev_key . . . . . : %p", prefix, key->prev_key);
+    log_printf ("%s  next_key . . . . . : %p", prefix, key->next_key);
 }
 
 /*
@@ -3170,9 +3206,9 @@ gui_key_print_log (struct t_gui_buffer *buffer)
 
     if (buffer)
     {
-        log_printf ("    keys . . . . . . . . : 0x%lx", buffer->keys);
-        log_printf ("    last_key . . . . . . : 0x%lx", buffer->last_key);
-        log_printf ("    keys_count . . . . . : %d",    buffer->keys_count);
+        log_printf ("    keys . . . . . . . . : %p", buffer->keys);
+        log_printf ("    last_key . . . . . . : %p", buffer->last_key);
+        log_printf ("    keys_count . . . . . : %d", buffer->keys_count);
         for (ptr_key = buffer->keys; ptr_key; ptr_key = ptr_key->next_key)
         {
             log_printf ("");
@@ -3185,9 +3221,9 @@ gui_key_print_log (struct t_gui_buffer *buffer)
         {
             log_printf ("");
             log_printf ("[keys for context: %s]", gui_key_context_string[context]);
-            log_printf ("  keys . . . . . . . . : 0x%lx", gui_keys[context]);
-            log_printf ("  last_key . . . . . . : 0x%lx", last_gui_key[context]);
-            log_printf ("  keys_count . . . . . : %d",    gui_keys_count[context]);
+            log_printf ("  keys . . . . . . . . : %p", gui_keys[context]);
+            log_printf ("  last_key . . . . . . : %p", last_gui_key[context]);
+            log_printf ("  keys_count . . . . . : %d", gui_keys_count[context]);
 
             for (ptr_key = gui_keys[context]; ptr_key;
                  ptr_key = ptr_key->next_key)

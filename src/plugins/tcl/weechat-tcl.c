@@ -2,7 +2,7 @@
  * weechat-tcl.c - tcl plugin for WeeChat
  *
  * Copyright (C) 2008-2010 Dmitry Kobylin <fnfal@academ.tsc.ru>
- * Copyright (C) 2008-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2008-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -56,7 +56,6 @@ struct t_plugin_script *tcl_script_eval = NULL;
 int tcl_eval_mode = 0;
 int tcl_eval_send_input = 0;
 int tcl_eval_exec_commands = 0;
-struct t_gui_buffer *tcl_eval_buffer = NULL;
 
 struct t_plugin_script *tcl_scripts = NULL;
 struct t_plugin_script *last_tcl_script = NULL;
@@ -198,7 +197,7 @@ weechat_tcl_exec (struct t_plugin_script *script,
                   int ret_type, const char *function,
                   const char *format, void **argv)
 {
-    int argc, i, llength;
+    int argc, i;
     int *ret_i;
     char *ret_cv;
     void *ret_val;
@@ -245,18 +244,13 @@ weechat_tcl_exec (struct t_plugin_script *script,
         }
     }
 
-    if (Tcl_ListObjLength (interp, cmdlist, &llength) != TCL_OK)
-        llength = 0;
-
     if (Tcl_EvalObjEx (interp, cmdlist, TCL_EVAL_DIRECT) == TCL_OK)
     {
-        /* remove elements, decrement their ref count */
-        Tcl_ListObjReplace (interp, cmdlist, 0, llength, 0, NULL);
         Tcl_DecrRefCount (cmdlist);  /* -1 */
         ret_val = NULL;
         if (ret_type == WEECHAT_SCRIPT_EXEC_STRING)
         {
-            ret_cv = Tcl_GetStringFromObj (Tcl_GetObjResult (interp), &i);
+            ret_cv = Tcl_GetString (Tcl_GetObjResult (interp));
             if (ret_cv)
                 ret_val = (void *)strdup (ret_cv);
             else
@@ -264,7 +258,7 @@ weechat_tcl_exec (struct t_plugin_script *script,
         }
         else if (ret_type == WEECHAT_SCRIPT_EXEC_POINTER)
         {
-            ret_cv = Tcl_GetStringFromObj (Tcl_GetObjResult (interp), &i);
+            ret_cv = Tcl_GetString (Tcl_GetObjResult (interp));
             if (ret_cv)
             {
                 ret_val = plugin_script_str2ptr (weechat_tcl_plugin,
@@ -307,13 +301,11 @@ weechat_tcl_exec (struct t_plugin_script *script,
         return NULL;
     }
 
-    /* remove elements, decrement their ref count */
-    Tcl_ListObjReplace (interp, cmdlist, 0, llength, 0, NULL);
     Tcl_DecrRefCount (cmdlist);  /* -1 */
     weechat_printf (NULL,
                     weechat_gettext ("%s%s: unable to run function \"%s\": %s"),
                     weechat_prefix ("error"), TCL_PLUGIN_NAME, function,
-                    Tcl_GetStringFromObj (Tcl_GetObjResult (interp), &i));
+                    Tcl_GetString (Tcl_GetObjResult (interp)));
     tcl_current_script = old_tcl_script;
 
     return NULL;
@@ -331,7 +323,6 @@ weechat_tcl_exec (struct t_plugin_script *script,
 struct t_plugin_script *
 weechat_tcl_load (const char *filename, const char *code)
 {
-    int i;
     Tcl_Interp *interp;
     struct stat buf;
 
@@ -374,7 +365,7 @@ weechat_tcl_load (const char *filename, const char *code)
                         weechat_gettext ("%s%s: error occurred while "
                                          "parsing file \"%s\": %s"),
                         weechat_prefix ("error"), TCL_PLUGIN_NAME, filename,
-                        Tcl_GetStringFromObj (Tcl_GetObjResult (interp), &i));
+                        Tcl_GetString (Tcl_GetObjResult (interp)));
 
         /* if script was registered, remove it from list */
         if (tcl_current_script)
@@ -457,8 +448,7 @@ weechat_tcl_unload (struct t_plugin_script *script)
                                       WEECHAT_SCRIPT_EXEC_INT,
                                       script->shutdown_func,
                                       NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -474,8 +464,7 @@ weechat_tcl_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("tcl_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -658,11 +647,10 @@ weechat_tcl_command_cb (const void *pointer, void *data,
             {
                 /* load tcl script */
                 path_script = plugin_script_search_path (weechat_tcl_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_tcl_load ((path_script) ? path_script : ptr_name,
                                   NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -928,6 +916,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_tcl_plugin = plugin;
 
+    tcl_quiet = 0;
+    tcl_eval_mode = 0;
+    tcl_eval_send_input = 0;
+    tcl_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -984,11 +977,20 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     /* free some data */
     if (tcl_action_install_list)
+    {
         free (tcl_action_install_list);
+        tcl_action_install_list = NULL;
+    }
     if (tcl_action_remove_list)
+    {
         free (tcl_action_remove_list);
+        tcl_action_remove_list = NULL;
+    }
     if (tcl_action_autoload_list)
+    {
         free (tcl_action_autoload_list);
+        tcl_action_autoload_list = NULL;
+    }
     /* weechat_string_dyn_free (tcl_buffer_output, 1); */
 
     return WEECHAT_RC_OK;

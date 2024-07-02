@@ -1,7 +1,7 @@
 /*
  * relay.c - network communication between WeeChat and remote client
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -32,6 +32,7 @@
 #include "relay-info.h"
 #include "relay-network.h"
 #include "relay-raw.h"
+#include "relay-remote.h"
 #include "relay-server.h"
 #include "relay-upgrade.h"
 
@@ -46,10 +47,32 @@ WEECHAT_PLUGIN_PRIORITY(RELAY_PLUGIN_PRIORITY);
 
 struct t_weechat_plugin *weechat_relay_plugin = NULL;
 
-int relay_signal_upgrade_received = 0; /* signal "upgrade" received ?       */
-
 char *relay_protocol_string[] =        /* strings for protocols             */
-{ "weechat", "irc" };
+{ "weechat", "irc", "api" };
+
+char *relay_status_string[] =          /* status strings for display        */
+{ N_("connecting"), N_("authenticating"),
+  N_("connected"), N_("authentication failed"), N_("disconnected")
+};
+char *relay_status_name[] =            /* name of status (for signal/info)  */
+{ "connecting", "waiting_auth",
+  "connected", "auth_failed", "disconnected"
+};
+char *relay_msg_type_string[] =        /* prefix in raw buffer for msg      */
+{ "", "[PING]\n", "[PONG]\n", "[CLOSE]\n" };
+
+struct t_hdata *relay_hdata_buffer = NULL;
+struct t_hdata *relay_hdata_key = NULL;
+struct t_hdata *relay_hdata_lines = NULL;
+struct t_hdata *relay_hdata_line = NULL;
+struct t_hdata *relay_hdata_line_data = NULL;
+struct t_hdata *relay_hdata_nick_group = NULL;
+struct t_hdata *relay_hdata_nick = NULL;
+struct t_hdata *relay_hdata_completion = NULL;
+struct t_hdata *relay_hdata_completion_word = NULL;
+struct t_hdata *relay_hdata_hotlist = NULL;
+
+int relay_signal_upgrade_received = 0; /* signal "upgrade" received ?       */
 
 struct t_hook *relay_hook_timer = NULL;
 
@@ -76,6 +99,30 @@ relay_protocol_search (const char *name)
     }
 
     /* protocol not found */
+    return -1;
+}
+
+/*
+ * Searches for a status.
+ *
+ * Returns index of status in enum t_relay_status, -1 if status is not found.
+ */
+
+int
+relay_status_search (const char *name)
+{
+    int i;
+
+    if (!name)
+        return -1;
+
+    for (i = 0; i < RELAY_NUM_STATUS; i++)
+    {
+        if (strcmp (relay_status_name[i], name) == 0)
+            return i;
+    }
+
+    /* status not found */
     return -1;
 }
 
@@ -181,6 +228,7 @@ relay_debug_dump_cb (const void *pointer, void *data,
 
         relay_server_print_log ();
         relay_client_print_log ();
+        relay_remote_print_log ();
 
         weechat_log_printf ("");
         weechat_log_printf ("***** End of \"%s\" plugin dump *****",
@@ -197,11 +245,27 @@ relay_debug_dump_cb (const void *pointer, void *data,
 int
 weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
+    int auto_connect;
+    char *info_auto_connect;
+
     /* make C compiler happy */
     (void) argc;
     (void) argv;
 
     weechat_plugin = plugin;
+
+    relay_hdata_buffer = weechat_hdata_get ("buffer");
+    relay_hdata_key = weechat_hdata_get ("key");
+    relay_hdata_lines = weechat_hdata_get ("lines");
+    relay_hdata_line = weechat_hdata_get ("line");
+    relay_hdata_line_data = weechat_hdata_get ("line_data");
+    relay_hdata_nick_group = weechat_hdata_get ("nick_group");
+    relay_hdata_nick = weechat_hdata_get ("nick");
+    relay_hdata_completion = weechat_hdata_get ("completion");
+    relay_hdata_completion_word = weechat_hdata_get ("completion_word");
+    relay_hdata_hotlist = weechat_hdata_get ("hotlist");
+
+    relay_signal_upgrade_received = 0;
 
     if (!relay_config_init ())
         return WEECHAT_RC_ERROR;
@@ -221,7 +285,19 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     relay_info_init ();
 
     if (weechat_relay_plugin->upgrading)
+    {
         relay_upgrade_load ();
+    }
+    else
+    {
+        /* check if auto-connect is enabled */
+        info_auto_connect = weechat_info_get ("auto_connect", NULL);
+        auto_connect = (info_auto_connect && (strcmp (info_auto_connect, "1") == 0)) ?
+            1 : 0;
+        free (info_auto_connect);
+        if (auto_connect)
+            relay_remote_auto_connect ();
+    }
 
     relay_hook_timer = weechat_hook_timer (1 * 1000, 0, 0,
                                            &relay_client_timer_cb, NULL, NULL);
@@ -240,7 +316,10 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     (void) plugin;
 
     if (relay_hook_timer)
+    {
         weechat_unhook (relay_hook_timer);
+        relay_hook_timer = NULL;
+    }
 
     relay_config_write ();
 
@@ -254,7 +333,11 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     relay_server_free_all ();
 
     if (relay_buffer)
+    {
         weechat_buffer_close (relay_buffer);
+        relay_buffer = NULL;
+    }
+    relay_buffer_selected_line = 0;
 
     relay_client_free_all ();
 

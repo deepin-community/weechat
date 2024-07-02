@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -158,6 +158,9 @@ enum t_gui_color_enum
     "([()].)|"                                  \
     "([<>])|"                                   \
     "(\\[[0-9;?]*[A-Za-z]))"
+
+#define GUI_COLOR_ANSI_DEFAULT_FG 39
+#define GUI_COLOR_ANSI_DEFAULT_BG 49
 
 #define GUI_COLOR_BUFFER_NAME "color"
 
