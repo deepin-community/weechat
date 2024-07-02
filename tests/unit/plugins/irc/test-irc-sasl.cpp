@@ -1,7 +1,7 @@
 /*
  * test-irc-sasl.cpp - test IRC SASL functions
  *
- * Copyright (C) 2021-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,7 +24,7 @@
 extern "C"
 {
 #include <string.h>
-#include "src/core/wee-string.h"
+#include "src/core/core-string.h"
 #include "src/plugins/plugin.h"
 #include "src/plugins/irc/irc-sasl.h"
 #include "src/plugins/irc/irc-server.h"
@@ -80,7 +80,7 @@ TEST(IrcSasl, MechanismScram)
     str = irc_sasl_mechanism_scram (server, "sha256", "+",
                                     "user1", "secret", &error);
     POINTERS_EQUAL(NULL, error);
-    CHECK(string_base64_decode (str, str_decoded) > 0);
+    CHECK(string_base64_decode (0, str, str_decoded) > 0);
     CHECK(strncmp (str_decoded, "n,,n=user1,r=", 13) == 0);
     free (str);
 

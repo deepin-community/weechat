@@ -1,7 +1,7 @@
 /*
  * gui-chat.c - chat functions (used by all GUI)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,15 +29,17 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
+#include <sys/time.h>
 #include <regex.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-eval.h"
-#include "../core/wee-hashtable.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-string.h"
-#include "../core/wee-utf8.h"
+#include "../core/core-config.h"
+#include "../core/core-eval.h"
+#include "../core/core-hashtable.h"
+#include "../core/core-hook.h"
+#include "../core/core-string.h"
+#include "../core/core-utf8.h"
+#include "../core/core-util.h"
 #include "../plugins/plugin.h"
 #include "gui-chat.h"
 #include "gui-buffer.h"
@@ -388,12 +390,13 @@ gui_chat_get_word_info (struct t_gui_window *window,
  */
 
 char *
-gui_chat_get_time_string (time_t date)
+gui_chat_get_time_string (time_t date, int date_usec, int highlight)
 {
     char text_time[128], text_time2[(128*3)+16], text_time_char[2];
     char *text_with_color;
     int i, time_first_digit, time_last_digit, last_color;
-    struct tm *local_time;
+    struct timeval tv;
+    struct t_hashtable *extra_vars;
 
     if (date == 0)
         return NULL;
@@ -402,17 +405,23 @@ gui_chat_get_time_string (time_t date)
         || !CONFIG_STRING(config_look_buffer_time_format)[0])
         return NULL;
 
-    local_time = localtime (&date);
-    if (!local_time)
-        return NULL;
-    if (strftime (text_time, sizeof (text_time),
-                  CONFIG_STRING(config_look_buffer_time_format),
-                  local_time) == 0)
+    tv.tv_sec = date;
+    tv.tv_usec = date_usec;
+    if (util_strftimeval (text_time, sizeof (text_time),
+                          CONFIG_STRING(config_look_buffer_time_format),
+                          &tv) == 0)
         return NULL;
 
     if (strstr (text_time, "${"))
     {
-        text_with_color = eval_expression (text_time, NULL, NULL, NULL);
+        extra_vars = hashtable_new (32,
+                                    WEECHAT_HASHTABLE_STRING,
+                                    WEECHAT_HASHTABLE_STRING,
+                                    NULL, NULL);
+        if (extra_vars)
+            hashtable_set (extra_vars, "highlight", (highlight) ? "1" : "0");
+        text_with_color = eval_expression (text_time, NULL, extra_vars, NULL);
+        hashtable_free (extra_vars);
         if (text_with_color)
         {
             if (strcmp (text_time, text_with_color) != 0)
@@ -499,7 +508,7 @@ gui_chat_get_time_string (time_t date)
 int
 gui_chat_get_time_length ()
 {
-    time_t date;
+    struct timeval tv_now;
     char *text_time;
     int length;
 
@@ -508,8 +517,8 @@ gui_chat_get_time_length ()
         return 0;
 
     length = 0;
-    date = time (NULL);
-    text_time = gui_chat_get_time_string (date);
+    gettimeofday (&tv_now, NULL);
+    text_time = gui_chat_get_time_string (tv_now.tv_sec, tv_now.tv_usec, 0);
 
     if (text_time)
     {
@@ -538,9 +547,11 @@ gui_chat_change_time_format ()
         {
             if (ptr_line->data->date != 0)
             {
-                if (ptr_line->data->str_time)
-                    free (ptr_line->data->str_time);
-                ptr_line->data->str_time = gui_chat_get_time_string (ptr_line->data->date);
+                free (ptr_line->data->str_time);
+                ptr_line->data->str_time = gui_chat_get_time_string (
+                    ptr_line->data->date,
+                    ptr_line->data->date_usec,
+                    ptr_line->data->highlight);
             }
         }
     }
@@ -586,16 +597,21 @@ gui_chat_buffer_valid (struct t_gui_buffer *buffer,
  */
 
 void
-gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
-                                    time_t date,
-                                    time_t date_printed,
-                                    const char *tags,
-                                    char *message)
+gui_chat_printf_datetime_tags_internal (struct t_gui_buffer *buffer,
+                                        time_t date,
+                                        int date_usec,
+                                        time_t date_printed,
+                                        int date_usec_printed,
+                                        const char *tags,
+                                        char *message)
 {
     int display_time, length_data, length_str;
     char *ptr_msg, *pos_prefix, *pos_tab;
     char *modifier_data, *string, *new_string, *pos_newline;
     struct t_gui_line *new_line;
+
+    if (!buffer)
+        return;
 
     new_line = NULL;
     string = NULL;
@@ -636,7 +652,9 @@ gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
     new_line = gui_line_new (buffer,
                              -1,
                              (display_time) ? date : 0,
+                             (display_time) ? date_usec : 0,
                              date_printed,
+                             date_usec_printed,
                              tags,
                              pos_prefix,
                              ptr_msg);
@@ -659,8 +677,8 @@ gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
     if (modifier_data && string)
     {
         snprintf (modifier_data, length_data,
-                  "0x%lx;%s",
-                  (unsigned long)buffer,
+                  "%p;%s",
+                  buffer,
                   (tags) ? tags : "");
         if (display_time)
         {
@@ -731,9 +749,11 @@ gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
                     }
                 }
                 if ((new_line->data->date == 0) && display_time)
+                {
                     new_line->data->date = new_line->data->date_printed;
-                if (new_line->data->prefix)
-                    string_shared_free (new_line->data->prefix);
+                    new_line->data->date_usec = new_line->data->date_usec_printed;
+                }
+                string_shared_free (new_line->data->prefix);
                 if (pos_prefix)
                 {
                     new_line->data->prefix = (char *)string_shared_get (pos_prefix);
@@ -745,8 +765,7 @@ gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
                 }
                 new_line->data->prefix_length = gui_chat_strlen_screen (
                     new_line->data->prefix);
-                if (new_line->data->message)
-                    free (new_line->data->message);
+                free (new_line->data->message);
                 new_line->data->message = strdup (ptr_msg);
             }
         }
@@ -761,12 +780,9 @@ gui_chat_printf_date_tags_internal (struct t_gui_buffer *buffer,
 
     gui_buffer_ask_chat_refresh (new_line->data->buffer, 1);
 
-    if (string)
-        free (string);
-    if (modifier_data)
-        free (modifier_data);
-    if (new_string)
-        free (new_string);
+    free (string);
+    free (modifier_data);
+    free (new_string);
 
     return;
 
@@ -776,12 +792,9 @@ no_print:
         gui_line_free_data (new_line);
         free (new_line);
     }
-    if (string)
-        free (string);
-    if (modifier_data)
-        free (modifier_data);
-    if (new_string)
-        free (new_string);
+    free (string);
+    free (modifier_data);
+    free (new_string);
 }
 
 /*
@@ -857,12 +870,13 @@ gui_chat_print_lines_waiting_buffer (FILE *f)
  */
 
 void
-gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
-                           const char *tags, const char *message, ...)
+gui_chat_printf_datetime_tags (struct t_gui_buffer *buffer,
+                               time_t date, int date_usec,
+                               const char *tags, const char *message, ...)
 {
-    time_t date_printed;
+    struct timeval tv_date_printed;
     char *pos, *pos_end;
-    int one_line = 0;
+    int one_line;
 
     if (!message)
         return;
@@ -881,13 +895,18 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
 
     utf8_normalize (vbuffer, '?');
 
-    date_printed = time (NULL);
+    gettimeofday (&tv_date_printed, NULL);
     if (date <= 0)
-        date = date_printed;
+    {
+        date = tv_date_printed.tv_sec;
+        date_usec = tv_date_printed.tv_usec;
+    }
 
+    one_line = 0;
     pos = vbuffer;
     while (pos)
     {
+        pos_end = NULL;
         if (!buffer || !buffer->input_multiline)
         {
             /* display until next end of line */
@@ -902,8 +921,13 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
 
         if (gui_init_ok)
         {
-            gui_chat_printf_date_tags_internal (buffer, date, date_printed,
-                                                tags, pos);
+            gui_chat_printf_datetime_tags_internal (buffer,
+                                                    date,
+                                                    date_usec,
+                                                    tv_date_printed.tv_sec,
+                                                    tv_date_printed.tv_usec,
+                                                    tags,
+                                                    pos);
         }
         else
         {
@@ -911,9 +935,7 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
         }
 
         if (one_line)
-        {
             break;
-        }
 
         pos = (pos_end && pos_end[1]) ? pos_end + 1 : NULL;
     }
@@ -929,11 +951,12 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
  */
 
 void
-gui_chat_printf_y_date_tags (struct t_gui_buffer *buffer, int y, time_t date,
-                           const char *tags, const char *message, ...)
+gui_chat_printf_y_datetime_tags (struct t_gui_buffer *buffer, int y,
+                                 time_t date, int date_usec,
+                                 const char *tags, const char *message, ...)
 {
     struct t_gui_line *ptr_line, *new_line, *new_line_empty;
-    time_t date_printed;
+    struct timeval tv_date_printed;
     int i, last_y, num_lines_to_add;
 
     if (!message)
@@ -955,12 +978,22 @@ gui_chat_printf_y_date_tags (struct t_gui_buffer *buffer, int y, time_t date,
 
     utf8_normalize (vbuffer, '?');
 
-    date_printed = time (NULL);
+    gettimeofday (&tv_date_printed, NULL);
     if (date <= 0)
-        date = date_printed;
+    {
+        date = tv_date_printed.tv_sec;
+        date_usec = tv_date_printed.tv_usec;
+    }
 
-    new_line = gui_line_new (buffer, y, date, date_printed, tags,
-                             NULL, vbuffer);
+    new_line = gui_line_new (buffer,
+                             y,
+                             date,
+                             date_usec,
+                             tv_date_printed.tv_sec,
+                             tv_date_printed.tv_usec,
+                             tags,
+                             NULL,
+                             vbuffer);
     if (!new_line)
         goto end;
 
@@ -997,7 +1030,8 @@ gui_chat_printf_y_date_tags (struct t_gui_buffer *buffer, int y, time_t date,
                 for (i = y - num_lines_to_add; i < y; i++)
                 {
                     new_line_empty = gui_line_new (new_line->data->buffer,
-                                                   i, 0, 0, NULL, NULL, "");
+                                                   i, 0, 0, 0, 0, NULL, NULL,
+                                                   "");
                     if (new_line_empty)
                         gui_line_add_y (new_line_empty);
                 }
@@ -1053,14 +1087,13 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
                                 const char *signal,
                                 struct t_hashtable *hashtable)
 {
-    const char *date, *line, *prefix, *ptr_prefix, *message;
+    const char *ptr_date, *ptr_date_usec, *line, *prefix, *ptr_prefix, *message;
     unsigned long value;
     long number;
-    struct tm *local_time;
+    struct timeval tv;
     struct t_gui_line *ptr_line;
     int is_nick, length_time, length_nick_prefix, length_prefix;
     int length_nick_suffix, length_message, length, rc;
-    time_t line_date;
     char str_time[128], *str, *error;
 
     /* make C compiler happy */
@@ -1072,22 +1105,28 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
 
     /* get time */
     str_time[0] = '\0';
-    date = (strstr (signal, "time")) ?
+    ptr_date = (strstr (signal, "time")) ?
         hashtable_get (hashtable, "_chat_line_date") : NULL;
-    if (date)
+    if (ptr_date)
     {
-        number = strtol (date, &error, 10);
+        error = NULL;
+        number = strtol (ptr_date, &error, 10);
         if (error && !error[0])
         {
-            line_date = (time_t)number;
-            local_time = localtime (&line_date);
-            if (local_time)
+            tv.tv_sec = (time_t)number;
+            tv.tv_usec = 0;
+            ptr_date_usec = (strstr (signal, "time")) ?
+                hashtable_get (hashtable, "_chat_line_date_usec") : NULL;
+            if (ptr_date_usec)
             {
-                if (strftime (str_time, sizeof (str_time),
-                              CONFIG_STRING(config_look_quote_time_format),
-                              local_time) == 0)
-                    str_time[0] = '\0';
+                error = NULL;
+                number = strtol (ptr_date_usec, &error, 10);
+                if (error && !error[0])
+                    tv.tv_usec = (int)number;
             }
+            util_strftimeval (str_time, sizeof (str_time),
+                              CONFIG_STRING(config_look_quote_time_format),
+                              &tv);
         }
     }
 

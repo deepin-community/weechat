@@ -1,7 +1,7 @@
 /*
  * gui-window.c - window functions (used by all GUI)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,13 +34,13 @@
 #include <ctype.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-hdata.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-infolist.h"
-#include "../core/wee-log.h"
-#include "../core/wee-string.h"
-#include "../core/wee-utf8.h"
+#include "../core/core-config.h"
+#include "../core/core-hdata.h"
+#include "../core/core-hook.h"
+#include "../core/core-infolist.h"
+#include "../core/core-log.h"
+#include "../core/core-string.h"
+#include "../core/core-utf8.h"
 #include "../plugins/plugin.h"
 #include "gui-window.h"
 #include "gui-bar.h"
@@ -50,6 +50,7 @@
 #include "gui-color.h"
 #include "gui-filter.h"
 #include "gui-input.h"
+#include "gui-history.h"
 #include "gui-hotlist.h"
 #include "gui-layout.h"
 #include "gui-line.h"
@@ -137,6 +138,8 @@ gui_window_get_context_at_xy (struct t_gui_window *window,
                               int *line_x,
                               char **word,
                               char **focused_line,
+                              char **focused_line_beginning,
+                              char **focused_line_end,
                               char **beginning,
                               char **end)
 {
@@ -150,6 +153,8 @@ gui_window_get_context_at_xy (struct t_gui_window *window,
     *line_x = -1;
     *word = NULL;
     *focused_line = NULL;
+    *focused_line_beginning = NULL;
+    *focused_line_end = NULL;
     *beginning = NULL;
     *end = NULL;
 
@@ -284,6 +289,24 @@ gui_window_get_context_at_xy (struct t_gui_window *window,
                     if (str_temp)
                     {
                         *focused_line = gui_color_decode (str_temp, NULL);
+                        free (str_temp);
+                    }
+                }
+                if (line_start)
+                {
+                    str_temp = string_strndup (line_start, ptr_data - line_start);
+                    if (str_temp)
+                    {
+                        *focused_line_beginning = gui_color_decode (str_temp, NULL);
+                        free (str_temp);
+                    }
+                }
+                if (line_end)
+                {
+                    str_temp = string_strndup (ptr_data, line_end - ptr_data);
+                    if (str_temp)
+                    {
+                        *focused_line_end = gui_color_decode (str_temp, NULL);
                         free (str_temp);
                     }
                 }
@@ -714,7 +737,7 @@ gui_window_new (struct t_gui_window *parent_window, struct t_gui_buffer *buffer,
     /* create bar windows */
     for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
     {
-        if (CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
+        if (CONFIG_ENUM(ptr_bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
             gui_bar_window_new (ptr_bar, new_window);
     }
 
@@ -1033,17 +1056,14 @@ gui_window_free (struct t_gui_window *window)
     }
 
     /* free other data */
-    if (window->layout_plugin_name)
-        free (window->layout_plugin_name);
-    if (window->layout_buffer_name)
-        free (window->layout_buffer_name);
+    free (window->layout_plugin_name);
+    free (window->layout_buffer_name);
 
     /* remove scroll list */
     gui_window_scroll_free_all (window);
 
     /* free coords */
-    if (window->coords)
-        free (window->coords);
+    free (window->coords);
 
     /* remove window from windows list */
     if (window->prev_window)
@@ -1479,8 +1499,7 @@ gui_window_scroll_previous_highlight (struct t_gui_window *window)
     if (!window)
         return;
 
-    if ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED))
+    if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
     {
         if (window->buffer->lines->first_line)
         {
@@ -1517,8 +1536,7 @@ gui_window_scroll_next_highlight (struct t_gui_window *window)
     if (!window)
         return;
 
-    if ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED))
+    if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
     {
         if (window->buffer->lines->first_line)
         {
@@ -1553,38 +1571,35 @@ gui_window_scroll_unread (struct t_gui_window *window)
     if (!window)
         return;
 
-    if (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED)
+    if (CONFIG_STRING(config_look_read_marker) &&
+        CONFIG_STRING(config_look_read_marker)[0] &&
+        (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) &&
+        (window->buffer->lines->first_line_not_read ||
+         (window->buffer->lines->last_read_line &&
+          window->buffer->lines->last_read_line != window->buffer->lines->last_line)))
     {
-        if (CONFIG_STRING(config_look_read_marker) &&
-            CONFIG_STRING(config_look_read_marker)[0] &&
-            (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) &&
-            (window->buffer->lines->first_line_not_read ||
-             (window->buffer->lines->last_read_line &&
-              window->buffer->lines->last_read_line != window->buffer->lines->last_line)))
+        if (window->buffer->lines->first_line_not_read)
+            window->scroll->start_line = window->buffer->lines->first_line;
+        else
+            window->scroll->start_line = window->buffer->lines->last_read_line->next_line;
+        if (window->scroll->start_line)
         {
-            if (window->buffer->lines->first_line_not_read)
-                window->scroll->start_line = window->buffer->lines->first_line;
-            else
-                window->scroll->start_line = window->buffer->lines->last_read_line->next_line;
-            if (window->scroll->start_line)
-            {
-                if (!gui_line_is_displayed (window->scroll->start_line))
-                    window->scroll->start_line = gui_line_get_next_displayed (window->scroll->start_line);
-            }
-            window->scroll->start_line_pos = 0;
-            window->scroll->first_line_displayed =
-                (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
-            gui_buffer_ask_chat_refresh (window->buffer, 2);
+            if (!gui_line_is_displayed (window->scroll->start_line))
+                window->scroll->start_line = gui_line_get_next_displayed (window->scroll->start_line);
         }
+        window->scroll->start_line_pos = 0;
+        window->scroll->first_line_displayed =
+            (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
+        gui_buffer_ask_chat_refresh (window->buffer, 2);
     }
 }
 
 /*
- * Searches for text in a buffer.
+ * Searches for text in buffer lines or commands history.
  *
  * Returns:
- *   1: line has been found with text
- *   0: no line found with text
+ *   1: successful search
+ *   0: no results found
  */
 
 int
@@ -1595,51 +1610,66 @@ gui_window_search_text (struct t_gui_window *window)
     if (!window)
         return 0;
 
-    if (window->buffer->text_search == GUI_TEXT_SEARCH_BACKWARD)
+    switch (window->buffer->text_search)
     {
-        if (window->buffer->lines->first_line
-            && window->buffer->input_buffer && window->buffer->input_buffer[0])
-        {
-            ptr_line = (window->scroll->start_line) ?
-                gui_line_get_prev_displayed (window->scroll->start_line) :
-                gui_line_get_last_displayed (window->buffer);
-            while (ptr_line)
+        case GUI_BUFFER_SEARCH_DISABLED:
+            break;
+        case GUI_BUFFER_SEARCH_LINES:
+            if (window->buffer->text_search_direction == GUI_BUFFER_SEARCH_DIR_BACKWARD)
             {
-                if (gui_line_search_text (window->buffer, ptr_line))
+                if (window->buffer->lines->first_line
+                    && window->buffer->input_buffer && window->buffer->input_buffer[0])
                 {
-                    window->scroll->start_line = ptr_line;
-                    window->scroll->start_line_pos = 0;
-                    window->scroll->first_line_displayed =
-                        (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
-                    gui_buffer_ask_chat_refresh (window->buffer, 2);
-                    return 1;
+                    ptr_line = (window->scroll->start_line) ?
+                        gui_line_get_prev_displayed (window->scroll->start_line) :
+                        gui_line_get_last_displayed (window->buffer);
+                    while (ptr_line)
+                    {
+                        if (gui_line_search_text (window->buffer, ptr_line))
+                        {
+                            window->scroll->start_line = ptr_line;
+                            window->scroll->start_line_pos = 0;
+                            window->scroll->first_line_displayed =
+                                (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
+                            gui_buffer_ask_chat_refresh (window->buffer, 2);
+                            return 1;
+                        }
+                        ptr_line = gui_line_get_prev_displayed (ptr_line);
+                    }
                 }
-                ptr_line = gui_line_get_prev_displayed (ptr_line);
             }
-        }
-    }
-    else if (window->buffer->text_search == GUI_TEXT_SEARCH_FORWARD)
-    {
-        if (window->buffer->lines->first_line
-            && window->buffer->input_buffer && window->buffer->input_buffer[0])
-        {
-            ptr_line = (window->scroll->start_line) ?
-                gui_line_get_next_displayed (window->scroll->start_line) :
-                gui_line_get_first_displayed (window->buffer);
-            while (ptr_line)
+            else if (window->buffer->text_search_direction == GUI_BUFFER_SEARCH_DIR_FORWARD)
             {
-                if (gui_line_search_text (window->buffer, ptr_line))
+                if (window->buffer->lines->first_line
+                    && window->buffer->input_buffer && window->buffer->input_buffer[0])
                 {
-                    window->scroll->start_line = ptr_line;
-                    window->scroll->start_line_pos = 0;
-                    window->scroll->first_line_displayed =
-                        (window->scroll->start_line == window->buffer->lines->first_line);
-                    gui_buffer_ask_chat_refresh (window->buffer, 2);
-                    return 1;
+                    ptr_line = (window->scroll->start_line) ?
+                        gui_line_get_next_displayed (window->scroll->start_line) :
+                        gui_line_get_first_displayed (window->buffer);
+                    while (ptr_line)
+                    {
+                        if (gui_line_search_text (window->buffer, ptr_line))
+                        {
+                            window->scroll->start_line = ptr_line;
+                            window->scroll->start_line_pos = 0;
+                            window->scroll->first_line_displayed =
+                                (window->scroll->start_line == window->buffer->lines->first_line);
+                            gui_buffer_ask_chat_refresh (window->buffer, 2);
+                            return 1;
+                        }
+                        ptr_line = gui_line_get_next_displayed (ptr_line);
+                    }
                 }
-                ptr_line = gui_line_get_next_displayed (ptr_line);
             }
-        }
+            break;
+        case GUI_BUFFER_SEARCH_HISTORY:
+            return gui_history_search (
+                window->buffer,
+                (window->buffer->text_search_history == GUI_BUFFER_SEARCH_HISTORY_LOCAL) ?
+                window->buffer->history : gui_history);
+            break;
+        case GUI_BUFFER_NUM_SEARCH:
+            break;
     }
     return 0;
 }
@@ -1650,45 +1680,75 @@ gui_window_search_text (struct t_gui_window *window)
  */
 
 void
-gui_window_search_start (struct t_gui_window *window,
+gui_window_search_start (struct t_gui_window *window, int search,
                          struct t_gui_line *text_search_start_line)
 {
     if (!window)
         return;
 
-    window->scroll->text_search_start_line = text_search_start_line;
-    window->buffer->text_search =
-        (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
-        GUI_TEXT_SEARCH_BACKWARD : GUI_TEXT_SEARCH_FORWARD;
+    window->buffer->text_search = search;
 
-    if ((window->buffer->text_search_where == 0)
-        ||  CONFIG_BOOLEAN(config_look_buffer_search_force_default))
+    switch (window->buffer->text_search)
     {
-        /* set default search values */
-        window->buffer->text_search_exact = CONFIG_BOOLEAN(config_look_buffer_search_case_sensitive);
-        window->buffer->text_search_regex = CONFIG_BOOLEAN(config_look_buffer_search_regex);
-        if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        {
-            switch (CONFIG_INTEGER(config_look_buffer_search_where))
+        case GUI_BUFFER_SEARCH_DISABLED:
+            break;
+        case GUI_BUFFER_SEARCH_LINES:
+            window->buffer->text_search_direction = (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
+                GUI_BUFFER_SEARCH_DIR_BACKWARD : GUI_BUFFER_SEARCH_DIR_FORWARD;
+            window->scroll->text_search_start_line = text_search_start_line;
+            if ((window->buffer->text_search_where == 0)
+                || CONFIG_BOOLEAN(config_look_buffer_search_force_default))
             {
-                case CONFIG_LOOK_BUFFER_SEARCH_PREFIX:
-                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX;
-                    break;
-                case CONFIG_LOOK_BUFFER_SEARCH_MESSAGE:
-                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
-                    break;
-                case CONFIG_LOOK_BUFFER_SEARCH_PREFIX_MESSAGE:
-                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX | GUI_TEXT_SEARCH_IN_MESSAGE;
-                    break;
-                default:
-                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
-                    break;
-            }
+                if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
+                {
+                    switch (CONFIG_ENUM(config_look_buffer_search_where))
+                    {
+                        case CONFIG_LOOK_BUFFER_SEARCH_PREFIX:
+                            window->buffer->text_search_where = GUI_BUFFER_SEARCH_IN_PREFIX;
+                            break;
+                        case CONFIG_LOOK_BUFFER_SEARCH_MESSAGE:
+                            window->buffer->text_search_where = GUI_BUFFER_SEARCH_IN_MESSAGE;
+                            break;
+                        case CONFIG_LOOK_BUFFER_SEARCH_PREFIX_MESSAGE:
+                            window->buffer->text_search_where = GUI_BUFFER_SEARCH_IN_PREFIX
+                                | GUI_BUFFER_SEARCH_IN_MESSAGE;
+                            break;
+                        default:
+                            window->buffer->text_search_where = GUI_BUFFER_SEARCH_IN_MESSAGE;
+                            break;
+                    }
+                }
+                else
+                {
+                    window->buffer->text_search_where = GUI_BUFFER_SEARCH_IN_MESSAGE;
+                }
+                break;
+            case GUI_BUFFER_SEARCH_HISTORY:
+                window->buffer->text_search_direction = GUI_BUFFER_SEARCH_DIR_BACKWARD;
+                if ((window->buffer->text_search_history == GUI_BUFFER_SEARCH_HISTORY_NONE)
+                    || CONFIG_BOOLEAN(config_look_buffer_search_force_default))
+                {
+                    switch (CONFIG_ENUM(config_look_buffer_search_history))
+                    {
+                        case CONFIG_LOOK_BUFFER_SEARCH_HISTORY_LOCAL:
+                            window->buffer->text_search_history = GUI_BUFFER_SEARCH_HISTORY_LOCAL;
+                            break;
+                        case CONFIG_LOOK_BUFFER_SEARCH_HISTORY_GLOBAL:
+                            window->buffer->text_search_history = GUI_BUFFER_SEARCH_HISTORY_GLOBAL;
+                            break;
+                        default:
+                            window->buffer->text_search_history = GUI_BUFFER_SEARCH_HISTORY_LOCAL;
+                            break;
+                    }
+                }
+                break;
+            case GUI_BUFFER_NUM_SEARCH:
+                break;
         }
-        else
-            window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
     }
 
+    window->buffer->text_search_exact = CONFIG_BOOLEAN(config_look_buffer_search_case_sensitive);
+    window->buffer->text_search_regex = CONFIG_BOOLEAN(config_look_buffer_search_regex);
     window->buffer->text_search_found = 0;
     gui_input_search_compile_regex (window->buffer);
     if (window->buffer->text_search_input)
@@ -1712,39 +1772,80 @@ gui_window_search_restart (struct t_gui_window *window)
     if (!window)
         return;
 
-    window->scroll->start_line = window->scroll->text_search_start_line;
-    window->scroll->start_line_pos = 0;
-    window->buffer->text_search =
-        (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
-        GUI_TEXT_SEARCH_BACKWARD : GUI_TEXT_SEARCH_FORWARD;
-    window->buffer->text_search_found = 0;
-    gui_input_search_compile_regex (window->buffer);
-    if (gui_window_search_text (window))
-        window->buffer->text_search_found = 1;
-    else
+    switch (window->buffer->text_search)
     {
-        if (CONFIG_BOOLEAN(config_look_search_text_not_found_alert)
-            && window->buffer->input_buffer && window->buffer->input_buffer[0])
-        {
-            fprintf (stderr, "\a");
-            fflush (stderr);
-        }
-        gui_buffer_ask_chat_refresh (window->buffer, 2);
+        case GUI_BUFFER_SEARCH_DISABLED:
+            break;
+        case GUI_BUFFER_SEARCH_LINES:
+            window->scroll->start_line = window->scroll->text_search_start_line;
+            window->scroll->start_line_pos = 0;
+            window->buffer->text_search_direction =
+                (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
+                GUI_BUFFER_SEARCH_DIR_BACKWARD : GUI_BUFFER_SEARCH_DIR_FORWARD;
+            gui_input_search_compile_regex (window->buffer);
+            window->buffer->text_search_found = 0;
+            if (gui_window_search_text (window))
+            {
+                window->buffer->text_search_found = 1;
+            }
+            else
+            {
+                if (CONFIG_BOOLEAN(config_look_search_text_not_found_alert)
+                    && window->buffer->input_buffer && window->buffer->input_buffer[0])
+                {
+                    fprintf (stderr, "\a");
+                    fflush (stderr);
+                }
+                gui_buffer_ask_chat_refresh (window->buffer, 2);
+            }
+            break;
+        case GUI_BUFFER_SEARCH_HISTORY:
+            gui_input_search_compile_regex (window->buffer);
+            window->buffer->text_search_found = 0;
+            window->buffer->text_search_ptr_history = NULL;
+            if (gui_window_search_text (window))
+            {
+                window->buffer->text_search_found = 1;
+            }
+            else
+            {
+                if (CONFIG_BOOLEAN(config_look_search_text_not_found_alert)
+                    && window->buffer->input_buffer && window->buffer->input_buffer[0])
+                {
+                    fprintf (stderr, "\a");
+                    fflush (stderr);
+                }
+            }
+            break;
+        case GUI_BUFFER_NUM_SEARCH:
+            break;
     }
 }
 
 /*
- * Ends search mode in a buffer (helper function).
+ * Stops search in a buffer, at current position if stop_here == 1 or reset
+ * scroll to the initial value if stop_here == 0.
  */
 
 void
-gui_window_search_end (struct t_gui_window *window)
+gui_window_search_stop (struct t_gui_window *window, int stop_here)
 {
+    const char *ptr_new_input;
+    int search;
+
     if (!window)
         return;
 
-    window->buffer->text_search = GUI_TEXT_SEARCH_DISABLED;
-    window->buffer->text_search = 0;
+    search = window->buffer->text_search;
+
+    ptr_new_input = (stop_here
+                     && (window->buffer->text_search == GUI_BUFFER_SEARCH_HISTORY)
+                     && window->buffer->text_search_ptr_history
+                     && window->buffer->text_search_ptr_history->text) ?
+        window->buffer->text_search_ptr_history->text : window->buffer->text_search_input;
+
+    window->buffer->text_search = GUI_BUFFER_SEARCH_DISABLED;
+    window->buffer->text_search_direction = GUI_BUFFER_SEARCH_DIR_BACKWARD;
     if (window->buffer->text_search_regex_compiled)
     {
         regfree (window->buffer->text_search_regex_compiled);
@@ -1752,49 +1853,31 @@ gui_window_search_end (struct t_gui_window *window)
         window->buffer->text_search_regex_compiled = NULL;
     }
     gui_input_delete_line (window->buffer);
-    if (window->buffer->text_search_input)
+    if (ptr_new_input)
     {
-        gui_input_insert_string (window->buffer,
-                                 window->buffer->text_search_input);
+        gui_input_insert_string (window->buffer, ptr_new_input);
         gui_input_text_changed_modifier_and_signal (window->buffer,
                                                     0, /* save undo */
                                                     1); /* stop completion */
+    }
+    if (window->buffer->text_search_input)
+    {
         free (window->buffer->text_search_input);
         window->buffer->text_search_input = NULL;
     }
-}
+    window->buffer->text_search_ptr_history = NULL;
 
-/*
- * Stops search in a buffer at current position.
- */
-
-void
-gui_window_search_stop_here (struct t_gui_window *window)
-{
-    if (!window)
-        return;
-
-    gui_window_search_end (window);
-    window->scroll->text_search_start_line = NULL;
-    gui_buffer_ask_chat_refresh (window->buffer, 2);
-}
-
-/*
- * Stops search in a buffer.
- */
-
-void
-gui_window_search_stop (struct t_gui_window *window)
-{
-    if (!window)
-        return;
-
-    gui_window_search_end (window);
-    window->scroll->start_line = window->scroll->text_search_start_line;
-    window->scroll->start_line_pos = 0;
-    window->scroll->text_search_start_line = NULL;
-    gui_hotlist_remove_buffer (window->buffer, 0);
-    gui_buffer_ask_chat_refresh (window->buffer, 2);
+    if (search == GUI_BUFFER_SEARCH_LINES)
+    {
+        if (!stop_here)
+        {
+            window->scroll->start_line = window->scroll->text_search_start_line;
+            window->scroll->start_line_pos = 0;
+            gui_hotlist_remove_buffer (window->buffer, 0);
+        }
+        window->scroll->text_search_start_line = NULL;
+        gui_buffer_ask_chat_refresh (window->buffer, 2);
+    }
 }
 
 /*
@@ -2022,56 +2105,56 @@ gui_window_print_log ()
     struct t_gui_bar_window *ptr_bar_win;
 
     log_printf ("");
-    log_printf ("gui_windows . . . . . . . . . : 0x%lx", gui_windows);
-    log_printf ("last_gui_window . . . . . . . : 0x%lx", last_gui_window);
-    log_printf ("gui_current window. . . . . . : 0x%lx", gui_current_window);
-    log_printf ("gui_windows_tree. . . . . . . : 0x%lx", gui_windows_tree);
+    log_printf ("gui_windows . . . . . . . . . : %p", gui_windows);
+    log_printf ("last_gui_window . . . . . . . : %p", last_gui_window);
+    log_printf ("gui_current window. . . . . . : %p", gui_current_window);
+    log_printf ("gui_windows_tree. . . . . . . : %p", gui_windows_tree);
 
     for (ptr_window = gui_windows; ptr_window; ptr_window = ptr_window->next_window)
     {
         log_printf ("");
-        log_printf ("[window (addr:0x%lx)]", ptr_window);
-        log_printf ("  number. . . . . . . : %d",    ptr_window->number);
-        log_printf ("  win_x . . . . . . . : %d",    ptr_window->win_x);
-        log_printf ("  win_y . . . . . . . : %d",    ptr_window->win_y);
-        log_printf ("  win_width . . . . . : %d",    ptr_window->win_width);
-        log_printf ("  win_height. . . . . : %d",    ptr_window->win_height);
-        log_printf ("  win_width_pct . . . : %d",    ptr_window->win_width_pct);
-        log_printf ("  win_height_pct. . . : %d",    ptr_window->win_height_pct);
-        log_printf ("  win_chat_x. . . . . : %d",    ptr_window->win_chat_x);
-        log_printf ("  win_chat_y. . . . . : %d",    ptr_window->win_chat_y);
-        log_printf ("  win_chat_width. . . : %d",    ptr_window->win_chat_width);
-        log_printf ("  win_chat_height . . : %d",    ptr_window->win_chat_height);
-        log_printf ("  win_chat_cursor_x . : %d",    ptr_window->win_chat_cursor_x);
-        log_printf ("  win_chat_cursor_y . : %d",    ptr_window->win_chat_cursor_y);
-        log_printf ("  refresh_needed. . . : %d",    ptr_window->refresh_needed);
-        log_printf ("  gui_objects . . . . : 0x%lx", ptr_window->gui_objects);
+        log_printf ("[window (addr:%p)]", ptr_window);
+        log_printf ("  number. . . . . . . : %d", ptr_window->number);
+        log_printf ("  win_x . . . . . . . : %d", ptr_window->win_x);
+        log_printf ("  win_y . . . . . . . : %d", ptr_window->win_y);
+        log_printf ("  win_width . . . . . : %d", ptr_window->win_width);
+        log_printf ("  win_height. . . . . : %d", ptr_window->win_height);
+        log_printf ("  win_width_pct . . . : %d", ptr_window->win_width_pct);
+        log_printf ("  win_height_pct. . . : %d", ptr_window->win_height_pct);
+        log_printf ("  win_chat_x. . . . . : %d", ptr_window->win_chat_x);
+        log_printf ("  win_chat_y. . . . . : %d", ptr_window->win_chat_y);
+        log_printf ("  win_chat_width. . . : %d", ptr_window->win_chat_width);
+        log_printf ("  win_chat_height . . : %d", ptr_window->win_chat_height);
+        log_printf ("  win_chat_cursor_x . : %d", ptr_window->win_chat_cursor_x);
+        log_printf ("  win_chat_cursor_y . : %d", ptr_window->win_chat_cursor_y);
+        log_printf ("  refresh_needed. . . : %d", ptr_window->refresh_needed);
+        log_printf ("  gui_objects . . . . : %p", ptr_window->gui_objects);
         gui_window_objects_print_log (ptr_window);
-        log_printf ("  buffer. . . . . . . : 0x%lx", ptr_window->buffer);
-        log_printf ("  layout_plugin_name. : '%s'",  ptr_window->layout_plugin_name);
-        log_printf ("  layout_buffer_name. : '%s'",  ptr_window->layout_buffer_name);
-        log_printf ("  scroll. . . . . . . : 0x%lx", ptr_window->scroll);
-        log_printf ("  coords_size . . . . : %d",    ptr_window->coords_size);
-        log_printf ("  coords. . . . . . . : 0x%lx", ptr_window->coords);
-        log_printf ("  ptr_tree. . . . . . : 0x%lx", ptr_window->ptr_tree);
-        log_printf ("  prev_window . . . . : 0x%lx", ptr_window->prev_window);
-        log_printf ("  next_window . . . . : 0x%lx", ptr_window->next_window);
+        log_printf ("  buffer. . . . . . . : %p", ptr_window->buffer);
+        log_printf ("  layout_plugin_name. : '%s'", ptr_window->layout_plugin_name);
+        log_printf ("  layout_buffer_name. : '%s'", ptr_window->layout_buffer_name);
+        log_printf ("  scroll. . . . . . . : %p", ptr_window->scroll);
+        log_printf ("  coords_size . . . . : %d", ptr_window->coords_size);
+        log_printf ("  coords. . . . . . . : %p", ptr_window->coords);
+        log_printf ("  ptr_tree. . . . . . : %p", ptr_window->ptr_tree);
+        log_printf ("  prev_window . . . . : %p", ptr_window->prev_window);
+        log_printf ("  next_window . . . . : %p", ptr_window->next_window);
 
         for (ptr_scroll = ptr_window->scroll; ptr_scroll;
              ptr_scroll = ptr_scroll->next_scroll)
         {
             log_printf ("");
-            log_printf ("  [scroll (addr:0x%lx)]", ptr_scroll);
-            log_printf ("    buffer. . . . . . . . : 0x%lx", ptr_scroll->buffer);
-            log_printf ("    first_line_displayed. : %d",    ptr_scroll->first_line_displayed);
-            log_printf ("    start_line. . . . . . : 0x%lx", ptr_scroll->start_line);
-            log_printf ("    start_line_pos. . . . : %d",    ptr_scroll->start_line_pos);
-            log_printf ("    scrolling . . . . . . : %d",    ptr_scroll->scrolling);
-            log_printf ("    start_col . . . . . . : %d",    ptr_scroll->start_col);
-            log_printf ("    lines_after . . . . . : %d",    ptr_scroll->lines_after);
-            log_printf ("    text_search_start_line: 0x%lx", ptr_scroll->text_search_start_line);
-            log_printf ("    prev_scroll . . . . . : 0x%lx", ptr_scroll->prev_scroll);
-            log_printf ("    next_scroll . . . . . : 0x%lx", ptr_scroll->next_scroll);
+            log_printf ("  [scroll (addr:%p)]", ptr_scroll);
+            log_printf ("    buffer. . . . . . . . : %p", ptr_scroll->buffer);
+            log_printf ("    first_line_displayed. : %d", ptr_scroll->first_line_displayed);
+            log_printf ("    start_line. . . . . . : %p", ptr_scroll->start_line);
+            log_printf ("    start_line_pos. . . . : %d", ptr_scroll->start_line_pos);
+            log_printf ("    scrolling . . . . . . : %d", ptr_scroll->scrolling);
+            log_printf ("    start_col . . . . . . : %d", ptr_scroll->start_col);
+            log_printf ("    lines_after . . . . . : %d", ptr_scroll->lines_after);
+            log_printf ("    text_search_start_line: %p", ptr_scroll->text_search_start_line);
+            log_printf ("    prev_scroll . . . . . : %p", ptr_scroll->prev_scroll);
+            log_printf ("    next_scroll . . . . . : %p", ptr_scroll->next_scroll);
         }
 
         for (ptr_bar_win = ptr_window->bar_windows; ptr_bar_win;

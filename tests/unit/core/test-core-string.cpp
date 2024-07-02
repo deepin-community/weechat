@@ -1,7 +1,7 @@
 /*
  * test-core-string.cpp - test string functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,9 +34,9 @@ extern "C"
 #include <string.h>
 #include <regex.h>
 #include "src/core/weechat.h"
-#include "src/core/wee-config.h"
-#include "src/core/wee-string.h"
-#include "src/core/wee-hashtable.h"
+#include "src/core/core-config.h"
+#include "src/core/core-string.h"
+#include "src/core/core-hashtable.h"
 #include "src/gui/gui-color.h"
 #include "src/plugins/plugin.h"
 }
@@ -83,13 +83,14 @@ extern "C"
         regfree(&regex);
 
 #define WEE_REPLACE_CB(__result_replace, __result_errors,               \
-                       __str, __prefix, __suffix,                       \
+                       __str, __prefix, __suffix, __allow_escape,       \
                        __list_prefix_no_replace,                        \
                        __callback, __callback_data, __errors)           \
     errors = -1;                                                        \
     result = string_replace_with_callback (                             \
-        __str, __prefix, __suffix, __list_prefix_no_replace,            \
-        __callback, __callback_data, __errors);                         \
+        __str, __prefix, __suffix, __allow_escape,                      \
+        __list_prefix_no_replace, __callback, __callback_data,          \
+        __errors);                                                      \
     if (__result_replace == NULL)                                       \
     {                                                                   \
         POINTERS_EQUAL(NULL, result);                                   \
@@ -121,6 +122,43 @@ extern struct t_hashtable *string_hashtable_shared;
 TEST_GROUP(CoreString)
 {
 };
+
+/*
+ * Tests functions:
+ *   string_asprintf
+ */
+
+TEST(CoreString, Asprintf)
+{
+    char *test;
+
+    test = (char *)0x1;
+    LONGS_EQUAL(-1, string_asprintf (NULL, NULL));
+    POINTERS_EQUAL(0x1, test);
+
+    test = (char *)0x1;
+    LONGS_EQUAL(-1, string_asprintf (NULL, ""));
+    POINTERS_EQUAL(0x1, test);
+
+    test = (char *)0x1;
+    LONGS_EQUAL(-1, string_asprintf (&test, NULL));
+    POINTERS_EQUAL(NULL, test);
+
+    test = (char *)0x1;
+    LONGS_EQUAL(0, string_asprintf (&test, ""));
+    STRCMP_EQUAL("", test);
+    free (test);
+
+    test = (char *)0x1;
+    LONGS_EQUAL(4, string_asprintf (&test, "test"));
+    STRCMP_EQUAL("test", test);
+    free (test);
+
+    test = (char *)0x1;
+    LONGS_EQUAL(16, string_asprintf (&test, "test, %s, %d", "string", 42));
+    STRCMP_EQUAL("test, string, 42", test);
+    free (test);
+}
 
 /*
  * Tests functions:
@@ -215,6 +253,46 @@ TEST(CoreString, ToUpper)
                  string_toupper ("àáâãäåæçèéêëìíîïðñòóôõöøœšùúûüýÿ"));
     WEE_TEST_STR("€", string_toupper ("€"));
     WEE_TEST_STR("[⛄]", string_toupper ("[⛄]"));
+}
+
+/*
+ * Tests functions:
+ *   string_tolower_range
+ */
+
+TEST(CoreString, ToLowerRange)
+{
+    char *str;
+
+    WEE_TEST_STR(NULL, string_tolower_range (NULL, 0));
+    WEE_TEST_STR(NULL, string_tolower_range (NULL, 30));
+
+    WEE_TEST_STR("", string_tolower_range ("", 0));
+    WEE_TEST_STR("", string_tolower_range ("", 30));
+    WEE_TEST_STR("^[a]ô", string_tolower_range ("^[A]Ô", 0));
+    WEE_TEST_STR("~{a}Ô", string_tolower_range ("^[A]Ô", 30));
+    WEE_TEST_STR("^{a}Ô", string_tolower_range ("^[A]Ô", 29));
+    WEE_TEST_STR("^[a]Ô", string_tolower_range ("^[A]Ô", 26));
+}
+
+/*
+ * Tests functions:
+ *   string_toupper_range
+ */
+
+TEST(CoreString, ToUpperRange)
+{
+    char *str;
+
+    WEE_TEST_STR(NULL, string_toupper_range (NULL, 0));
+    WEE_TEST_STR(NULL, string_toupper_range (NULL, 30));
+
+    WEE_TEST_STR("", string_toupper_range ("", 0));
+    WEE_TEST_STR("", string_toupper_range ("", 30));
+    WEE_TEST_STR("~{A}Ô", string_toupper_range ("~{a}ô", 0));
+    WEE_TEST_STR("^[A]ô", string_toupper_range ("~{a}ô", 30));
+    WEE_TEST_STR("~[A]ô", string_toupper_range ("~{a}ô", 29));
+    WEE_TEST_STR("~{A}ô", string_toupper_range ("~{a}ô", 26));
 }
 
 /*
@@ -499,6 +577,11 @@ TEST(CoreString, CharComparison)
     LONGS_EQUAL(0, string_charcasecmp_range ("]", "}", 30));
     LONGS_EQUAL(0, string_charcasecmp_range ("\\", "|", 30));
     LONGS_EQUAL(0, string_charcasecmp_range ("^", "~", 30));
+    LONGS_EQUAL(0, string_charcasecmp_range ("[", "{", 29));
+    LONGS_EQUAL(0, string_charcasecmp_range ("]", "}", 29));
+    LONGS_EQUAL(0, string_charcasecmp_range ("\\", "|", 29));
+    LONGS_EQUAL(-32, string_charcasecmp_range ("^", "~", 29));
+    LONGS_EQUAL(32, string_charcasecmp_range ("~", "^", 29));
     LONGS_EQUAL(-32, string_charcasecmp_range ("[", "{", 26));
     LONGS_EQUAL(32, string_charcasecmp_range ("{", "[", 26));
     LONGS_EQUAL(-32, string_charcasecmp_range ("]", "}", 26));
@@ -524,8 +607,12 @@ TEST(CoreString, StringComparison)
 {
     /* case-sensitive comparison */
     LONGS_EQUAL(0, string_strcmp (NULL, NULL));
-    LONGS_EQUAL(-97, string_strcmp (NULL, "abc"));
-    LONGS_EQUAL(97, string_strcmp ("abc", NULL));
+    LONGS_EQUAL(-1, string_strcmp (NULL, ""));
+    LONGS_EQUAL(1, string_strcmp ("", NULL));
+    LONGS_EQUAL(-1, string_strcmp (NULL, "abc"));
+    LONGS_EQUAL(1, string_strcmp ("abc", NULL));
+    LONGS_EQUAL(-97, string_strcmp ("", "abc"));
+    LONGS_EQUAL(97, string_strcmp ("abc", ""));
     LONGS_EQUAL(-98, string_strcmp ("", "b"));
     LONGS_EQUAL(98, string_strcmp ("b", ""));
     LONGS_EQUAL(0, string_strcmp ("abc", "abc"));
@@ -544,8 +631,12 @@ TEST(CoreString, StringComparison)
 
     /* case-sensitive comparison with max length */
     LONGS_EQUAL(0, string_strncmp (NULL, NULL, 3));
-    LONGS_EQUAL(-97, string_strncmp (NULL, "abc", 3));
-    LONGS_EQUAL(97, string_strncmp ("abc", NULL, 3));
+    LONGS_EQUAL(-1, string_strncmp (NULL, "", 3));
+    LONGS_EQUAL(1, string_strncmp ("", NULL, 3));
+    LONGS_EQUAL(-1, string_strncmp (NULL, "abc", 3));
+    LONGS_EQUAL(1, string_strncmp ("abc", NULL, 3));
+    LONGS_EQUAL(-97, string_strncmp ("", "abc", 3));
+    LONGS_EQUAL(97, string_strncmp ("abc", "", 3));
     LONGS_EQUAL(-98, string_strncmp ("", "b", 3));
     LONGS_EQUAL(98, string_strncmp ("b", "", 3));
     LONGS_EQUAL(0, string_strncmp ("abc", "abc", 3));
@@ -570,8 +661,12 @@ TEST(CoreString, StringComparison)
 
     /* case-insensitive comparison */
     LONGS_EQUAL(0, string_strcasecmp (NULL, NULL));
-    LONGS_EQUAL(-97, string_strcasecmp (NULL, "abc"));
-    LONGS_EQUAL(97, string_strcasecmp ("abc", NULL));
+    LONGS_EQUAL(-1, string_strcasecmp (NULL, ""));
+    LONGS_EQUAL(1, string_strcasecmp ("", NULL));
+    LONGS_EQUAL(-1, string_strcasecmp (NULL, "abc"));
+    LONGS_EQUAL(1, string_strcasecmp ("abc", NULL));
+    LONGS_EQUAL(-97, string_strcasecmp ("", "abc"));
+    LONGS_EQUAL(97, string_strcasecmp ("abc", ""));
     LONGS_EQUAL(-98, string_strcasecmp ("", "b"));
     LONGS_EQUAL(98, string_strcasecmp ("b", ""));
     LONGS_EQUAL(0, string_strcasecmp ("abc", "abc"));
@@ -590,8 +685,12 @@ TEST(CoreString, StringComparison)
 
     /* case-insensitive comparison with max length */
     LONGS_EQUAL(0, string_strncasecmp (NULL, NULL, 3));
-    LONGS_EQUAL(-97, string_strncasecmp (NULL, "abc", 3));
-    LONGS_EQUAL(97, string_strncasecmp ("abc", NULL, 3));
+    LONGS_EQUAL(-1, string_strncasecmp (NULL, "", 3));
+    LONGS_EQUAL(1, string_strncasecmp ("", NULL, 3));
+    LONGS_EQUAL(-1, string_strncasecmp (NULL, "abc", 3));
+    LONGS_EQUAL(1, string_strncasecmp ("abc", NULL, 3));
+    LONGS_EQUAL(-97, string_strncasecmp ("", "abc", 3));
+    LONGS_EQUAL(97, string_strncasecmp ("abc", "", 3));
     LONGS_EQUAL(-98, string_strncasecmp ("", "b", 3));
     LONGS_EQUAL(98, string_strncasecmp ("b", "", 3));
     LONGS_EQUAL(0, string_strncasecmp ("abc", "abc", 3));
@@ -616,8 +715,12 @@ TEST(CoreString, StringComparison)
 
     /* case-insensitive comparison with a range */
     LONGS_EQUAL(0, string_strcasecmp_range (NULL, NULL, 30));
-    LONGS_EQUAL(-97, string_strcasecmp_range (NULL, "abc", 30));
-    LONGS_EQUAL(97, string_strcasecmp_range ("abc", NULL, 30));
+    LONGS_EQUAL(-1, string_strcasecmp_range (NULL, "", 30));
+    LONGS_EQUAL(1, string_strcasecmp_range ("", NULL, 30));
+    LONGS_EQUAL(-1, string_strcasecmp_range (NULL, "abc", 30));
+    LONGS_EQUAL(1, string_strcasecmp_range ("abc", NULL, 30));
+    LONGS_EQUAL(-97, string_strcasecmp_range ("", "abc", 30));
+    LONGS_EQUAL(97, string_strcasecmp_range ("abc", "", 30));
     LONGS_EQUAL(-98, string_strcasecmp_range ("", "b", 30));
     LONGS_EQUAL(98, string_strcasecmp_range ("b", "", 30));
     LONGS_EQUAL(-2, string_strcasecmp_range ("A", "C", 30));
@@ -628,6 +731,11 @@ TEST(CoreString, StringComparison)
     LONGS_EQUAL(0, string_strcasecmp_range ("]", "}", 30));
     LONGS_EQUAL(0, string_strcasecmp_range ("\\", "|", 30));
     LONGS_EQUAL(0, string_strcasecmp_range ("^", "~", 30));
+    LONGS_EQUAL(0, string_strcasecmp_range ("[", "{", 29));
+    LONGS_EQUAL(0, string_strcasecmp_range ("]", "}", 29));
+    LONGS_EQUAL(0, string_strcasecmp_range ("\\", "|", 29));
+    LONGS_EQUAL(-32, string_strcasecmp_range ("^", "~", 29));
+    LONGS_EQUAL(32, string_strcasecmp_range ("~", "^", 29));
     LONGS_EQUAL(-32, string_strcasecmp_range ("[", "{", 26));
     LONGS_EQUAL(32, string_strcasecmp_range ("{", "[", 26));
     LONGS_EQUAL(-32, string_strcasecmp_range ("]", "}", 26));
@@ -639,8 +747,12 @@ TEST(CoreString, StringComparison)
 
     /* case-insensitive comparison with max length and a range */
     LONGS_EQUAL(0, string_strncasecmp_range (NULL, NULL, 3, 30));
-    LONGS_EQUAL(-97, string_strncasecmp_range (NULL, "abc", 3, 30));
-    LONGS_EQUAL(97, string_strncasecmp_range ("abc", NULL, 3, 30));
+    LONGS_EQUAL(-1, string_strncasecmp_range (NULL, "", 3, 30));
+    LONGS_EQUAL(1, string_strncasecmp_range ("", NULL, 3, 30));
+    LONGS_EQUAL(-1, string_strncasecmp_range (NULL, "abc", 3, 30));
+    LONGS_EQUAL(1, string_strncasecmp_range ("abc", NULL, 3, 30));
+    LONGS_EQUAL(-97, string_strncasecmp_range ("", "abc", 3, 30));
+    LONGS_EQUAL(97, string_strncasecmp_range ("abc", "", 3, 30));
     LONGS_EQUAL(-98, string_strncasecmp_range ("", "b", 3, 30));
     LONGS_EQUAL(98, string_strncasecmp_range ("b", "", 3, 30));
     LONGS_EQUAL(-2, string_strncasecmp_range ("ABC", "CCC", 3, 30));
@@ -661,6 +773,11 @@ TEST(CoreString, StringComparison)
     LONGS_EQUAL(0, string_strncasecmp_range ("^^^", "~~~", 3, 30));
     LONGS_EQUAL(0, string_strncasecmp_range ("^^^abc", "~~~def", 3, 30));
     LONGS_EQUAL(-3, string_strncasecmp_range ("^^^abc", "~~~def", 6, 30));
+    LONGS_EQUAL(0, string_strncasecmp_range ("[[[", "{{{", 3, 29));
+    LONGS_EQUAL(0, string_strncasecmp_range ("]]]", "}}}", 3, 29));
+    LONGS_EQUAL(0, string_strncasecmp_range ("\\\\\\", "|||", 3, 29));
+    LONGS_EQUAL(-32, string_strncasecmp_range ("^^^", "~~~", 3, 29));
+    LONGS_EQUAL(32, string_strncasecmp_range ("~~~", "^^^", 3, 29));
     LONGS_EQUAL(-32, string_strncasecmp_range ("[[[", "{{{", 3, 26));
     LONGS_EQUAL(-32, string_strncasecmp_range ("]]]", "}}}", 3, 26));
     LONGS_EQUAL(-32, string_strncasecmp_range ("\\\\\\", "|||", 3, 26));
@@ -668,8 +785,12 @@ TEST(CoreString, StringComparison)
 
     /* comparison with chars ignored */
     LONGS_EQUAL(0, string_strcmp_ignore_chars (NULL, NULL, "", 0));
-    LONGS_EQUAL(-97, string_strcmp_ignore_chars (NULL, "abc", "", 0));
-    LONGS_EQUAL(97, string_strcmp_ignore_chars ("abc", NULL, "", 0));
+    LONGS_EQUAL(-1, string_strcmp_ignore_chars (NULL, "", "", 0));
+    LONGS_EQUAL(1, string_strcmp_ignore_chars ("", NULL, "", 0));
+    LONGS_EQUAL(-1, string_strcmp_ignore_chars (NULL, "abc", "", 0));
+    LONGS_EQUAL(1, string_strcmp_ignore_chars ("abc", NULL, "", 0));
+    LONGS_EQUAL(-97, string_strcmp_ignore_chars ("", "abc", "", 0));
+    LONGS_EQUAL(97, string_strcmp_ignore_chars ("abc", "", "", 0));
     LONGS_EQUAL(-98, string_strcmp_ignore_chars ("", "b", "", 0));
     LONGS_EQUAL(98, string_strcmp_ignore_chars ("b", "", "", 0));
     LONGS_EQUAL(-2, string_strcmp_ignore_chars ("ABC", "CCC", "", 0));
@@ -778,7 +899,7 @@ TEST(CoreString, Match)
 
 /*
  * Tests functions:
- *   string_match
+ *   string_match_list
  */
 
 TEST(CoreString, MatchList)
@@ -848,6 +969,7 @@ TEST(CoreString, ExpandHome)
     int length_home;
 
     home = getenv ("HOME");
+    CHECK(home);
     length_home = strlen (home);
 
     POINTERS_EQUAL(NULL, string_expand_home (NULL));
@@ -868,14 +990,17 @@ TEST(CoreString, EvalPathHome)
 {
     char *home, *result;
     int length_home, length_weechat_config_dir, length_weechat_data_dir;
-    int length_weechat_cache_dir, length_weechat_runtime_dir;
+    int length_weechat_state_dir, length_weechat_cache_dir;
+    int length_weechat_runtime_dir;
     struct t_hashtable *extra_vars, *options;
 
     home = getenv ("HOME");
+    CHECK(home);
     length_home = strlen (home);
 
     length_weechat_config_dir = strlen (weechat_config_dir);
     length_weechat_data_dir = strlen (weechat_data_dir);
+    length_weechat_state_dir = strlen (weechat_state_dir);
     length_weechat_cache_dir = strlen (weechat_cache_dir);
     length_weechat_runtime_dir = strlen (weechat_runtime_dir);
 
@@ -919,6 +1044,14 @@ TEST(CoreString, EvalPathHome)
     STRCMP_EQUAL(result + length_weechat_data_dir, "/test");
     free (result);
 
+    /* "%h" with forced state dir */
+    hashtable_set (options, "directory", "state");
+    result = string_eval_path_home ("%h/test", NULL, NULL, options);
+    CHECK(strncmp (result, weechat_state_dir, length_weechat_state_dir) == 0);
+    LONGS_EQUAL(length_weechat_state_dir + 5, strlen (result));
+    STRCMP_EQUAL(result + length_weechat_state_dir, "/test");
+    free (result);
+
     /* "%h" with forced cache dir */
     hashtable_set (options, "directory", "cache");
     result = string_eval_path_home ("%h/test", NULL, NULL, options);
@@ -951,6 +1084,14 @@ TEST(CoreString, EvalPathHome)
     CHECK(strncmp (result, weechat_data_dir, length_weechat_data_dir) == 0);
     LONGS_EQUAL(length_weechat_data_dir + 5, strlen (result));
     STRCMP_EQUAL(result + length_weechat_data_dir, "/path");
+    free (result);
+
+    /* state dir */
+    result = string_eval_path_home ("${weechat_state_dir}/path",
+                                    NULL, NULL, NULL);
+    CHECK(strncmp (result, weechat_state_dir, length_weechat_state_dir) == 0);
+    LONGS_EQUAL(length_weechat_state_dir + 5, strlen (result));
+    STRCMP_EQUAL(result + length_weechat_state_dir, "/path");
     free (result);
 
     /* cache dir */
@@ -1251,20 +1392,23 @@ TEST(CoreString, Highlight)
 /*
  * Test callback for function string_replace_with_callback.
  *
- * It replaces "abc" by "def", "xxx" by empty string, and for any other value
+ * It replaces "abc" by "def", "empty" by empty string, and for any other value
  * it returns NULL (so the value is kept as-is).
  */
 
 char *
-test_replace_cb (void *data, const char *text)
+test_replace_cb (void *data,
+                 const char *prefix, const char *text, const char *suffix)
 {
     /* make C++ compiler happy */
     (void) data;
+    (void) prefix;
+    (void) suffix;
 
     if (strcmp (text, "abc") == 0)
         return strdup ("def");
 
-    if (strcmp (text, "xxx") == 0)
+    if (strcmp (text, "empty") == 0)
         return strdup ("");
 
     if (strncmp (text, "no_replace:", 11) == 0)
@@ -1369,51 +1513,59 @@ TEST(CoreString, ReplaceWithCallback)
     int errors;
 
     /* tests with invalid arguments */
-    WEE_REPLACE_CB(NULL, -1, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, "", NULL, NULL, NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, NULL, "", NULL, NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, NULL, NULL, "", NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, NULL, NULL, NULL, NULL, &test_replace_cb, NULL, NULL);
-    WEE_REPLACE_CB(NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, &errors);
-    WEE_REPLACE_CB(NULL, -1, "test", NULL, NULL, NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, "test", "${", NULL, NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, "test", NULL, "}", NULL, NULL, NULL, NULL);
-    WEE_REPLACE_CB(NULL, -1, "test", NULL, NULL, NULL, &test_replace_cb, NULL, NULL);
-    WEE_REPLACE_CB(NULL, 0, "test", NULL, NULL, NULL, NULL, NULL, &errors);
-    WEE_REPLACE_CB(NULL, -1, "test", "${", "}", NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, "", NULL, NULL, 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, NULL, "", NULL, 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, NULL, NULL, "", 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, NULL, NULL, NULL, 1, NULL, &test_replace_cb, NULL, NULL);
+    WEE_REPLACE_CB(NULL, 0, NULL, NULL, NULL, 1, NULL, NULL, NULL, &errors);
+    WEE_REPLACE_CB(NULL, -1, "test", NULL, NULL, 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, "test", "${", NULL, 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, "test", NULL, "}", 1, NULL, NULL, NULL, NULL);
+    WEE_REPLACE_CB(NULL, -1, "test", NULL, NULL, 1, NULL, &test_replace_cb, NULL, NULL);
+    WEE_REPLACE_CB(NULL, 0, "test", NULL, NULL, 1, NULL, NULL, NULL, &errors);
+    WEE_REPLACE_CB(NULL, -1, "test", "${", "}", 1, NULL, NULL, NULL, NULL);
 
     /* valid arguments */
-    WEE_REPLACE_CB("test", -1, "test", "${", "}", NULL,
+    WEE_REPLACE_CB("test", -1, "test", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, NULL);
-    WEE_REPLACE_CB("test", 0, "test", "${", "}", NULL,
+    WEE_REPLACE_CB("test", 0, "test", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test def", 0, "test ${abc}", "${", "}", NULL,
+    WEE_REPLACE_CB("test def", 0, "test ${abc}", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test ", 0, "test ${xxx}", "${", "}", NULL,
+    WEE_REPLACE_CB("test ", 0, "test ${empty}", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test ${aaa}", 1, "test ${aaa}", "${", "}", NULL,
+    WEE_REPLACE_CB("test ${aaa", 1, "test ${aaa", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test def  ${aaa}", 1, "test ${abc} ${xxx} ${aaa}",
-                   "${", "}", NULL, &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test ", 1, "test ${abc", "${", "}", NULL,
+    WEE_REPLACE_CB("test ", 0, "test ${empty", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test abc}", 0, "test abc}", "${", "}", NULL,
+    WEE_REPLACE_CB("test ${empty", 0, "test \\${empty", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test ${}", 1, "test ${}", "${", "}", NULL,
+    WEE_REPLACE_CB("test \\${empty", 0, "test \\${empty", "${", "}", 0, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("test ${ }", 1, "test ${ }", "${", "}", NULL,
+    WEE_REPLACE_CB("test ${aaa}", 1, "test ${aaa}", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("def", 0, "${abc}", "${", "}", NULL,
+    WEE_REPLACE_CB("test def  ${aaa}", 1, "test ${abc} ${empty} ${aaa}",
+                   "${", "}", 1, NULL, &test_replace_cb, NULL, &errors);
+    WEE_REPLACE_CB("test def", 0, "test ${abc", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("", 0, "${xxx}", "${", "}", NULL,
+    WEE_REPLACE_CB("test abc}", 0, "test abc}", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
-    WEE_REPLACE_CB("${aaa}", 1, "${aaa}", "${", "}", NULL,
+    WEE_REPLACE_CB("test ${}", 1, "test ${}", "${", "}", 1, NULL,
+                   &test_replace_cb, NULL, &errors);
+    WEE_REPLACE_CB("test ${ }", 1, "test ${ }", "${", "}", 1, NULL,
+                   &test_replace_cb, NULL, &errors);
+    WEE_REPLACE_CB("def", 0, "${abc}", "${", "}", 1, NULL,
+                   &test_replace_cb, NULL, &errors);
+    WEE_REPLACE_CB("", 0, "${empty}", "${", "}", 1, NULL,
+                   &test_replace_cb, NULL, &errors);
+    WEE_REPLACE_CB("${aaa}", 1, "${aaa}", "${", "}", 1, NULL,
                    &test_replace_cb, NULL, &errors);
     WEE_REPLACE_CB("no_replace:def", 0, "${no_replace:${abc}}", "${", "}",
-                   NULL,
+                   1, NULL,
                    &test_replace_cb, NULL, &errors);
     WEE_REPLACE_CB("no_replace:${abc}", 0, "${no_replace:${abc}}", "${", "}",
-                   list_prefix_no_replace,
+                   1, list_prefix_no_replace,
                    &test_replace_cb, NULL, &errors);
 }
 
@@ -2278,68 +2430,87 @@ TEST(CoreString, Base64)
 {
     int i, length;
     char str[1024];
-    const char *str_base64[][2] =
-        { { "", "" },
-          { "A", "QQ==" },
-          { "B", "Qg==" },
-          { "C", "Qw==" },
-          { "D", "RA==" },
-          { "abc", "YWJj" },
-          { "This is a test.", "VGhpcyBpcyBhIHRlc3Qu" },
-          { "This is a test..", "VGhpcyBpcyBhIHRlc3QuLg==" },
-          { "This is a test...", "VGhpcyBpcyBhIHRlc3QuLi4=" },
-          { "This is a test....", "VGhpcyBpcyBhIHRlc3QuLi4u" },
+    const char *str_base64[][3] =
+        { { "", "", "" },
+          { "A", "QQ==", "QQ" },
+          { "B", "Qg==", "Qg" },
+          { "C", "Qw==", "Qw" },
+          { "D", "RA==", "RA" },
+          { "abc", "YWJj", "YWJj" },
+          { "<<?!!>>", "PDw/ISE+Pg==", "PDw_ISE-Pg" },
+          { "This is a test.",
+            "VGhpcyBpcyBhIHRlc3Qu", "VGhpcyBpcyBhIHRlc3Qu" },
+          { "This is a test..",
+            "VGhpcyBpcyBhIHRlc3QuLg==", "VGhpcyBpcyBhIHRlc3QuLg" },
+          { "This is a test...",
+            "VGhpcyBpcyBhIHRlc3QuLi4=", "VGhpcyBpcyBhIHRlc3QuLi4" },
+          { "This is a test....",
+            "VGhpcyBpcyBhIHRlc3QuLi4u", "VGhpcyBpcyBhIHRlc3QuLi4u" },
           { "This is a long long long sentence here...",
-            "VGhpcyBpcyBhIGxvbmcgbG9uZyBsb25nIHNlbnRlbmNlIGhlcmUuLi4=" },
+            "VGhpcyBpcyBhIGxvbmcgbG9uZyBsb25nIHNlbnRlbmNlIGhlcmUuLi4=",
+            "VGhpcyBpcyBhIGxvbmcgbG9uZyBsb25nIHNlbnRlbmNlIGhlcmUuLi4" },
           { "Another example for base64",
-            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQ=" },
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQ=",
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQ" },
           { "Another example for base64.",
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQu",
             "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQu" },
           { "Another example for base64..",
-            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLg==" },
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLg==",
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLg" },
           { "Another example for base64...",
-            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLi4=" },
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLi4=",
+            "QW5vdGhlciBleGFtcGxlIGZvciBiYXNlNjQuLi4" },
           { NULL, NULL } };
 
     /* string_base64_encode */
-    LONGS_EQUAL(-1, string_base64_encode (NULL, 0, NULL));
-    LONGS_EQUAL(-1, string_base64_encode (NULL, 0, str));
-    LONGS_EQUAL(-1, string_base64_encode ("", 0, NULL));
+    LONGS_EQUAL(-1, string_base64_encode (0, NULL, 0, NULL));
+    LONGS_EQUAL(-1, string_base64_encode (0, NULL, 0, str));
+    LONGS_EQUAL(-1, string_base64_encode (0, "", 0, NULL));
     str[0] = 0xAA;
-    LONGS_EQUAL(0, string_base64_encode ("", -1, str));
+    LONGS_EQUAL(0, string_base64_encode (0, "", -1, str));
     BYTES_EQUAL(0x0, str[0]);
     str[0] = 0xAA;
-    LONGS_EQUAL(0, string_base64_encode ("", 0, str));
+    LONGS_EQUAL(0, string_base64_encode (0, "", 0, str));
     BYTES_EQUAL(0x0, str[0]);
     for (i = 0; str_base64[i][0]; i++)
     {
         length = strlen (str_base64[i][1]);
-        LONGS_EQUAL(length, string_base64_encode (str_base64[i][0],
+        LONGS_EQUAL(length, string_base64_encode (0,
+                                                  str_base64[i][0],
                                                   strlen (str_base64[i][0]),
                                                   str));
         STRCMP_EQUAL(str_base64[i][1], str);
+        length = strlen (str_base64[i][2]);
+        LONGS_EQUAL(length, string_base64_encode (1,
+                                                  str_base64[i][0],
+                                                  strlen (str_base64[i][0]),
+                                                  str));
+        STRCMP_EQUAL(str_base64[i][2], str);
     }
     /* test with a \0 in string */
-    LONGS_EQUAL(20, string_base64_encode ("This is\0a test.", 15, str));
+    LONGS_EQUAL(20, string_base64_encode (0, "This is\0a test.", 15, str));
     STRCMP_EQUAL("VGhpcyBpcwBhIHRlc3Qu", str);
 
     /* string_base64_decode */
-    LONGS_EQUAL(-1, string_base64_decode (NULL, NULL));
-    LONGS_EQUAL(-1, string_base64_decode (NULL, str));
-    LONGS_EQUAL(-1, string_base64_decode ("", NULL));
-    LONGS_EQUAL(0, string_base64_decode ("", str));
+    LONGS_EQUAL(-1, string_base64_decode (0, NULL, NULL));
+    LONGS_EQUAL(-1, string_base64_decode (0, NULL, str));
+    LONGS_EQUAL(-1, string_base64_decode (0, "", NULL));
+    LONGS_EQUAL(0, string_base64_decode (0, "", str));
     for (i = 0; str_base64[i][0]; i++)
     {
         length = strlen (str_base64[i][0]);
-        LONGS_EQUAL(length, string_base64_decode (str_base64[i][1], str));
+        LONGS_EQUAL(length, string_base64_decode (0, str_base64[i][1], str));
+        STRCMP_EQUAL(str_base64[i][0], str);
+        LONGS_EQUAL(length, string_base64_decode (1, str_base64[i][2], str));
         STRCMP_EQUAL(str_base64[i][0], str);
     }
     /* test with a \0 in string */
-    LONGS_EQUAL(15, string_base64_decode ("VGhpcyBpcwBhIHRlc3Qu", str));
+    LONGS_EQUAL(15, string_base64_decode (0, "VGhpcyBpcwBhIHRlc3Qu", str));
     MEMCMP_EQUAL("This is\0a test.", str, 15);
 
     /* invalid base64 string, missing two "=" at the end */
-    LONGS_EQUAL(4, string_base64_decode ("dGVzdA", str));
+    LONGS_EQUAL(4, string_base64_decode (0, "dGVzdA", str));
     STRCMP_EQUAL("test", str);
 }
 
@@ -2352,23 +2523,31 @@ TEST(CoreString, BaseEncode)
 {
     char str[1024];
 
-    LONGS_EQUAL(-1, string_base_encode (0, NULL, 0, NULL));
-    LONGS_EQUAL(-1, string_base_encode (0, "", 0, str));
-    LONGS_EQUAL(-1, string_base_encode (16, NULL, 0, str));
-    LONGS_EQUAL(-1, string_base_encode (32, NULL, 0, str));
-    LONGS_EQUAL(-1, string_base_encode (64, NULL, 0, str));
+    LONGS_EQUAL(-1, string_base_encode ("0", NULL, 0, NULL));
+    LONGS_EQUAL(-1, string_base_encode ("0", "", 0, str));
+    LONGS_EQUAL(-1, string_base_encode ("16", NULL, 0, str));
+    LONGS_EQUAL(-1, string_base_encode ("32", NULL, 0, str));
+    LONGS_EQUAL(-1, string_base_encode ("64", NULL, 0, str));
 
     str[0] = 0xAA;
-    LONGS_EQUAL(16, string_base_encode (16, "abcdefgh", 8, str));
+    LONGS_EQUAL(16, string_base_encode ("16", "abcdefgh", 8, str));
     STRCMP_EQUAL("6162636465666768", str);
 
     str[0] = 0xAA;
-    LONGS_EQUAL(16, string_base_encode (32, "abcdefgh", 8, str));
+    LONGS_EQUAL(16, string_base_encode ("32", "abcdefgh", 8, str));
     STRCMP_EQUAL("MFRGGZDFMZTWQ===", str);
 
     str[0] = 0xAA;
-    LONGS_EQUAL(20, string_base_encode (64, "This is a test.", 15, str));
+    LONGS_EQUAL(20, string_base_encode ("64", "This is a test.", 15, str));
     STRCMP_EQUAL("VGhpcyBpcyBhIHRlc3Qu", str);
+
+    str[0] = 0xAA;
+    LONGS_EQUAL(12, string_base_encode ("64", "<<" "???" ">>", 7, str));
+    STRCMP_EQUAL("PDw/Pz8+Pg==", str);
+
+    str[0] = 0xAA;
+    LONGS_EQUAL(10, string_base_encode ("64url", "<<" "???" ">>", 7, str));
+    STRCMP_EQUAL("PDw_Pz8-Pg", str);
 }
 
 /*
@@ -2380,23 +2559,31 @@ TEST(CoreString, BaseDecode)
 {
     char str[1024];
 
-    LONGS_EQUAL(-1, string_base_decode (0, NULL, NULL));
-    LONGS_EQUAL(-1, string_base_decode (0, "", str));
-    LONGS_EQUAL(-1, string_base_decode (16, NULL, str));
-    LONGS_EQUAL(-1, string_base_decode (32, NULL, str));
-    LONGS_EQUAL(-1, string_base_decode (64, NULL, str));
+    LONGS_EQUAL(-1, string_base_decode ("0", NULL, NULL));
+    LONGS_EQUAL(-1, string_base_decode ("0", "", str));
+    LONGS_EQUAL(-1, string_base_decode ("16", NULL, str));
+    LONGS_EQUAL(-1, string_base_decode ("32", NULL, str));
+    LONGS_EQUAL(-1, string_base_decode ("64", NULL, str));
 
     str[0] = 0xAA;
-    LONGS_EQUAL(8, string_base_decode (16, "6162636465666768", str));
+    LONGS_EQUAL(8, string_base_decode ("16", "6162636465666768", str));
     STRCMP_EQUAL("abcdefgh", str);
 
     str[0] = 0xAA;
-    LONGS_EQUAL(8, string_base_decode (32, "MFRGGZDFMZTWQ===", str));
+    LONGS_EQUAL(8, string_base_decode ("32", "MFRGGZDFMZTWQ===", str));
     STRCMP_EQUAL("abcdefgh", str);
 
     str[0] = 0xAA;
-    LONGS_EQUAL(15, string_base_decode (64, "VGhpcyBpcyBhIHRlc3Qu", str));
+    LONGS_EQUAL(15, string_base_decode ("64", "VGhpcyBpcyBhIHRlc3Qu", str));
     STRCMP_EQUAL("This is a test.", str);
+
+    str[0] = 0xAA;
+    LONGS_EQUAL(7, string_base_decode ("64", "PDw/Pz8+Pg==", str));
+    STRCMP_EQUAL("<<" "???" ">>", str);
+
+    str[0] = 0xAA;
+    LONGS_EQUAL(7, string_base_decode ("64url", "PDw_Pz8-Pg", str));
+    STRCMP_EQUAL("<<" "???" ">>", str);
 }
 
 /*
@@ -2743,6 +2930,9 @@ TEST(CoreString, Shared)
 
     string_shared_free (str3);
     LONGS_EQUAL(count + 0, string_hashtable_shared->items_count);
+
+    /* test free of NULL */
+    string_shared_free (NULL);
 }
 
 /*
@@ -2913,4 +3103,33 @@ TEST(CoreString, Dyn)
     /* test free of NULL */
     string_dyn_free (NULL, 0);
     string_dyn_free (str, 0);
+}
+
+/*
+ * Tests functions:
+ *   string_concat
+ */
+
+TEST(CoreString, Concat)
+{
+    STRCMP_EQUAL("", string_concat (NULL, NULL));
+    STRCMP_EQUAL("", string_concat (NULL, "", NULL));
+    STRCMP_EQUAL("", string_concat ("", "", NULL));
+    STRCMP_EQUAL("", string_concat (",", "", NULL));
+
+    STRCMP_EQUAL("abc", string_concat (NULL, "abc", NULL));
+    STRCMP_EQUAL("abcdef", string_concat (NULL, "abc", "def", NULL));
+    STRCMP_EQUAL("abcdefghi", string_concat (NULL, "abc", "def", "ghi", NULL));
+
+    STRCMP_EQUAL("abc", string_concat ("", "abc", NULL));
+    STRCMP_EQUAL("abcdef", string_concat ("", "abc", "def", NULL));
+    STRCMP_EQUAL("abcdefghi", string_concat ("", "abc", "def", "ghi", NULL));
+
+    STRCMP_EQUAL("abc", string_concat (",", "abc", NULL));
+    STRCMP_EQUAL("abc,def", string_concat (",", "abc", "def", NULL));
+    STRCMP_EQUAL("abc,def,ghi", string_concat (",", "abc", "def", "ghi", NULL));
+
+    STRCMP_EQUAL("abc", string_concat (" / ", "abc", NULL));
+    STRCMP_EQUAL("abc / def", string_concat (" / ", "abc", "def", NULL));
+    STRCMP_EQUAL("abc / def / ghi", string_concat (" / ", "abc", "def", "ghi", NULL));
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007-2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2008-2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -19,7 +19,7 @@
 # along with WeeChat.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(weechat C)
 
@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 set(CMAKE_SKIP_RPATH ON)
 
 # compiler options
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char -fms-extensions -Wall -Wextra -Werror-implicit-function-declaration")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char -fms-extensions -Wall -Wextra -Werror-implicit-function-declaration -Wformat -Werror=format-security")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char -fms-extensions -Wall -Wextra")
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
   # extra options specific to gcc/g++
@@ -99,6 +99,8 @@ option(ENABLE_NCURSES        "Compile the Ncurses interface"            ON)
 option(ENABLE_HEADLESS       "Compile the headless binary"              ON)
 option(ENABLE_NLS            "Enable Native Language Support"           ON)
 option(ENABLE_LARGEFILE      "Enable Large File Support"                ON)
+option(ENABLE_ZSTD           "Enable Zstandard compression"             ON)
+option(ENABLE_CJSON          "Enable cJSON support"                     ON)
 option(ENABLE_ALIAS          "Enable Alias plugin"                      ON)
 option(ENABLE_BUFLIST        "Enable Buflist plugin"                    ON)
 option(ENABLE_CHARSET        "Enable Charset plugin"                    ON)
@@ -190,6 +192,9 @@ include(CheckSymbolExists)
 check_include_files("langinfo.h" HAVE_LANGINFO_CODESET)
 check_include_files("sys/resource.h" HAVE_SYS_RESOURCE_H)
 
+check_include_files("malloc.h" HAVE_MALLOC_H)
+check_symbol_exists("malloc_trim" "malloc.h" HAVE_MALLOC_TRIM)
+
 check_function_exists(mallinfo HAVE_MALLINFO)
 check_function_exists(mallinfo2 HAVE_MALLINFO2)
 
@@ -200,24 +205,11 @@ if(ENABLE_LARGEFILE)
   add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -D_LARGE_FILES)
 endif()
 
-# Check for Gettext
-if(ENABLE_NLS)
-  find_package(Gettext)
-  if(GETTEXT_FOUND)
-    add_definitions(-DENABLE_NLS)
-    find_package(Intl)
-    if(Intl_FOUND)
-      list(APPEND EXTRA_LIBS "${Intl_LIBRARIES}")
-    endif()
-  else()
-    message(SEND_ERROR "Gettext not found")
-  endif()
-endif()
-
 # Check for libgcrypt
-find_package(GCRYPT REQUIRED)
+pkg_check_modules(LIBGCRYPT REQUIRED libgcrypt)
 add_definitions(-DHAVE_GCRYPT)
-list(APPEND EXTRA_LIBS ${GCRYPT_LDFLAGS})
+include_directories(${LIBGCRYPT_INCLUDE_DIRS})
+list(APPEND EXTRA_LIBS ${LIBGCRYPT_LDFLAGS})
 
 # Check for GnuTLS
 find_package(GnuTLS REQUIRED)
@@ -230,7 +222,16 @@ list(APPEND EXTRA_LIBS gnutls)
 find_package(ZLIB REQUIRED)
 
 # Check for zstd
-pkg_check_modules(LIBZSTD REQUIRED libzstd)
+if(ENABLE_ZSTD)
+  pkg_check_modules(LIBZSTD REQUIRED libzstd)
+  add_definitions(-DHAVE_ZSTD)
+endif()
+
+# Check for cJSON
+if(ENABLE_CJSON)
+  pkg_check_modules(LIBCJSON REQUIRED libcjson)
+  add_definitions(-DHAVE_CJSON)
+endif()
 
 # Check for iconv
 find_package(Iconv)
@@ -258,7 +259,13 @@ endif()
 add_subdirectory(icons)
 
 if(ENABLE_NLS)
+  find_package(Gettext REQUIRED)
+  add_definitions(-DENABLE_NLS)
+  find_package(Intl REQUIRED)
+  list(APPEND EXTRA_LIBS "${Intl_LIBRARIES}")
   add_subdirectory(po)
+else()
+  add_custom_target(translations COMMAND true)
 endif()
 
 add_subdirectory(src)

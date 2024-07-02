@@ -1,7 +1,7 @@
 /*
  * relay-server.c - server functions for relay plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -52,7 +52,7 @@ struct t_relay_server *last_relay_server = NULL;
  * Examples:
  *
  *   string                    ipv4 ipv6 tls unix protocol protocol_args
- *   ---------------------------------------------------------------
+ *   -------------------------------------------------------------------
  *   irc.libera                1    1    0   0    irc      libera
  *   tls.irc.libera            1    1    1   0    irc      libera
  *   ipv4.irc.libera           1    0    0   0    irc      libera
@@ -63,6 +63,9 @@ struct t_relay_server *last_relay_server = NULL;
  *   tls.weechat               1    1    1   0    weechat
  *   ipv6.tls.weechat          0    1    1   0    weechat
  *   unix.weechat              0    0    0   1    weechat
+ *   tls.api                   1    1    1   0    api
+ *   ipv6.tls.api              0    1    1   0    api
+ *   unix.api                  0    0    0   1    api
  *
  * Note: *protocol and *protocol_args must be freed after use.
  */
@@ -475,10 +478,8 @@ error:
         close (client_fd);
 
 end:
-    if (relay_password)
-        free (relay_password);
-    if (relay_totp_secret)
-        free (relay_totp_secret);
+    free (relay_password);
+    free (relay_totp_secret);
 
     return WEECHAT_RC_OK;
 }
@@ -512,7 +513,7 @@ relay_server_create_socket (struct t_relay_server *server)
         server_addr6.sin6_addr = in6addr_any;
         if (bind_address && bind_address[0])
         {
-            if (!inet_pton (domain, bind_address, &server_addr6.sin6_addr))
+            if (inet_pton (domain, bind_address, &server_addr6.sin6_addr) != 1)
             {
                 weechat_printf (NULL,
                                 /* TRANSLATORS: second "%s" is "IPv4" or "IPv6" */
@@ -534,7 +535,7 @@ relay_server_create_socket (struct t_relay_server *server)
         server_addr.sin_addr.s_addr = INADDR_ANY;
         if (bind_address && bind_address[0])
         {
-            if (!inet_pton (domain, bind_address, &server_addr.sin_addr))
+            if (inet_pton (domain, bind_address, &server_addr.sin_addr) != 1)
             {
                 weechat_printf (NULL,
                                 /* TRANSLATORS: second "%s" is "IPv4" or "IPv6" */
@@ -801,6 +802,18 @@ relay_server_new (const char *protocol_string, enum t_relay_protocol protocol,
     if (!protocol_string)
         return NULL;
 
+#ifndef HAVE_CJSON
+    if (protocol == RELAY_PROTOCOL_API)
+    {
+        weechat_printf (NULL,
+                        _("%s%s: error: unable to add relay \"%s\" "
+                          "(cJSON support is not enabled)"),
+                        weechat_prefix ("error"), RELAY_PLUGIN_NAME,
+                        protocol_string);
+        return NULL;
+    }
+#endif /* HAVE_CJSON */
+
     /* look for duplicate ports/paths */
     dup_server = (unix_socket) ?
         relay_server_search_path (path) : relay_server_search_port (port);
@@ -838,8 +851,7 @@ relay_server_new (const char *protocol_string, enum t_relay_protocol protocol,
             weechat_hashtable_set (options, "directory", "runtime");
         new_server->path = weechat_string_eval_path_home (path,
                                                           NULL, NULL, options);
-        if (options)
-            weechat_hashtable_free (options);
+        weechat_hashtable_free (options);
         new_server->ipv4 = ipv4;
         new_server->ipv6 = ipv6;
         new_server->tls = tls;
@@ -887,8 +899,7 @@ relay_server_update_path (struct t_relay_server *server, const char *path)
     if (options)
         weechat_hashtable_set (options, "directory", "runtime");
     new_path = weechat_string_eval_path_home (path, NULL, NULL, options);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
     if (!new_path)
         return;
 
@@ -951,10 +962,8 @@ relay_server_free (struct t_relay_server *server)
 
     /* free data */
     relay_server_close_socket (server);
-    if (server->protocol_string)
-        free (server->protocol_string);
-    if (server->protocol_args)
-        free (server->protocol_args);
+    free (server->protocol_string);
+    free (server->protocol_args);
     free (server->path);
 
     free (server);
@@ -1039,23 +1048,23 @@ relay_server_print_log ()
          ptr_server = ptr_server->next_server)
     {
         weechat_log_printf ("");
-        weechat_log_printf ("[relay server (addr:0x%lx)]", ptr_server);
-        weechat_log_printf ("  protocol_string . . . : '%s'",  ptr_server->protocol_string);
+        weechat_log_printf ("[relay server (addr:%p)]", ptr_server);
+        weechat_log_printf ("  protocol_string . . . : '%s'", ptr_server->protocol_string);
         weechat_log_printf ("  protocol. . . . . . . : %d (%s)",
                             ptr_server->protocol,
                             relay_protocol_string[ptr_server->protocol]);
-        weechat_log_printf ("  protocol_args . . . . : '%s'",  ptr_server->protocol_args);
-        weechat_log_printf ("  port. . . . . . . . . : %d",    ptr_server->port);
-        weechat_log_printf ("  path. . . . . . . . . : %s",    ptr_server->path);
-        weechat_log_printf ("  ipv4. . . . . . . . . : %d",    ptr_server->ipv4);
-        weechat_log_printf ("  ipv6. . . . . . . . . : %d",    ptr_server->ipv6);
-        weechat_log_printf ("  tls . . . . . . . . . : %d",    ptr_server->tls);
-        weechat_log_printf ("  unix_socket . . . . . : %d",    ptr_server->unix_socket);
-        weechat_log_printf ("  sock. . . . . . . . . : %d",    ptr_server->sock);
-        weechat_log_printf ("  hook_fd . . . . . . . : 0x%lx", ptr_server->hook_fd);
-        weechat_log_printf ("  start_time. . . . . . : %lld",  (long long)ptr_server->start_time);
-        weechat_log_printf ("  last_client_disconnect: %lld",  (long long)ptr_server->last_client_disconnect);
-        weechat_log_printf ("  prev_server . . . . . : 0x%lx", ptr_server->prev_server);
-        weechat_log_printf ("  next_server . . . . . : 0x%lx", ptr_server->next_server);
+        weechat_log_printf ("  protocol_args . . . . : '%s'", ptr_server->protocol_args);
+        weechat_log_printf ("  port. . . . . . . . . : %d", ptr_server->port);
+        weechat_log_printf ("  path. . . . . . . . . : %s", ptr_server->path);
+        weechat_log_printf ("  ipv4. . . . . . . . . : %d", ptr_server->ipv4);
+        weechat_log_printf ("  ipv6. . . . . . . . . : %d", ptr_server->ipv6);
+        weechat_log_printf ("  tls . . . . . . . . . : %d", ptr_server->tls);
+        weechat_log_printf ("  unix_socket . . . . . : %d", ptr_server->unix_socket);
+        weechat_log_printf ("  sock. . . . . . . . . : %d", ptr_server->sock);
+        weechat_log_printf ("  hook_fd . . . . . . . : %p", ptr_server->hook_fd);
+        weechat_log_printf ("  start_time. . . . . . : %lld", (long long)ptr_server->start_time);
+        weechat_log_printf ("  last_client_disconnect: %lld", (long long)ptr_server->last_client_disconnect);
+        weechat_log_printf ("  prev_server . . . . . : %p", ptr_server->prev_server);
+        weechat_log_printf ("  next_server . . . . . : %p", ptr_server->next_server);
     }
 }

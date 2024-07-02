@@ -1,7 +1,7 @@
 /*
  * weechat-guile.c - guile (scheme) plugin for WeeChat
  *
- * Copyright (C) 2011-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -311,10 +311,8 @@ weechat_guile_alist_to_hashtable (SCM alist, int size, const char *type_keys,
             str = scm_to_locale_string (scm_list_ref (pair, scm_from_int (0)));
             str2 = scm_to_locale_string (scm_list_ref (pair, scm_from_int (1)));
             weechat_hashtable_set (hashtable, str, str2);
-            if (str)
-                free (str);
-            if (str2)
-                free (str2);
+            free (str);
+            free (str2);
         }
         else if (strcmp (type_values, WEECHAT_HASHTABLE_POINTER) == 0)
         {
@@ -323,10 +321,8 @@ weechat_guile_alist_to_hashtable (SCM alist, int size, const char *type_keys,
             weechat_hashtable_set (hashtable, str,
                                    plugin_script_str2ptr (weechat_guile_plugin,
                                                           NULL, NULL, str2));
-            if (str)
-                free (str);
-            if (str2)
-                free (str2);
+            free (str);
+            free (str2);
         }
     }
 
@@ -633,8 +629,7 @@ weechat_guile_unload (struct t_plugin_script *script)
     {
         rc = (int *)weechat_guile_exec (script, WEECHAT_SCRIPT_EXEC_INT,
                                         script->shutdown_func, NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -655,8 +650,7 @@ weechat_guile_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("guile_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -772,8 +766,7 @@ weechat_guile_eval (struct t_gui_buffer *buffer, int send_to_buffer_as_input,
                                   "script_guile_eval",
                                   "s", func_argv);
     /* result is ignored */
-    if (result)
-        free (result);
+    free (result);
 
     weechat_guile_output_flush ();
 
@@ -876,11 +869,10 @@ weechat_guile_command_cb (const void *pointer, void *data,
             {
                 /* load guile script */
                 path_script = plugin_script_search_path (weechat_guile_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_guile_load ((path_script) ? path_script : ptr_name,
                                     NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -1258,6 +1250,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_guile_plugin = plugin;
 
+    guile_quiet = 0;
+    guile_eval_mode = 0;
+    guile_eval_send_input = 0;
+    guile_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -1353,13 +1350,14 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     weechat_guile_catch (scm_gc_unprotect_object, (void *)guile_module_weechat);
 
     /* free some data */
-    if (guile_action_install_list)
-        free (guile_action_install_list);
-    if (guile_action_remove_list)
-        free (guile_action_remove_list);
-    if (guile_action_autoload_list)
-        free (guile_action_autoload_list);
+    free (guile_action_install_list);
+    guile_action_install_list = NULL;
+    free (guile_action_remove_list);
+    guile_action_remove_list = NULL;
+    free (guile_action_autoload_list);
+    guile_action_autoload_list = NULL;
     weechat_string_dyn_free (guile_buffer_output, 1);
+    guile_buffer_output = NULL;
 
     return WEECHAT_RC_OK;
 }

@@ -1,7 +1,7 @@
 /*
  * logger-config.c - logger configuration options (file logger.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -94,6 +94,32 @@ logger_config_change_file_option_restart_log (const void *pointer, void *data,
 }
 
 /*
+ * Callback for changes on compression type option.
+ */
+
+void
+logger_config_change_file_rotation_comp_type (const void *pointer,
+                                              void *data,
+                                              struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) option;
+
+#ifndef HAVE_ZSTD
+    if (weechat_config_enum (option) == LOGGER_BUFFER_COMPRESSION_ZSTD)
+    {
+        weechat_printf (NULL,
+                        _("%s%s: zstd compression is not available, "
+                          "logger files will not be compressed"),
+                        weechat_prefix ("error"),
+                        LOGGER_PLUGIN_NAME);
+    }
+#endif
+}
+
+/*
  * Callback for changes on option "logger.file.color_lines".
  */
 
@@ -109,9 +135,7 @@ logger_config_color_lines_change (const void *pointer, void *data,
     if (logger_config_loading)
         return;
 
-    if (logger_hook_print)
-        weechat_unhook (logger_hook_print);
-
+    weechat_unhook (logger_hook_print);
     logger_hook_print = weechat_hook_print (
         NULL, NULL, NULL,
         (weechat_config_boolean (logger_config_file_color_lines)) ? 0 : 1,
@@ -658,7 +682,7 @@ logger_config_init ()
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         logger_config_file_rotation_compression_type = weechat_config_new_option (
             logger_config_file, logger_config_section_file,
-            "rotation_compression_type", "integer",
+            "rotation_compression_type", "enum",
             N_("compression type for rotated log files; if set to \"none\", "
                "rotated log files are not compressed; WARNING: if rotation was "
                "enabled with another type of compression (or no compression), "
@@ -666,7 +690,9 @@ logger_config_init ()
                "new type (or decompress files), then change the option in "
                "logger.conf, then load the logger plugin"),
             "none|gzip|zstd", 0, 0, "none", NULL, 0,
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            NULL, NULL, NULL,
+            &logger_config_change_file_rotation_comp_type, NULL, NULL,
+            NULL, NULL, NULL);
         logger_config_file_rotation_size_max = weechat_config_new_option (
             logger_config_file, logger_config_section_file,
             "rotation_size_max", "string",
@@ -688,7 +714,8 @@ logger_config_init ()
             logger_config_file, logger_config_section_file,
             "time_format", "string",
             N_("timestamp used in log files (see man strftime for date/time "
-               "specifiers)"),
+               "specifiers, extra specifiers are supported, see function "
+               "util_strftimeval in Plugin API reference)"),
             NULL, 0, 0, "%Y-%m-%d %H:%M:%S", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
@@ -752,4 +779,5 @@ void
 logger_config_free ()
 {
     weechat_config_free (logger_config_file);
+    logger_config_file = NULL;
 }

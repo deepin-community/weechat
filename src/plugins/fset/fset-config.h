@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -44,6 +44,7 @@ extern struct t_config_option *fset_config_format_export_option;
 extern struct t_config_option *fset_config_format_export_option_null;
 extern struct t_config_option *fset_config_format_option[2];
 
+extern struct t_config_option *fset_config_color_allowed_values[2];
 extern struct t_config_option *fset_config_color_color_name[2];
 extern struct t_config_option *fset_config_color_default_value[2];
 extern struct t_config_option *fset_config_color_description[2];

@@ -2,7 +2,7 @@
  * weechat-php.c - PHP plugin for WeeChat
  *
  * Copyright (C) 2006-2017 Adam Saponara <as@php.net>
- * Copyright (C) 2017-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -154,16 +154,25 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_config_option_set_null, arginfo_weechat_config_option_set_null)
     PHP_FE(weechat_config_option_unset, arginfo_weechat_config_option_unset)
     PHP_FE(weechat_config_option_rename, arginfo_weechat_config_option_rename)
+    PHP_FE(weechat_config_option_get_string, arginfo_weechat_config_option_get_string)
+    PHP_FE(weechat_config_option_get_pointer, arginfo_weechat_config_option_get_pointer)
     PHP_FE(weechat_config_option_is_null, arginfo_weechat_config_option_is_null)
     PHP_FE(weechat_config_option_default_is_null, arginfo_weechat_config_option_default_is_null)
     PHP_FE(weechat_config_boolean, arginfo_weechat_config_boolean)
     PHP_FE(weechat_config_boolean_default, arginfo_weechat_config_boolean_default)
+    PHP_FE(weechat_config_boolean_inherited, arginfo_weechat_config_boolean_inherited)
     PHP_FE(weechat_config_integer, arginfo_weechat_config_integer)
     PHP_FE(weechat_config_integer_default, arginfo_weechat_config_integer_default)
+    PHP_FE(weechat_config_integer_inherited, arginfo_weechat_config_integer_inherited)
     PHP_FE(weechat_config_string, arginfo_weechat_config_string)
     PHP_FE(weechat_config_string_default, arginfo_weechat_config_string_default)
+    PHP_FE(weechat_config_string_inherited, arginfo_weechat_config_string_inherited)
     PHP_FE(weechat_config_color, arginfo_weechat_config_color)
     PHP_FE(weechat_config_color_default, arginfo_weechat_config_color_default)
+    PHP_FE(weechat_config_color_inherited, arginfo_weechat_config_color_inherited)
+    PHP_FE(weechat_config_enum, arginfo_weechat_config_enum)
+    PHP_FE(weechat_config_enum_default, arginfo_weechat_config_enum_default)
+    PHP_FE(weechat_config_enum_inherited, arginfo_weechat_config_enum_inherited)
     PHP_FE(weechat_config_write_option, arginfo_weechat_config_write_option)
     PHP_FE(weechat_config_write_line, arginfo_weechat_config_write_line)
     PHP_FE(weechat_config_write, arginfo_weechat_config_write)
@@ -185,8 +194,10 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_color, arginfo_weechat_color)
     PHP_FE(weechat_print, arginfo_weechat_print)
     PHP_FE(weechat_print_date_tags, arginfo_weechat_print_date_tags)
+    PHP_FE(weechat_print_datetime_tags, arginfo_weechat_print_datetime_tags)
     PHP_FE(weechat_print_y, arginfo_weechat_print_y)
     PHP_FE(weechat_print_y_date_tags, arginfo_weechat_print_y_date_tags)
+    PHP_FE(weechat_print_y_datetime_tags, arginfo_weechat_print_y_datetime_tags)
     PHP_FE(weechat_log_print, arginfo_weechat_log_print)
     PHP_FE(weechat_hook_command, arginfo_weechat_hook_command)
     PHP_FE(weechat_hook_completion, arginfo_weechat_hook_completion)
@@ -197,6 +208,7 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_hook_fd, arginfo_weechat_hook_fd)
     PHP_FE(weechat_hook_process, arginfo_weechat_hook_process)
     PHP_FE(weechat_hook_process_hashtable, arginfo_weechat_hook_process_hashtable)
+    PHP_FE(weechat_hook_url, arginfo_weechat_hook_url)
     PHP_FE(weechat_hook_connect, arginfo_weechat_hook_connect)
     PHP_FE(weechat_hook_line, arginfo_weechat_hook_line)
     PHP_FE(weechat_hook_print, arginfo_weechat_hook_print)
@@ -298,6 +310,7 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_hdata_char, arginfo_weechat_hdata_char)
     PHP_FE(weechat_hdata_integer, arginfo_weechat_hdata_integer)
     PHP_FE(weechat_hdata_long, arginfo_weechat_hdata_long)
+    PHP_FE(weechat_hdata_longlong, arginfo_weechat_hdata_longlong)
     PHP_FE(weechat_hdata_string, arginfo_weechat_hdata_string)
     PHP_FE(weechat_hdata_pointer, arginfo_weechat_hdata_pointer)
     PHP_FE(weechat_hdata_time, arginfo_weechat_hdata_time)
@@ -316,78 +329,33 @@ const zend_function_entry weechat_functions[] = {
 
 PHP_MINIT_FUNCTION(weechat)
 {
+    int i;
+
     /* make C compiler happy */
     (void) type;
 
-    /* Register integer constants */
-    #define PHP_WEECHAT_CONSTANT(NAME) \
-        zend_register_long_constant(#NAME, sizeof(#NAME)-1, (NAME), CONST_CS | CONST_PERSISTENT, module_number)
-    PHP_WEECHAT_CONSTANT(WEECHAT_RC_OK);
-    PHP_WEECHAT_CONSTANT(WEECHAT_RC_OK_EAT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_RC_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_READ_OK);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_READ_MEMORY_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_READ_FILE_NOT_FOUND);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_WRITE_OK);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_WRITE_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_WRITE_MEMORY_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_SET_OK_CHANGED);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_UNSET_OK_RESET);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_UNSET_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_OTHER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_CHAR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_INTEGER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_LONG);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_STRING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_POINTER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_TIME);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_HASHTABLE);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_SHARED_STRING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HDATA_LIST_CHECK_POINTERS);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_PROCESS_RUNNING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_PROCESS_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_PROCESS_CHILD);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_OK);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_PROXY_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_MEMORY_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_TIMEOUT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_SOCKET_ERROR);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_GNUTLS_CB_VERIFY_CERT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_CONNECT_GNUTLS_CB_SET_CERT);
-    #undef PHP_WEECHAT_CONSTANT
-
-    /* Register string constants */
-    #define PHP_WEECHAT_CONSTANT(NAME) \
-        zend_register_string_constant(#NAME, sizeof(#NAME)-1, (NAME), CONST_CS | CONST_PERSISTENT, module_number)
-    PHP_WEECHAT_CONSTANT(WEECHAT_PLUGIN_API_VERSION);
-    PHP_WEECHAT_CONSTANT(WEECHAT_CONFIG_OPTION_NULL);
-    PHP_WEECHAT_CONSTANT(WEECHAT_LIST_POS_SORT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_LIST_POS_BEGINNING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_LIST_POS_END);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HASHTABLE_INTEGER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HASHTABLE_STRING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HASHTABLE_POINTER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HASHTABLE_BUFFER);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HASHTABLE_TIME);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOTLIST_LOW);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOTLIST_MESSAGE);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOTLIST_PRIVATE);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOTLIST_HIGHLIGHT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_SIGNAL_STRING);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_SIGNAL_INT);
-    PHP_WEECHAT_CONSTANT(WEECHAT_HOOK_SIGNAL_POINTER);
-    #undef PHP_WEECHAT_CONSTANT
+    /* interface constants */
+    for (i = 0; weechat_script_constants[i].name; i++)
+    {
+        if (weechat_script_constants[i].value_string)
+        {
+            zend_register_string_constant(
+                weechat_script_constants[i].name,
+                strlen (weechat_script_constants[i].name),
+                weechat_script_constants[i].value_string,
+                CONST_CS | CONST_PERSISTENT,
+                module_number);
+        }
+        else
+        {
+            zend_register_long_constant(
+                weechat_script_constants[i].name,
+                strlen (weechat_script_constants[i].name),
+                weechat_script_constants[i].value_integer,
+                CONST_CS | CONST_PERSISTENT,
+                module_number);
+        }
+    }
     return SUCCESS;
 }
 
@@ -705,7 +673,7 @@ weechat_php_load (const char *filename, const char *code)
     memset (&file_handle, 0, sizeof (file_handle));
     file_handle.type = ZEND_HANDLE_FILENAME;
 #if PHP_VERSION_ID >= 80100
-    file_handle.filename = zend_string_init(filename, strlen(filename), 0);
+    file_handle.filename = zend_string_init (filename, strlen(filename), 0);
 #else
     file_handle.filename = filename;
 #endif
@@ -779,8 +747,7 @@ weechat_php_unload (struct t_plugin_script *script)
                                       WEECHAT_SCRIPT_EXEC_INT,
                                       script->shutdown_func,
                                       NULL, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -793,8 +760,7 @@ weechat_php_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("php_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -977,11 +943,10 @@ weechat_php_command_cb (const void *pointer, void *data,
             {
                 /* load PHP script */
                 path_script = plugin_script_search_path (weechat_php_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_php_load ((path_script) ? path_script : ptr_name,
                                   NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -1308,6 +1273,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_php_plugin = plugin;
 
+    php_quiet = 0;
+    php_eval_mode = 0;
+    php_eval_send_input = 0;
+    php_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -1382,11 +1352,20 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     php_embed_shutdown ();
 
     if (php_action_install_list)
+    {
         free (php_action_install_list);
+        php_action_install_list = NULL;
+    }
     if (php_action_remove_list)
+    {
         free (php_action_remove_list);
+        php_action_remove_list = NULL;
+    }
     if (php_action_autoload_list)
+    {
         free (php_action_autoload_list);
+        php_action_autoload_list = NULL;
+    }
     /* weechat_string_dyn_free (php_buffer_output, 1); */
 
     return WEECHAT_RC_OK;

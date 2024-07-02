@@ -1,7 +1,7 @@
 /*
  * relay-info.c - info and infolist hooks for relay plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -69,7 +69,7 @@ relay_info_info_relay_client_count_cb (const void *pointer, void *data,
             protocol = relay_protocol_search (items[0]);
             if (protocol < 0)
             {
-                status = relay_client_status_search (items[0]);
+                status = relay_status_search (items[0]);
                 if (status < 0)
                     goto end;
             }
@@ -86,7 +86,7 @@ relay_info_info_relay_client_count_cb (const void *pointer, void *data,
         }
         if (strcmp (items[1], "*") != 0)
         {
-            status = relay_client_status_search (items[1]);
+            status = relay_status_search (items[1]);
             if (status < 0)
                 goto end;
         }
@@ -106,8 +106,7 @@ relay_info_info_relay_client_count_cb (const void *pointer, void *data,
     ptr_count = str_count;
 
 end:
-    if (items)
-        weechat_string_free_split (items);
+    weechat_string_free_split (items);
 
     return (ptr_count) ? strdup (ptr_count) : NULL;
 }

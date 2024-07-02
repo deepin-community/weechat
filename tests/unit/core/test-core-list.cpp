@@ -1,7 +1,7 @@
 /*
  * test-core-list.cpp - test list functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -23,7 +23,7 @@
 
 extern "C"
 {
-#include "src/core/wee-list.h"
+#include "src/core/core-list.h"
 #include "src/plugins/plugin.h"
 }
 
@@ -142,6 +142,9 @@ TEST(CoreList, Add)
 
     /* free list */
     weelist_free (list);
+
+    /* test free of NULL list */
+    weelist_free (NULL);
 }
 
 /*

@@ -1,7 +1,7 @@
 /*
  * test-gui-key.cpp - test key functions
  *
- * Copyright (C) 2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -25,9 +25,9 @@
 
 extern "C"
 {
-#include "src/core/wee-config.h"
-#include "src/core/wee-input.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-config.h"
+#include "src/core/core-input.h"
+#include "src/core/core-string.h"
 #include "src/gui/gui-buffer.h"
 #include "src/gui/gui-key.h"
 
@@ -100,8 +100,9 @@ TEST(GuiKey, SearchContext)
 
     LONGS_EQUAL(0, gui_key_search_context ("default"));
     LONGS_EQUAL(1, gui_key_search_context ("search"));
-    LONGS_EQUAL(2, gui_key_search_context ("cursor"));
-    LONGS_EQUAL(3, gui_key_search_context ("mouse"));
+    LONGS_EQUAL(2, gui_key_search_context ("histsearch"));
+    LONGS_EQUAL(3, gui_key_search_context ("cursor"));
+    LONGS_EQUAL(4, gui_key_search_context ("mouse"));
 }
 
 /*
@@ -113,17 +114,26 @@ TEST(GuiKey, GetCurrentContext)
 {
     LONGS_EQUAL(GUI_KEY_CONTEXT_DEFAULT, gui_key_get_current_context ());
 
-    input_data (gui_buffers, "/cursor", NULL, 0);
+    input_data (gui_buffers, "/cursor", NULL, 0, 0);
     LONGS_EQUAL(GUI_KEY_CONTEXT_CURSOR, gui_key_get_current_context ());
 
-    input_data (gui_buffers, "/cursor stop", NULL, 0);
+    input_data (gui_buffers, "/cursor stop", NULL, 0, 0);
     LONGS_EQUAL(GUI_KEY_CONTEXT_DEFAULT, gui_key_get_current_context ());
 
-    input_data (gui_buffers, "/input search_text_here", NULL, 0);
+    input_data (gui_buffers, "/input search_text_here", NULL, 0, 0);
     LONGS_EQUAL(GUI_KEY_CONTEXT_SEARCH, gui_key_get_current_context ());
 
-    input_data (gui_buffers, "/input search_stop", NULL, 0);
+    input_data (gui_buffers, "/input search_stop", NULL, 0, 0);
     LONGS_EQUAL(GUI_KEY_CONTEXT_DEFAULT, gui_key_get_current_context ());
+
+    input_data (gui_buffers, "/input search_history", NULL, 0, 0);
+    LONGS_EQUAL(GUI_KEY_CONTEXT_HISTSEARCH, gui_key_get_current_context ());
+
+    input_data (gui_buffers, "/input search_stop", NULL, 0, 0);
+    LONGS_EQUAL(GUI_KEY_CONTEXT_DEFAULT, gui_key_get_current_context ());
+
+    gui_buffers->text_search_where = 0;
+    gui_buffers->text_search_history = GUI_BUFFER_SEARCH_HISTORY_NONE;
 }
 
 /*
@@ -1051,18 +1061,32 @@ TEST(GuiKey, SeemsValid)
     LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-cb"));
     LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-updown"));
     LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "@chat:button1"));
+    LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-test"));
+    LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "ctrl-test"));
+    LONGS_EQUAL(0, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-test"));
 
     /* valid keys */
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "a"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "A"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "é"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "/"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "f1"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "f10"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "f11"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "f2"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "f20"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-a"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-ctrl-a"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-c,b"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "meta-w,meta-up"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "ctrl-left"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "ctrl-u"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-home"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-f1"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-f10"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-f11"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-f2"));
+    LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_DEFAULT, "shift-f20"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_CURSOR, "@chat:q"));
     LONGS_EQUAL(1, gui_key_seems_valid (GUI_KEY_CONTEXT_MOUSE, "@chat:button1"));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -41,14 +41,14 @@
 #define IRC_COLOR_BOLD_CHAR      '\x02'  /* bold text                       */
 #define IRC_COLOR_BOLD_STR       "\x02"  /*   [02]...[02]                   */
 
-#define IRC_COLOR_COLOR_CHAR     '\x03'  /* text color: fg / fg,bg / ,bg    */
+#define IRC_COLOR_COLOR_CHAR     '\x03'  /* text color: fg/fg,bg/,bg        */
 #define IRC_COLOR_COLOR_STR      "\x03"  /*   [03]15,05...[03]              */
+
+#define IRC_COLOR_HEX_COLOR_CHAR '\x04'  /* text color (hex): fg/fg,bg/,bg  */
+#define IRC_COLOR_HEX_COLOR_STR  "\x04"  /*   [04]FFFF00,8B008B...[04]      */
 
 #define IRC_COLOR_RESET_CHAR     '\x0F'  /* reset color/attributes          */
 #define IRC_COLOR_RESET_STR      "\x0F"  /*   [0F]...                       */
-
-#define IRC_COLOR_FIXED_CHAR     '\x11'  /* monospaced font (ignored)       */
-#define IRC_COLOR_FIXED_STR      "\x11"  /*   [11]...[11]                   */
 
 #define IRC_COLOR_REVERSE_CHAR   '\x16'  /* reverse video (fg <--> bg)      */
 #define IRC_COLOR_REVERSE_STR    "\x16"  /*   [16]...[16]                   */
@@ -97,7 +97,6 @@
 #define IRC_COLOR_TOPIC_NEW weechat_color(weechat_config_string(irc_config_color_topic_new))
 #define IRC_COLOR_INPUT_NICK weechat_color(weechat_config_string(irc_config_color_input_nick))
 #define IRC_COLOR_ITEM_AWAY weechat_color(weechat_config_string(irc_config_color_item_away))
-#define IRC_COLOR_ITEM_CHANNEL_MODES weechat_color(weechat_config_string(irc_config_color_item_channel_modes))
 #define IRC_COLOR_ITEM_LAG_COUNTING weechat_color(weechat_config_string(irc_config_color_item_lag_counting))
 #define IRC_COLOR_ITEM_LAG_FINISHED weechat_color(weechat_config_string(irc_config_color_item_lag_finished))
 #define IRC_COLOR_ITEM_NICK_MODES weechat_color(weechat_config_string(irc_config_color_item_nick_modes))

@@ -1,7 +1,7 @@
 /*
  * plugin-config.c - plugin configuration options (file plugins.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,11 +30,11 @@
 #include <sys/stat.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-list.h"
-#include "../core/wee-log.h"
-#include "../core/wee-string.h"
+#include "../core/core-config.h"
+#include "../core/core-hook.h"
+#include "../core/core-list.h"
+#include "../core/core-log.h"
+#include "../core/core-string.h"
 #include "plugin-config.h"
 #include "weechat-plugin.h"
 

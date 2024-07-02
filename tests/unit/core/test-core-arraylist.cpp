@@ -1,7 +1,7 @@
 /*
  * test-core-arraylist.cpp - test arraylist functions
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,8 +24,8 @@
 extern "C"
 {
 #include <string.h>
-#include "src/core/wee-arraylist.h"
-#include "src/core/wee-string.h"
+#include "src/core/core-arraylist.h"
+#include "src/core/core-string.h"
 }
 
 #define TEST_ARRAYLIST_ADD(__result, __value)                           \
@@ -480,6 +480,9 @@ test_arraylist (int initial_size, int sorted, int allow_duplicates)
 TEST(CoreArraylist, New)
 {
     int initial_size, sorted, allow_duplicates;
+
+    /* free arraylist with NULL pointer */
+    arraylist_free (NULL);
 
     /*
      * in order to create an arraylist, initial_size must be >= 0 and a

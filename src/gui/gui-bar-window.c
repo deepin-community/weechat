@@ -1,7 +1,7 @@
 /*
  * gui-bar-window.c - bar window functions (used by all GUI)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,12 +29,12 @@
 #include <string.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-hashtable.h"
-#include "../core/wee-hdata.h"
-#include "../core/wee-infolist.h"
-#include "../core/wee-log.h"
-#include "../core/wee-string.h"
+#include "../core/core-config.h"
+#include "../core/core-hashtable.h"
+#include "../core/core-hdata.h"
+#include "../core/core-infolist.h"
+#include "../core/core-log.h"
+#include "../core/core-string.h"
 #include "../plugins/plugin.h"
 #include "gui-bar-window.h"
 #include "gui-bar.h"
@@ -168,7 +168,7 @@ gui_bar_window_search_by_xy (struct t_gui_window *window, int x, int y,
     if (*bar_window)
     {
         filling = gui_bar_get_filling ((*bar_window)->bar);
-        position = CONFIG_INTEGER((*bar_window)->bar->options[GUI_BAR_OPTION_POSITION]);
+        position = CONFIG_ENUM((*bar_window)->bar->options[GUI_BAR_OPTION_POSITION]);
 
         *bar_item_line = y - (*bar_window)->y + (*bar_window)->scroll_y;
         *bar_item_col = x - (*bar_window)->x + (*bar_window)->scroll_x;
@@ -300,8 +300,8 @@ gui_bar_window_get_size (struct t_gui_bar *bar, struct t_gui_window *window,
 
         if (!CONFIG_BOOLEAN(ptr_bar_window->bar->options[GUI_BAR_OPTION_HIDDEN]))
         {
-            if ((CONFIG_INTEGER(ptr_bar_window->bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
-                && (CONFIG_INTEGER(ptr_bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == (int)position))
+            if ((CONFIG_ENUM(ptr_bar_window->bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
+                && (CONFIG_ENUM(ptr_bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == (int)position))
             {
                 switch (position)
                 {
@@ -365,7 +365,7 @@ gui_bar_window_calculate_pos_size (struct t_gui_bar_window *bar_window,
         add_right = gui_bar_root_get_size (bar_window->bar, GUI_BAR_POSITION_RIGHT);
     }
 
-    switch (CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]))
+    switch (CONFIG_ENUM(bar_window->bar->options[GUI_BAR_OPTION_POSITION]))
     {
         case GUI_BAR_POSITION_BOTTOM:
             bar_window->x = x1 + add_left;
@@ -516,8 +516,7 @@ error:
     {
         for (i = 0; i < bar_window->items_count; i++)
         {
-            if (bar_window->items_content[i])
-                free (bar_window->items_content[i]);
+            free (bar_window->items_content[i]);
         }
         free (bar_window->items_content);
         bar_window->items_content = NULL;
@@ -526,8 +525,7 @@ error:
     {
         for (i = 0; i < bar_window->items_count; i++)
         {
-            if (bar_window->items_num_lines[i])
-                free (bar_window->items_num_lines[i]);
+            free (bar_window->items_num_lines[i]);
         }
         free (bar_window->items_num_lines);
         bar_window->items_num_lines = NULL;
@@ -536,8 +534,7 @@ error:
     {
         for (i = 0; i < bar_window->items_count; i++)
         {
-            if (bar_window->items_refresh_needed[i])
-                free (bar_window->items_refresh_needed[i]);
+            free (bar_window->items_refresh_needed[i]);
         }
         free (bar_window->items_refresh_needed);
         bar_window->items_refresh_needed = NULL;
@@ -814,8 +811,7 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
                             (item_value) ? item_value : ptr_content,
                             -1);
                         first_sub_item = 0;
-                        if (item_value)
-                            free (item_value);
+                        free (item_value);
                         if (item_is_spacer)
                             (*num_spacers)++;
                         else
@@ -880,8 +876,8 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
                 else
                     split_items[i] = NULL;
             }
-            if ((CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == GUI_BAR_POSITION_BOTTOM)
-                || (CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == GUI_BAR_POSITION_TOP))
+            if ((CONFIG_ENUM(bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == GUI_BAR_POSITION_BOTTOM)
+                || (CONFIG_ENUM(bar_window->bar->options[GUI_BAR_OPTION_POSITION]) == GUI_BAR_POSITION_TOP))
             {
                 columns = bar_window->width / (max_length_screen + 1);
                 if (columns == 0)
@@ -969,8 +965,7 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
                 {
                     for (sub = 0; sub < bar_window->items_subcount[i]; sub++)
                     {
-                        if (split_items[i][sub])
-                            string_free_split (split_items[i][sub]);
+                        string_free_split (split_items[i][sub]);
                     }
                     free (split_items[i]);
                 }
@@ -1008,7 +1003,7 @@ gui_bar_window_can_use_spacer (struct t_gui_bar_window *bar_window)
     if (!bar_window)
         return 0;
 
-    position = CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]);
+    position = CONFIG_ENUM(bar_window->bar->options[GUI_BAR_OPTION_POSITION]);
     filling = gui_bar_get_filling (bar_window->bar);
     bar_size = CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_SIZE]);
 
@@ -1194,7 +1189,7 @@ gui_bar_window_new (struct t_gui_bar *bar, struct t_gui_window *window)
 
     if (window)
     {
-        if ((CONFIG_INTEGER(bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
+        if ((CONFIG_ENUM(bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
             && (!gui_bar_check_conditions (bar, window)))
             return;
     }
@@ -1272,7 +1267,7 @@ gui_bar_window_get_max_size_in_window (struct t_gui_bar_window *bar_window,
 
     if (bar_window && window)
     {
-        switch (CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]))
+        switch (CONFIG_ENUM(bar_window->bar->options[GUI_BAR_OPTION_POSITION]))
         {
             case GUI_BAR_POSITION_BOTTOM:
             case GUI_BAR_POSITION_TOP:
@@ -1439,7 +1434,7 @@ gui_bar_window_remove_unused_bars (struct t_gui_window *window)
         {
             next_bar_win = ptr_bar_win->next_bar_window;
 
-            if ((CONFIG_INTEGER(ptr_bar_win->bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
+            if ((CONFIG_ENUM(ptr_bar_win->bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
                 && (!gui_bar_check_conditions (ptr_bar_win->bar, window)))
             {
                 gui_bar_window_free (ptr_bar_win, window);
@@ -1454,7 +1449,7 @@ gui_bar_window_remove_unused_bars (struct t_gui_window *window)
         /* remove unused root bars */
         for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
         {
-            if ((CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
+            if ((CONFIG_ENUM(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
                 && ptr_bar->bar_window
                 && (!gui_bar_check_conditions (ptr_bar, NULL)))
             {
@@ -1491,7 +1486,7 @@ gui_bar_window_add_missing_bars (struct t_gui_window *window)
         /* add missing window bars in window */
         for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
         {
-            if ((CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
+            if ((CONFIG_ENUM(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_WINDOW)
                 && (!gui_bar_window_search_bar (window, ptr_bar))
                 && (gui_bar_check_conditions (ptr_bar, window)))
             {
@@ -1505,7 +1500,7 @@ gui_bar_window_add_missing_bars (struct t_gui_window *window)
         /* add missing root bars */
         for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
         {
-            if ((CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
+            if ((CONFIG_ENUM(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
                 && !ptr_bar->bar_window
                 && (gui_bar_check_conditions (ptr_bar, NULL)))
             {
@@ -1759,20 +1754,20 @@ gui_bar_window_print_log (struct t_gui_bar_window *bar_window)
     int i, j;
 
     log_printf ("");
-    log_printf ("  [window bar (addr:0x%lx)]",     bar_window);
-    log_printf ("    bar. . . . . . . . . . : 0x%lx ('%s')",
+    log_printf ("  [window bar (addr:%p)]", bar_window);
+    log_printf ("    bar. . . . . . . . . . : %p ('%s')",
                 bar_window->bar,
                 (bar_window->bar) ? bar_window->bar->name : "");
-    log_printf ("    x. . . . . . . . . . . : %d",    bar_window->x);
-    log_printf ("    y. . . . . . . . . . . : %d",    bar_window->y);
-    log_printf ("    width. . . . . . . . . : %d",    bar_window->width);
-    log_printf ("    height . . . . . . . . : %d",    bar_window->height);
-    log_printf ("    scroll_x . . . . . . . : %d",    bar_window->scroll_x);
-    log_printf ("    scroll_y . . . . . . . : %d",    bar_window->scroll_y);
-    log_printf ("    cursor_x . . . . . . . : %d",    bar_window->cursor_x);
-    log_printf ("    cursor_y . . . . . . . : %d",    bar_window->cursor_y);
-    log_printf ("    current_size . . . . . : %d",    bar_window->current_size);
-    log_printf ("    items_count. . . . . . : %d",    bar_window->items_count);
+    log_printf ("    x. . . . . . . . . . . : %d", bar_window->x);
+    log_printf ("    y. . . . . . . . . . . : %d", bar_window->y);
+    log_printf ("    width. . . . . . . . . : %d", bar_window->width);
+    log_printf ("    height . . . . . . . . : %d", bar_window->height);
+    log_printf ("    scroll_x . . . . . . . : %d", bar_window->scroll_x);
+    log_printf ("    scroll_y . . . . . . . : %d", bar_window->scroll_y);
+    log_printf ("    cursor_x . . . . . . . : %d", bar_window->cursor_x);
+    log_printf ("    cursor_y . . . . . . . : %d", bar_window->cursor_y);
+    log_printf ("    current_size . . . . . : %d", bar_window->current_size);
+    log_printf ("    items_count. . . . . . : %d", bar_window->items_count);
     for (i = 0; i < bar_window->items_count; i++)
     {
         log_printf ("    items_subcount[%03d]. . : %d",
@@ -1794,7 +1789,7 @@ gui_bar_window_print_log (struct t_gui_bar_window *bar_window)
         }
         else
         {
-            log_printf ("    items_content. . . . . . : 0x%lx", bar_window->items_content);
+            log_printf ("    items_content. . . . . . : %p", bar_window->items_content);
         }
     }
     log_printf ("    screen_col_size. . . . : %d", bar_window->screen_col_size);
@@ -1811,8 +1806,8 @@ gui_bar_window_print_log (struct t_gui_bar_window *bar_window)
                     bar_window->coords[i]->x,
                     bar_window->coords[i]->y);
     }
-    log_printf ("    gui_objects. . . . . . : 0x%lx", bar_window->gui_objects);
+    log_printf ("    gui_objects. . . . . . : %p", bar_window->gui_objects);
     gui_bar_window_objects_print_log (bar_window);
-    log_printf ("    prev_bar_window. . . . : 0x%lx", bar_window->prev_bar_window);
-    log_printf ("    next_bar_window. . . . : 0x%lx", bar_window->next_bar_window);
+    log_printf ("    prev_bar_window. . . . : %p", bar_window->prev_bar_window);
+    log_printf ("    next_bar_window. . . . : %p", bar_window->next_bar_window);
 }

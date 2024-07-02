@@ -2,7 +2,7 @@
  * weechat-lua-api.c - lua API functions
  *
  * Copyright (C) 2006-2007 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -36,10 +36,6 @@
 #include "weechat-lua.h"
 
 
-#define API_DEF_CONST_INT(__name)                                       \
-    { #__name, __name, NULL }
-#define API_DEF_CONST_STR(__name)                                       \
-    { #__name, 0, __name }
 #define API_DEF_FUNC(__name)                                            \
     { #__name, &weechat_lua_api_##__name }
 #define API_FUNC(__name)                                                \
@@ -530,12 +526,9 @@ API_FUNC(string_eval_expression)
     result = weechat_string_eval_expression (expr, pointers, extra_vars,
                                              options);
 
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -567,12 +560,9 @@ API_FUNC(string_eval_path_home)
     result = weechat_string_eval_path_home (path, pointers, extra_vars,
                                             options);
 
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -1337,9 +1327,7 @@ weechat_lua_api_config_option_change_cb (const void *pointer, void *data,
                                WEECHAT_SCRIPT_EXEC_IGNORE,
                                ptr_function,
                                "ss", func_argv);
-
-        if (rc)
-            free (rc);
+        free (rc);
     }
 }
 
@@ -1364,9 +1352,7 @@ weechat_lua_api_config_option_delete_cb (const void *pointer, void *data,
                                WEECHAT_SCRIPT_EXEC_IGNORE,
                                ptr_function,
                                "ss", func_argv);
-
-        if (rc)
-            free (rc);
+        free (rc);
     }
 }
 
@@ -1552,6 +1538,41 @@ API_FUNC(config_option_rename)
     API_RETURN_OK;
 }
 
+API_FUNC(config_option_get_string)
+{
+    const char *option, *property, *result;
+
+    API_INIT_FUNC(1, "config_option_get_string", API_RETURN_EMPTY);
+    if (lua_gettop (L) < 2)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    option = lua_tostring (L, -2);
+    property = lua_tostring (L, -1);
+
+    result = weechat_config_option_get_string (API_STR2PTR(option),
+                                               property);
+
+    API_RETURN_STRING(result);
+}
+
+API_FUNC(config_option_get_pointer)
+{
+    const char *option, *property;
+    const char *result;
+
+    API_INIT_FUNC(1, "config_option_get_pointer", API_RETURN_EMPTY);
+    if (lua_gettop (L) < 2)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    option = lua_tostring (L, -2);
+    property = lua_tostring (L, -1);
+
+    result = API_PTR2STR(weechat_config_option_get_pointer (API_STR2PTR(option),
+                                                            property));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(config_option_is_null)
 {
     const char *option;
@@ -1616,6 +1637,22 @@ API_FUNC(config_boolean_default)
     API_RETURN_INT(value);
 }
 
+API_FUNC(config_boolean_inherited)
+{
+    const char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_boolean_inherited", API_RETURN_INT(0));
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    option = lua_tostring (L, -1);
+
+    value = weechat_config_boolean_inherited (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
 API_FUNC(config_integer)
 {
     const char *option;
@@ -1644,6 +1681,22 @@ API_FUNC(config_integer_default)
     option = lua_tostring (L, -1);
 
     value = weechat_config_integer_default (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_integer_inherited)
+{
+    const char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_integer_inherited", API_RETURN_INT(0));
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    option = lua_tostring (L, -1);
+
+    value = weechat_config_integer_inherited (API_STR2PTR(option));
 
     API_RETURN_INT(value);
 }
@@ -1678,6 +1731,21 @@ API_FUNC(config_string_default)
     API_RETURN_STRING(result);
 }
 
+API_FUNC(config_string_inherited)
+{
+    const char *option, *result;
+
+    API_INIT_FUNC(1, "config_string_inherited", API_RETURN_EMPTY);
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    option = lua_tostring (L, -1);
+
+    result = weechat_config_string_inherited (API_STR2PTR(option));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(config_color)
 {
     const char *option, *result;
@@ -1706,6 +1774,69 @@ API_FUNC(config_color_default)
     result = weechat_config_color_default (API_STR2PTR(option));
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(config_color_inherited)
+{
+    const char *option, *result;
+
+    API_INIT_FUNC(1, "config_color_inherited", API_RETURN_EMPTY);
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    option = lua_tostring (L, -1);
+
+    result = weechat_config_color_inherited (API_STR2PTR(option));
+
+    API_RETURN_STRING(result);
+}
+
+API_FUNC(config_enum)
+{
+    const char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum", API_RETURN_INT(0));
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    option = lua_tostring (L, -1);
+
+    value = weechat_config_enum (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_enum_default)
+{
+    const char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum_default", API_RETURN_INT(0));
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    option = lua_tostring (L, -1);
+
+    value = weechat_config_enum_default (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
+}
+
+API_FUNC(config_enum_inherited)
+{
+    const char *option;
+    int value;
+
+    API_INIT_FUNC(1, "config_enum_inherited", API_RETURN_INT(0));
+    if (lua_gettop (L) < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    option = lua_tostring (L, -1);
+
+    value = weechat_config_enum_inherited (API_STR2PTR(option));
+
+    API_RETURN_INT(value);
 }
 
 API_FUNC(config_write_option)
@@ -1979,8 +2110,7 @@ API_FUNC(key_bind)
 
     num_keys = weechat_key_bind (context, hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(num_keys);
 }
@@ -2075,6 +2205,33 @@ API_FUNC(print_date_tags)
     API_RETURN_OK;
 }
 
+API_FUNC(print_datetime_tags)
+{
+    const char *buffer, *tags, *message;
+    long date;
+    int date_usec;
+
+    API_INIT_FUNC(1, "print_datetime_tags", API_RETURN_ERROR);
+    if (lua_gettop (L) < 5)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    buffer = lua_tostring (L, -5);
+    date = lua_tonumber (L, -4);
+    date_usec = lua_tonumber (L, -3);
+    tags = lua_tostring (L, -2);
+    message = lua_tostring (L, -1);
+
+    plugin_script_api_printf_datetime_tags (weechat_lua_plugin,
+                                            lua_current_script,
+                                            API_STR2PTR(buffer),
+                                            (time_t)date,
+                                            date_usec,
+                                            tags,
+                                            "%s", message);
+
+    API_RETURN_OK;
+}
+
 API_FUNC(print_y)
 {
     const char *buffer, *message;
@@ -2120,6 +2277,35 @@ API_FUNC(print_y_date_tags)
                                           (time_t)date,
                                           tags,
                                           "%s", message);
+
+    API_RETURN_OK;
+}
+
+API_FUNC(print_y_datetime_tags)
+{
+    const char *buffer, *tags, *message;
+    int y, date_usec;
+    long date;
+
+    API_INIT_FUNC(1, "print_y_datetime_tags", API_RETURN_ERROR);
+    if (lua_gettop (L) < 6)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    buffer = lua_tostring (L, -6);
+    y = lua_tonumber (L, -5);
+    date = lua_tonumber (L, -4);
+    date_usec = lua_tonumber (L, -3);
+    tags = lua_tostring (L, -2);
+    message = lua_tostring (L, -1);
+
+    plugin_script_api_printf_y_datetime_tags (weechat_lua_plugin,
+                                              lua_current_script,
+                                              API_STR2PTR(buffer),
+                                              y,
+                                              (time_t)date,
+                                              date_usec,
+                                              tags,
+                                              "%s", message);
 
     API_RETURN_OK;
 }
@@ -2639,8 +2825,82 @@ API_FUNC(hook_process_hashtable)
                                                                    function,
                                                                    data));
 
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
+
+    API_RETURN_STRING(result);
+}
+
+int
+weechat_lua_api_hook_url_cb (const void *pointer, void *data,
+                             const char *url,
+                             struct t_hashtable *options,
+                             struct t_hashtable *output)
+{
+    struct t_plugin_script *script;
+    void *func_argv[4];
+    char empty_arg[1] = { '\0' };
+    const char *ptr_function, *ptr_data;
+    int *rc, ret;
+
+    script = (struct t_plugin_script *)pointer;
+    plugin_script_get_function_and_data (data, &ptr_function, &ptr_data);
+
+    if (ptr_function && ptr_function[0])
+    {
+        func_argv[0] = (ptr_data) ? (char *)ptr_data : empty_arg;
+        func_argv[1] = (url) ? (char *)url : empty_arg;
+        func_argv[2] = options;
+        func_argv[3] = output;
+
+        rc = (int *) weechat_lua_exec (script,
+                                       WEECHAT_SCRIPT_EXEC_INT,
+                                       ptr_function,
+                                       "sshh", func_argv);
+
+        if (!rc)
+            ret = WEECHAT_RC_ERROR;
+        else
+        {
+            ret = *rc;
+            free (rc);
+        }
+
+        return ret;
+    }
+
+    return WEECHAT_RC_ERROR;
+}
+
+API_FUNC(hook_url)
+{
+    const char *url, *function, *data;
+    struct t_hashtable *options;
+    int timeout;
+    const char *result;
+
+    API_INIT_FUNC(1, "hook_url", API_RETURN_EMPTY);
+    if (lua_gettop (L) < 5)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    url = lua_tostring (L, -5);
+    options = weechat_lua_tohashtable (L, -4,
+                                       WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                       WEECHAT_HASHTABLE_STRING,
+                                       WEECHAT_HASHTABLE_STRING);
+    timeout = lua_tonumber (L, -3);
+    function = lua_tostring (L, -2);
+    data = lua_tostring (L, -1);
+
+    result = API_PTR2STR(plugin_script_api_hook_url (weechat_lua_plugin,
+                                                     lua_current_script,
+                                                     url,
+                                                     options,
+                                                     timeout,
+                                                     &weechat_lua_api_hook_url_cb,
+                                                     function,
+                                                     data));
+
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING(result);
 }
@@ -2783,7 +3043,7 @@ API_FUNC(hook_line)
 int
 weechat_lua_api_hook_print_cb (const void *pointer, void *data,
                                struct t_gui_buffer *buffer,
-                               time_t date,
+                               time_t date, int date_usec,
                                int tags_count, const char **tags,
                                int displayed, int highlight,
                                const char *prefix, const char *message)
@@ -2796,6 +3056,7 @@ weechat_lua_api_hook_print_cb (const void *pointer, void *data,
     int *rc, ret;
 
     /* make C compiler happy */
+    (void) date_usec;
     (void) tags_count;
 
     script = (struct t_plugin_script *)pointer;
@@ -2828,8 +3089,7 @@ weechat_lua_api_hook_print_cb (const void *pointer, void *data,
             ret = *rc;
             free (rc);
         }
-        if (func_argv[3])
-            free (func_argv[3]);
+        free (func_argv[3]);
 
         return ret;
     }
@@ -3066,8 +3326,7 @@ API_FUNC(hook_hsignal_send)
 
     rc = weechat_hook_hsignal_send (signal, hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(rc);
 }
@@ -3611,8 +3870,7 @@ API_FUNC(buffer_new_props)
             function_close,
             data_close));
 
-    if (properties)
-        weechat_hashtable_free (properties);
+    weechat_hashtable_free (properties);
 
     API_RETURN_STRING(result);
 }
@@ -4498,8 +4756,7 @@ API_FUNC(command_options)
                                             command,
                                             options);
 
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (options);
 
     API_RETURN_INT(rc);
 }
@@ -4630,10 +4887,8 @@ API_FUNC(info_get_hashtable)
 
     weechat_lua_pushhashtable (L, result_hashtable);
 
-    if (table)
-        weechat_hashtable_free (table);
-    if (result_hashtable)
-        weechat_hashtable_free (result_hashtable);
+    weechat_hashtable_free (table);
+    weechat_hashtable_free (result_hashtable);
 
     return 1;
 }
@@ -5131,12 +5386,9 @@ API_FUNC(hdata_search)
                                                options,
                                                move));
 
-    if (pointers)
-        weechat_hashtable_free (pointers);
-    if (extra_vars)
-        weechat_hashtable_free (extra_vars);
-    if (options)
-        weechat_hashtable_free (options);
+    weechat_hashtable_free (pointers);
+    weechat_hashtable_free (extra_vars);
+    weechat_hashtable_free (options);
 
     API_RETURN_STRING(result);
 }
@@ -5197,6 +5449,26 @@ API_FUNC(hdata_long)
     value = weechat_hdata_long (API_STR2PTR(hdata),
                                 API_STR2PTR(pointer),
                                 name);
+
+    API_RETURN_LONG(value);
+}
+
+API_FUNC(hdata_longlong)
+{
+    const char *hdata, *pointer, *name;
+    long long value;
+
+    API_INIT_FUNC(1, "hdata_longlong", API_RETURN_LONG(0));
+    if (lua_gettop (L) < 3)
+        API_WRONG_ARGS(API_RETURN_LONG(0));
+
+    hdata = lua_tostring (L, -3);
+    pointer = lua_tostring (L, -2);
+    name = lua_tostring (L, -1);
+
+    value = weechat_hdata_longlong (API_STR2PTR(hdata),
+                                    API_STR2PTR(pointer),
+                                    name);
 
     API_RETURN_LONG(value);
 }
@@ -5325,8 +5597,7 @@ API_FUNC(hdata_update)
                                   API_STR2PTR(pointer),
                                   hashtable);
 
-    if (hashtable)
-        weechat_hashtable_free (hashtable);
+    weechat_hashtable_free (hashtable);
 
     API_RETURN_INT(value);
 }
@@ -5521,16 +5792,25 @@ const struct luaL_Reg weechat_lua_api_funcs[] = {
     API_DEF_FUNC(config_option_set_null),
     API_DEF_FUNC(config_option_unset),
     API_DEF_FUNC(config_option_rename),
+    API_DEF_FUNC(config_option_get_string),
+    API_DEF_FUNC(config_option_get_pointer),
     API_DEF_FUNC(config_option_is_null),
     API_DEF_FUNC(config_option_default_is_null),
     API_DEF_FUNC(config_boolean),
     API_DEF_FUNC(config_boolean_default),
+    API_DEF_FUNC(config_boolean_inherited),
     API_DEF_FUNC(config_integer),
     API_DEF_FUNC(config_integer_default),
+    API_DEF_FUNC(config_integer_inherited),
     API_DEF_FUNC(config_string),
     API_DEF_FUNC(config_string_default),
+    API_DEF_FUNC(config_string_inherited),
     API_DEF_FUNC(config_color),
     API_DEF_FUNC(config_color_default),
+    API_DEF_FUNC(config_color_inherited),
+    API_DEF_FUNC(config_enum),
+    API_DEF_FUNC(config_enum_default),
+    API_DEF_FUNC(config_enum_inherited),
     API_DEF_FUNC(config_write_option),
     API_DEF_FUNC(config_write_line),
     API_DEF_FUNC(config_write),
@@ -5552,8 +5832,10 @@ const struct luaL_Reg weechat_lua_api_funcs[] = {
     API_DEF_FUNC(color),
     API_DEF_FUNC(print),
     API_DEF_FUNC(print_date_tags),
+    API_DEF_FUNC(print_datetime_tags),
     API_DEF_FUNC(print_y),
     API_DEF_FUNC(print_y_date_tags),
+    API_DEF_FUNC(print_y_datetime_tags),
     API_DEF_FUNC(log_print),
     API_DEF_FUNC(hook_command),
     API_DEF_FUNC(hook_completion),
@@ -5564,6 +5846,7 @@ const struct luaL_Reg weechat_lua_api_funcs[] = {
     API_DEF_FUNC(hook_fd),
     API_DEF_FUNC(hook_process),
     API_DEF_FUNC(hook_process_hashtable),
+    API_DEF_FUNC(hook_url),
     API_DEF_FUNC(hook_connect),
     API_DEF_FUNC(hook_line),
     API_DEF_FUNC(hook_print),
@@ -5665,6 +5948,7 @@ const struct luaL_Reg weechat_lua_api_funcs[] = {
     API_DEF_FUNC(hdata_char),
     API_DEF_FUNC(hdata_integer),
     API_DEF_FUNC(hdata_long),
+    API_DEF_FUNC(hdata_longlong),
     API_DEF_FUNC(hdata_string),
     API_DEF_FUNC(hdata_pointer),
     API_DEF_FUNC(hdata_time),
@@ -5676,58 +5960,5 @@ const struct luaL_Reg weechat_lua_api_funcs[] = {
     API_DEF_FUNC(upgrade_write_object),
     API_DEF_FUNC(upgrade_read),
     API_DEF_FUNC(upgrade_close),
-
-    { NULL, NULL }
-};
-
-const struct t_lua_const weechat_lua_api_consts[] =
-{
-    API_DEF_CONST_INT(WEECHAT_RC_OK),
-    API_DEF_CONST_INT(WEECHAT_RC_OK_EAT),
-    API_DEF_CONST_INT(WEECHAT_RC_ERROR),
-
-    API_DEF_CONST_INT(WEECHAT_CONFIG_READ_OK),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_READ_MEMORY_ERROR),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_READ_FILE_NOT_FOUND),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_WRITE_OK),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_WRITE_ERROR),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_WRITE_MEMORY_ERROR),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_SET_OK_CHANGED),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_SET_ERROR),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_UNSET_OK_RESET),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED),
-    API_DEF_CONST_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR),
-
-    API_DEF_CONST_STR(WEECHAT_LIST_POS_SORT),
-    API_DEF_CONST_STR(WEECHAT_LIST_POS_BEGINNING),
-    API_DEF_CONST_STR(WEECHAT_LIST_POS_END),
-
-    API_DEF_CONST_STR(WEECHAT_HOTLIST_LOW),
-    API_DEF_CONST_STR(WEECHAT_HOTLIST_MESSAGE),
-    API_DEF_CONST_STR(WEECHAT_HOTLIST_PRIVATE),
-    API_DEF_CONST_STR(WEECHAT_HOTLIST_HIGHLIGHT),
-
-    API_DEF_CONST_INT(WEECHAT_HOOK_PROCESS_RUNNING),
-    API_DEF_CONST_INT(WEECHAT_HOOK_PROCESS_ERROR),
-
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_OK),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_PROXY_ERROR),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_MEMORY_ERROR),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_TIMEOUT),
-    API_DEF_CONST_INT(WEECHAT_HOOK_CONNECT_SOCKET_ERROR),
-
-    API_DEF_CONST_STR(WEECHAT_HOOK_SIGNAL_STRING),
-    API_DEF_CONST_STR(WEECHAT_HOOK_SIGNAL_INT),
-    API_DEF_CONST_STR(WEECHAT_HOOK_SIGNAL_POINTER),
-
-    { NULL, 0, NULL }
+    { NULL, NULL },
 };

@@ -1,7 +1,7 @@
 /*
  * gui-curses-window.c - window display functions for Curses GUI
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,11 +34,11 @@
 #include <termios.h>
 
 #include "../../core/weechat.h"
-#include "../../core/wee-config.h"
-#include "../../core/wee-eval.h"
-#include "../../core/wee-hook.h"
-#include "../../core/wee-log.h"
-#include "../../core/wee-string.h"
+#include "../../core/core-config.h"
+#include "../../core/core-eval.h"
+#include "../../core/core-hook.h"
+#include "../../core/core-log.h"
+#include "../../core/core-string.h"
 #include "../../plugins/plugin.h"
 #include "../gui-window.h"
 #include "../gui-bar.h"
@@ -1372,8 +1372,9 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
 
     if (old_buffer != buffer)
     {
-        (void) hook_signal_send ("buffer_switch",
-                                 WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+        (void) gui_buffer_send_signal (buffer,
+                                       "buffer_switch",
+                                       WEECHAT_HOOK_SIGNAL_POINTER, buffer);
     }
 }
 
@@ -1826,7 +1827,7 @@ gui_window_refresh_windows ()
 
     for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
     {
-        if ((CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
+        if ((CONFIG_ENUM(ptr_bar->options[GUI_BAR_OPTION_TYPE]) == GUI_BAR_TYPE_ROOT)
             && ptr_bar->bar_window
             && !CONFIG_BOOLEAN(ptr_bar->options[GUI_BAR_OPTION_HIDDEN]))
         {
@@ -2645,7 +2646,7 @@ gui_window_send_clipboard (const char *storage_unit, const char *text)
     text_base64 = malloc ((length * 4) + 1);
     if (text_base64)
     {
-        if (string_base64_encode (text, length, text_base64) >= 0)
+        if (string_base64_encode (0, text, length, text_base64) >= 0)
         {
             fprintf (stderr, "\033]52;%s;%s\a",
                      (storage_unit) ? storage_unit : "",
@@ -2715,7 +2716,7 @@ void
 gui_window_objects_print_log (struct t_gui_window *window)
 {
     log_printf ("  window specific objects for Curses:");
-    log_printf ("    win_chat. . . . . . . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_chat);
-    log_printf ("    win_separator_horiz . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
-    log_printf ("    win_separator_vertic. : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
+    log_printf ("    win_chat. . . . . . . : %p", GUI_WINDOW_OBJECTS(window)->win_chat);
+    log_printf ("    win_separator_horiz . : %p", GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
+    log_printf ("    win_separator_vertic. : %p", GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
 }

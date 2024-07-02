@@ -1,7 +1,7 @@
 /*
  * test-trigger.cpp - test trigger functions
  *
- * Copyright (C) 2021-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -26,8 +26,8 @@
 extern "C"
 {
 #include <stdio.h>
-#include "src/core/wee-config.h"
-#include "src/core/wee-config-file.h"
+#include "src/core/core-config.h"
+#include "src/core/core-config-file.h"
 #include "src/plugins/plugin.h"
 #include "src/plugins/trigger/trigger.h"
 }
@@ -629,7 +629,7 @@ TEST(Trigger, New)
     POINTERS_EQUAL(NULL, trigger_search_with_option (NULL));
     POINTERS_EQUAL(NULL, trigger_search_with_option (config_look_day_change));
 
-    /* invalid free */
+    /* test free of NULL trigger */
     trigger_free (NULL);
 }
 

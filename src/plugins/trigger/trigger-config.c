@@ -1,7 +1,7 @@
 /*
  * trigger-config.c - trigger configuration options (file trigger.conf)
  *
- * Copyright (C) 2014-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -375,7 +375,7 @@ trigger_config_create_trigger_option (const char *trigger_name, int index_option
         case TRIGGER_OPTION_HOOK:
             ptr_option = weechat_config_new_option (
                 trigger_config_file, trigger_config_section_trigger,
-                option_name, "integer",
+                option_name, "enum",
                 N_("type of hook used"),
                 trigger_hook_option_values,
                 0, 0, value, NULL, 0,
@@ -440,7 +440,7 @@ trigger_config_create_trigger_option (const char *trigger_name, int index_option
         case TRIGGER_OPTION_RETURN_CODE:
             ptr_option = weechat_config_new_option (
                 trigger_config_file, trigger_config_section_trigger,
-                option_name, "integer",
+                option_name, "enum",
                 N_("return code for hook callback (see plugin API reference to "
                    "know where ok_eat/error can be used efficiently)"),
                 "ok|ok_eat|error", 0, 0, value, NULL, 0,
@@ -449,7 +449,7 @@ trigger_config_create_trigger_option (const char *trigger_name, int index_option
         case TRIGGER_OPTION_POST_ACTION:
             ptr_option = weechat_config_new_option (
                 trigger_config_file, trigger_config_section_trigger,
-                option_name, "integer",
+                option_name, "enum",
                 N_("action to take on the trigger after execution"),
                 "none|disable|delete", 0, 0, value, NULL, 0,
                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -532,8 +532,7 @@ trigger_config_use_temp_triggers ()
     {
         next_temp_trigger = triggers_temp->next_trigger;
 
-        if (triggers_temp->name)
-            free (triggers_temp->name);
+        free (triggers_temp->name);
         free (triggers_temp);
 
         triggers_temp = next_temp_trigger;
@@ -831,4 +830,5 @@ void
 trigger_config_free ()
 {
     weechat_config_free (trigger_config_file);
+    trigger_config_file = NULL;
 }

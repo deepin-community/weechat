@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -33,11 +33,7 @@
 #include <locale.h>
 
 #if defined(ENABLE_NLS) && !defined(_)
-    #ifdef HAVE_LIBINTL_H
-        #include <libintl.h>
-    #else
-        #include "../../intl/libintl.h"
-    #endif /* HAVE_LIBINTL_H */
+    #include <libintl.h>
     #define _(string) gettext(string)
     #define NG_(single,plural,number) ngettext(single,plural,number)
     #ifdef gettext_noop
@@ -52,9 +48,10 @@
     #define N_(string) (string)
     #define gettext(string) (string)
 #endif /* !defined(_) */
+#define AI(string) (string)
 
 
-#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2023"
+#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2024"
 #define WEECHAT_WEBSITE          "https://weechat.org/"
 #define WEECHAT_WEBSITE_DOWNLOAD "https://weechat.org/download/"
 
@@ -118,6 +115,7 @@ extern int weechat_home_temp;
 extern int weechat_home_delete_on_exit;
 extern char *weechat_config_dir;
 extern char *weechat_data_dir;
+extern char *weechat_state_dir;
 extern char *weechat_cache_dir;
 extern char *weechat_runtime_dir;
 extern char *weechat_local_charset;

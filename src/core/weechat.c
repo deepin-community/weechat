@@ -17,7 +17,7 @@
  *
  * weechat.c - WeeChat main functions
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -56,27 +56,28 @@
 #endif
 
 #include "weechat.h"
-#include "wee-command.h"
-#include "wee-completion.h"
-#include "wee-config.h"
-#include "wee-debug.h"
-#include "wee-dir.h"
-#include "wee-doc.h"
-#include "wee-eval.h"
-#include "wee-hdata.h"
-#include "wee-hook.h"
-#include "wee-list.h"
-#include "wee-log.h"
-#include "wee-network.h"
-#include "wee-proxy.h"
-#include "wee-secure.h"
-#include "wee-secure-config.h"
-#include "wee-signal.h"
-#include "wee-string.h"
-#include "wee-upgrade.h"
-#include "wee-utf8.h"
-#include "wee-util.h"
-#include "wee-version.h"
+#include "core-command.h"
+#include "core-completion.h"
+#include "core-config.h"
+#include "core-debug.h"
+#include "core-dir.h"
+#include "core-doc.h"
+#include "core-eval.h"
+#include "core-hdata.h"
+#include "core-hook.h"
+#include "core-list.h"
+#include "core-log.h"
+#include "core-network.h"
+#include "core-proxy.h"
+#include "core-secure.h"
+#include "core-secure-config.h"
+#include "core-signal.h"
+#include "core-string.h"
+#include "core-upgrade.h"
+#include "core-url.h"
+#include "core-utf8.h"
+#include "core-util.h"
+#include "core-version.h"
 #include "../gui/gui-chat.h"
 #include "../gui/gui-color.h"
 #include "../gui/gui-completion.h"
@@ -114,6 +115,7 @@ int weechat_home_temp = 0;             /* 1 if using a temporary home       */
 int weechat_home_delete_on_exit = 0;   /* 1 if home is deleted on exit      */
 char *weechat_config_dir = NULL;       /* config directory                  */
 char *weechat_data_dir = NULL;         /* data directory                    */
+char *weechat_state_dir = NULL;        /* state directory                   */
 char *weechat_cache_dir = NULL;        /* cache directory                   */
 char *weechat_runtime_dir = NULL;      /* runtime directory                 */
 int weechat_locale_ok = 0;             /* is locale OK?                     */
@@ -177,8 +179,8 @@ weechat_display_usage ()
           "  -c, --colors             display default colors in terminal "
           "and exit\n"
           "  -d, --dir <path>         force a single WeeChat home directory\n"
-          "                           or 4 different directories separated "
-          "by colons (in this order: config, data, cache, runtime)\n"
+          "                           or 5 different directories separated "
+          "by colons (in this order: config, data, state, cache, runtime)\n"
           "                           (environment variable WEECHAT_HOME is "
           "read if this option is not given)\n"
           "  -t, --temp-dir           create a temporary WeeChat home "
@@ -299,8 +301,7 @@ weechat_parse_args (int argc, char *argv[])
                 break;
             case 'd': /* -d / --dir */
                 weechat_home_temp = 0;
-                if (weechat_home_force)
-                    free (weechat_home_force);
+                free (weechat_home_force);
                 weechat_home_force = strdup (optarg);
                 break;
             case 't': /* -t / --temp-dir */
@@ -322,13 +323,11 @@ weechat_parse_args (int argc, char *argv[])
                 weechat_shutdown (EXIT_SUCCESS, 0);
                 break;
             case 'p': /* -p / --no-plugin */
-                if (weechat_force_plugin_autoload)
-                    free (weechat_force_plugin_autoload);
+                free (weechat_force_plugin_autoload);
                 weechat_force_plugin_autoload = strdup ("!*");
                 break;
             case 'P': /* -P / --plugins */
-                if (weechat_force_plugin_autoload)
-                    free (weechat_force_plugin_autoload);
+                free (weechat_force_plugin_autoload);
                 weechat_force_plugin_autoload = strdup (optarg);
                 break;
             case 'r': /* -r / --run-command */
@@ -574,26 +573,17 @@ weechat_shutdown (int return_code, int crash)
         dir_remove_home_dirs ();
     }
 
-    if (weechat_argv0)
-        free (weechat_argv0);
-    if (weechat_home_force)
-        free (weechat_home_force);
-    if (weechat_config_dir)
-        free (weechat_config_dir);
-    if (weechat_data_dir)
-        free (weechat_data_dir);
-    if (weechat_cache_dir)
-        free (weechat_cache_dir);
-    if (weechat_runtime_dir)
-        free (weechat_runtime_dir);
-    if (weechat_local_charset)
-        free (weechat_local_charset);
-    if (weechat_force_plugin_autoload)
-        free (weechat_force_plugin_autoload);
-    if (weechat_startup_commands)
-        weelist_free (weechat_startup_commands);
-    if (weechat_doc_gen_path)
-        free (weechat_doc_gen_path);
+    free (weechat_argv0);
+    free (weechat_home_force);
+    free (weechat_config_dir);
+    free (weechat_data_dir);
+    free (weechat_state_dir);
+    free (weechat_cache_dir);
+    free (weechat_runtime_dir);
+    free (weechat_local_charset);
+    free (weechat_force_plugin_autoload);
+    weelist_free (weechat_startup_commands);
+    free (weechat_doc_gen_path);
 
     if (crash)
         abort ();
@@ -640,6 +630,8 @@ weechat_init (int argc, char *argv[], void (*gui_init_cb)())
             * weechat_current_start_timeval.tv_usec)
            ^ getpid ());
 
+    weeurl_init ();                     /* initialize URL                   */
+    string_init ();                     /* initialize string                */
     signal_init ();                     /* initialize signals               */
     hdata_init ();                      /* initialize hdata                 */
     hook_init ();                       /* initialize hooks                 */
@@ -720,5 +712,6 @@ weechat_end (void (*gui_end_cb)(int clean_exit))
     hdata_end ();                       /* end hdata                        */
     secure_end ();                      /* end secured data                 */
     string_end ();                      /* end string                       */
+    weeurl_end ();
     weechat_shutdown (-1, 0);           /* end other things                 */
 }

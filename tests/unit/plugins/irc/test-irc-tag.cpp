@@ -1,7 +1,7 @@
 /*
  * test-irc-tag.cpp - test IRC message tags functions
  *
- * Copyright (C) 2021-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -21,13 +21,17 @@
 
 #include "CppUTest/TestHarness.h"
 
+#include "tests/tests.h"
+
 extern "C"
 {
 #include <stdio.h>
-#include "src/core/wee-hashtable.h"
-#include "src/core/wee-hook.h"
+#include "src/core/core-hashtable.h"
+#include "src/core/core-hook.h"
 #include "src/plugins/irc/irc-tag.h"
 #include "src/plugins/plugin.h"
+
+extern char *irc_tag_hashtable_to_string (struct t_hashtable *tags);
 }
 
 #define WEE_CHECK_ESCAPE_VALUE(__result, __string)                      \
@@ -160,4 +164,91 @@ TEST(IrcTag, Parse)
                  (const char *)hashtable_get (hashtable, "tag_example.com/ddd"));
 
     hashtable_free (hashtable);
+}
+
+/*
+ * Tests functions:
+ *   irc_tag_add_to_string_cb
+ *   irc_tag_hashtable_to_string
+ */
+
+TEST(IrcTag, HashtableToString)
+{
+    char *str;
+    struct t_hashtable *tags;
+
+    POINTERS_EQUAL(NULL, irc_tag_hashtable_to_string (NULL));
+
+    tags = hashtable_new (32,
+                          WEECHAT_HASHTABLE_STRING,
+                          WEECHAT_HASHTABLE_STRING,
+                          NULL, NULL);
+    CHECK(tags);
+
+    WEE_TEST_STR("", irc_tag_hashtable_to_string (tags));
+
+    hashtable_set (tags, "time", "2023-08-09T07:43:01.830Z");
+    hashtable_set (tags, "msgid", "icqfzy7zdbpix4gy8pvzuv49kw");
+    hashtable_set (tags, "test", "value with spaces");
+
+    WEE_TEST_STR("time=2023-08-09T07:43:01.830Z;"
+                 "msgid=icqfzy7zdbpix4gy8pvzuv49kw;"
+                 "test=value\\swith\\sspaces",
+                 irc_tag_hashtable_to_string (tags));
+
+    hashtable_free (tags);
+}
+
+/*
+ * Tests functions:
+ *   irc_tag_add_to_hashtable_cb
+ *   irc_tag_add_tags_to_message
+ */
+
+TEST(IrcTag, AddTagsToMessage)
+{
+    char *str;
+    struct t_hashtable *tags;
+
+    POINTERS_EQUAL(NULL, irc_tag_add_tags_to_message (NULL, NULL));
+
+    WEE_TEST_STR("", irc_tag_add_tags_to_message ("", NULL));
+    WEE_TEST_STR(":nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     ":nick!user@host PRIVMSG #test :hello", NULL));
+    WEE_TEST_STR("@tag1;tag2=value2 :nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     "@tag1;tag2=value2 :nick!user@host PRIVMSG #test :hello",
+                     NULL));
+
+    tags = hashtable_new (32,
+                          WEECHAT_HASHTABLE_STRING,
+                          WEECHAT_HASHTABLE_STRING,
+                          NULL, NULL);
+    CHECK(tags);
+
+    WEE_TEST_STR(":nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     ":nick!user@host PRIVMSG #test :hello", tags));
+    WEE_TEST_STR("@tag1;tag2=value2 :nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     "@tag1;tag2=value2 :nick!user@host PRIVMSG #test :hello",
+                     tags));
+
+    hashtable_set (tags, "time", "2023-08-09T07:43:01.830Z");
+    hashtable_set (tags, "msgid", "icqfzy7zdbpix4gy8pvzuv49kw");
+    hashtable_set (tags, "test", "value with spaces");
+
+    WEE_TEST_STR("@time=2023-08-09T07:43:01.830Z;msgid=icqfzy7zdbpix4gy8pvzuv49kw;"
+                 "test=value\\swith\\sspaces :nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     ":nick!user@host PRIVMSG #test :hello", tags));
+    WEE_TEST_STR("@tag1;tag2=value2;time=2023-08-09T07:43:01.830Z;"
+                 "msgid=icqfzy7zdbpix4gy8pvzuv49kw;test=value\\swith\\sspaces "
+                 ":nick!user@host PRIVMSG #test :hello",
+                 irc_tag_add_tags_to_message (
+                     "@tag1;tag2=value2 :nick!user@host PRIVMSG #test :hello",
+                     tags));
+
+    hashtable_free (tags);
 }

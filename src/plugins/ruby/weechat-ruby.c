@@ -1,7 +1,7 @@
 /*
  * weechat-ruby.c - ruby plugin for WeeChat
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -274,7 +274,7 @@ weechat_ruby_print_exception (VALUE err)
     backtrace = rb_protect_funcall (err, rb_intern ("backtrace"),
                                     &ruby_error, 0, NULL);
 
-    message = rb_protect_funcall(err, rb_intern ("message"), &ruby_error, 0, NULL);
+    message = rb_protect_funcall (err, rb_intern ("message"), &ruby_error, 0, NULL);
     err_msg = StringValueCStr (message);
 
     err_class = NULL;
@@ -287,7 +287,7 @@ weechat_ruby_print_exception (VALUE err)
         err_class = StringValuePtr (class_name);
     }
 
-    if (strcmp (err_class, "SyntaxError") == 0)
+    if (err_class && (strcmp (err_class, "SyntaxError") == 0))
     {
         tmp3 = rb_inspect (err);
         weechat_printf (NULL,
@@ -437,8 +437,7 @@ weechat_ruby_output (VALUE self, VALUE str)
     }
     weechat_string_dyn_concat (ruby_buffer_output, ptr_msg, -1);
 
-    if (msg)
-        free (msg);
+    free (msg);
 
     return Qnil;
 }
@@ -762,8 +761,7 @@ weechat_ruby_unload (struct t_plugin_script *script)
                                        WEECHAT_SCRIPT_EXEC_INT,
                                        script->shutdown_func,
                                        0, NULL);
-        if (rc)
-            free (rc);
+        free (rc);
     }
 
     filename = strdup (script->filename);
@@ -781,8 +779,7 @@ weechat_ruby_unload (struct t_plugin_script *script)
 
     (void) weechat_hook_signal_send ("ruby_script_unloaded",
                                      WEECHAT_HOOK_SIGNAL_STRING, filename);
-    if (filename)
-        free (filename);
+    free (filename);
 }
 
 /*
@@ -899,8 +896,7 @@ weechat_ruby_eval (struct t_gui_buffer *buffer, int send_to_buffer_as_input,
                                 "script_ruby_eval",
                                 "s", func_argv);
     /* result is ignored */
-    if (result)
-        free (result);
+    free (result);
 
     weechat_ruby_output_flush ();
 
@@ -1003,11 +999,10 @@ weechat_ruby_command_cb (const void *pointer, void *data,
             {
                 /* load ruby script */
                 path_script = plugin_script_search_path (weechat_ruby_plugin,
-                                                         ptr_name);
+                                                         ptr_name, 1);
                 weechat_ruby_load ((path_script) ? path_script : ptr_name,
                                    NULL);
-                if (path_script)
-                    free (path_script);
+                free (path_script);
             }
             else if (weechat_strcmp (argv[1], "reload") == 0)
             {
@@ -1336,6 +1331,11 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_ruby_plugin = plugin;
 
+    ruby_quiet = 0;
+    ruby_eval_mode = 0;
+    ruby_eval_send_input = 0;
+    ruby_eval_exec_commands = 0;
+
     /* set interpreter name and version */
     weechat_hashtable_set (plugin->variables, "interpreter_name",
                            plugin->name);
@@ -1439,12 +1439,22 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     /* free some data */
     if (ruby_action_install_list)
+    {
         free (ruby_action_install_list);
+        ruby_action_install_list = NULL;
+    }
     if (ruby_action_remove_list)
+    {
         free (ruby_action_remove_list);
+        ruby_action_remove_list = NULL;
+    }
     if (ruby_action_autoload_list)
+    {
         free (ruby_action_autoload_list);
+        ruby_action_autoload_list = NULL;
+    }
     weechat_string_dyn_free (ruby_buffer_output, 1);
+    ruby_buffer_output = NULL;
 
     return WEECHAT_RC_OK;
 }

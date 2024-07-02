@@ -1,7 +1,7 @@
 /*
  * buflist-config.c - buflist configuration options (file buflist.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -70,8 +70,10 @@ struct t_config_option *buflist_config_format_tls_version = NULL;
 
 struct t_hook **buflist_config_signals_refresh = NULL;
 int buflist_config_num_signals_refresh = 0;
-char **buflist_config_sort_fields[BUFLIST_BAR_NUM_ITEMS] = { NULL, NULL, NULL };
-int buflist_config_sort_fields_count[BUFLIST_BAR_NUM_ITEMS] = { 0, 0, 0 };
+char **buflist_config_sort_fields[BUFLIST_BAR_NUM_ITEMS] =
+{ NULL, NULL, NULL, NULL, NULL };
+int buflist_config_sort_fields_count[BUFLIST_BAR_NUM_ITEMS] =
+{ 0, 0, 0, 0, 0 };
 char *buflist_config_format_buffer_eval = NULL;
 char *buflist_config_format_buffer_current_eval = NULL;
 char *buflist_config_format_hotlist_eval = NULL;
@@ -157,7 +159,7 @@ buflist_config_signal_buffer_cb (const void *pointer, void *data,
     (void) type_data;
     (void) signal_data;
 
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 
     return WEECHAT_RC_OK;
 }
@@ -259,13 +261,13 @@ buflist_config_change_enabled (const void *pointer, void *data,
         /* buflist enabled */
         buflist_config_hook_signals_refresh ();
         weechat_command (NULL, "/mute /bar show buflist");
-        buflist_bar_item_update (0);
+        buflist_bar_item_update (-1, 0);
     }
     else
     {
         /* buflist disabled */
         weechat_command (NULL, "/mute /bar hide buflist");
-        buflist_bar_item_update (1);
+        buflist_bar_item_update (-1, 1);
     }
 }
 
@@ -326,13 +328,12 @@ buflist_config_change_sort (const void *pointer, void *data,
             0,
             &buflist_config_sort_fields_count[i]);
 
-        if (sort)
-            free (sort);
+        free (sort);
     }
 
     weechat_hashtable_free (hashtable_pointers);
 
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 }
 
 /*
@@ -366,7 +367,7 @@ buflist_config_change_nick_prefix (const void *pointer, void *data,
     (void) option;
 
     buflist_config_change_signals_refresh (NULL, NULL, NULL);
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 }
 
 /*
@@ -382,7 +383,7 @@ buflist_config_change_use_items (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    buflist_bar_item_update (2);
+    buflist_bar_item_update (-1, 2);
 }
 
 /*
@@ -398,7 +399,7 @@ buflist_config_change_buflist (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 }
 
 /*
@@ -444,22 +445,19 @@ buflist_config_change_format (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    if (buflist_config_format_buffer_eval)
-        free (buflist_config_format_buffer_eval);
+    free (buflist_config_format_buffer_eval);
     buflist_config_format_buffer_eval = buflist_config_add_eval_for_formats (
         weechat_config_string (buflist_config_format_buffer));
 
-    if (buflist_config_format_buffer_current_eval)
-        free (buflist_config_format_buffer_current_eval);
+    free (buflist_config_format_buffer_current_eval);
     buflist_config_format_buffer_current_eval = buflist_config_add_eval_for_formats (
         weechat_config_string (buflist_config_format_buffer_current));
 
-    if (buflist_config_format_hotlist_eval)
-        free (buflist_config_format_hotlist_eval);
+    free (buflist_config_format_hotlist_eval);
     buflist_config_format_hotlist_eval = buflist_config_add_eval_for_formats (
         weechat_config_string (buflist_config_format_hotlist));
 
-    buflist_bar_item_update (0);
+    buflist_bar_item_update (-1, 0);
 }
 
 /*
@@ -607,7 +605,7 @@ buflist_config_init ()
                "char \"~\" can be used to do a case insensitive comparison; "
                "examples: \"-~short_name\" for case insensitive and reverse "
                "sort on buffer short name, "
-               "\"-hotlist.priority,hotlist.creation_time.tv_sec,number,-active\" "
+               "\"-hotlist.priority,hotlist.time,hotlist.time_usec,number,-active\" "
                "for sort like the hotlist then by buffer number for buffers "
                "without activity "
                "(note: the content is evaluated, before being split into "
@@ -622,9 +620,9 @@ buflist_config_init ()
             buflist_config_file, buflist_config_section_look,
             "use_items", "integer",
             N_("number of buflist bar items that can be used; the item names "
-               "are: \"buflist\", \"buflist2\", \"buflist3\"; be careful, "
-               "using more than one bar item slows down the display of "
-               "buffers list"),
+               "are: \"buflist\", \"buflist2\", \"buflist3\", \"buflist4\" and "
+               "\"buflist5\"; be careful, using more than one bar item slows "
+               "down the display of buffers list"),
             NULL, 1, BUFLIST_BAR_NUM_ITEMS, "1", NULL, 0,
             NULL, NULL, NULL,
             &buflist_config_change_use_items, NULL, NULL,
@@ -649,7 +647,7 @@ buflist_config_init ()
                "(note: content is evaluated, see /help buflist); "
                "example: standard format for bar item \"buflist\" and only the "
                "buffer number between square brackets for other bar items "
-               "(\"buflist2\" and \"buflist3\"): "
+               "(\"buflist2\" to \"buflist5\"): "
                "\"${if:${bar_item.name}==buflist?${format_number}${indent}"
                "${format_nick_prefix}${color_hotlist}${format_name}:"
                "[${number}]}\""),
@@ -737,7 +735,7 @@ buflist_config_init ()
         buflist_config_format_indent = weechat_config_new_option (
             buflist_config_file, buflist_config_section_format,
             "indent", "string",
-            N_("string displayed to indent channel and private buffers "
+            N_("string displayed to indent channel, private and list buffers "
                "(note: content is evaluated, see /help buflist)"),
             NULL, 0, 0, "  ", NULL, 0,
             NULL, NULL, NULL,
@@ -842,6 +840,7 @@ buflist_config_free ()
     int i;
 
     weechat_config_free (buflist_config_file);
+    buflist_config_file = NULL;
 
     if (buflist_config_signals_refresh)
         buflist_config_free_signals_refresh ();
@@ -856,10 +855,12 @@ buflist_config_free ()
         }
     }
 
-    if (buflist_config_format_buffer_eval)
-        free (buflist_config_format_buffer_eval);
-    if (buflist_config_format_buffer_current_eval)
-        free (buflist_config_format_buffer_current_eval);
-    if (buflist_config_format_hotlist_eval)
-        free (buflist_config_format_hotlist_eval);
+    free (buflist_config_format_buffer_eval);
+    buflist_config_format_buffer_eval = NULL;
+
+    free (buflist_config_format_buffer_current_eval);
+    buflist_config_format_buffer_current_eval = NULL;
+
+    free (buflist_config_format_hotlist_eval);
+    buflist_config_format_hotlist_eval = NULL;
 }

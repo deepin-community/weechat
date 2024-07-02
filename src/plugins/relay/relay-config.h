@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,6 +24,7 @@
 
 #define RELAY_CONFIG_NAME "relay"
 #define RELAY_CONFIG_PRIO_NAME (TO_STR(RELAY_PLUGIN_PRIORITY) "|" RELAY_CONFIG_NAME)
+#define RELAY_CONFIG_SECTION_REMOTE "remote"
 
 #define RELAY_CONFIG_VERSION 2
 
@@ -45,6 +46,7 @@ extern struct t_config_option *relay_config_network_allowed_ips;
 extern struct t_config_option *relay_config_network_auth_timeout;
 extern struct t_config_option *relay_config_network_bind_address;
 extern struct t_config_option *relay_config_network_clients_purge_delay;
+extern struct t_config_option *relay_config_network_commands;
 extern struct t_config_option *relay_config_network_compression;
 extern struct t_config_option *relay_config_network_ipv6;
 extern struct t_config_option *relay_config_network_max_clients;
@@ -52,6 +54,7 @@ extern struct t_config_option *relay_config_network_nonce_size;
 extern struct t_config_option *relay_config_network_password;
 extern struct t_config_option *relay_config_network_password_hash_algo;
 extern struct t_config_option *relay_config_network_password_hash_iterations;
+extern struct t_config_option *relay_config_network_time_window;
 extern struct t_config_option *relay_config_network_tls_cert_key;
 extern struct t_config_option *relay_config_network_tls_priorities;
 extern struct t_config_option *relay_config_network_totp_secret;
@@ -65,8 +68,10 @@ extern struct t_config_option *relay_config_irc_backlog_since_last_message;
 extern struct t_config_option *relay_config_irc_backlog_tags;
 extern struct t_config_option *relay_config_irc_backlog_time_format;
 
-extern struct t_config_option *relay_config_weechat_commands;
+extern struct t_config_option *relay_config_api_remote_get_lines;
 
+extern int relay_config_auto_open_buffer[];
+extern int relay_config_display_clients[];
 extern regex_t *relay_config_regex_allowed_ips;
 extern regex_t *relay_config_regex_websocket_allowed_origins;
 extern struct t_hashtable *relay_config_hashtable_irc_backlog_tags;
@@ -83,6 +88,9 @@ extern int relay_config_create_option_port_path (const void *pointer, void *data
                                                  const char *value);
 extern int relay_config_check_path_length (const char *path);
 extern int relay_config_check_path_available (const char *path);
+extern struct t_config_option *relay_config_create_remote_option (const char *remote_name,
+                                                                  int index_option,
+                                                                  const char *value);
 extern int relay_config_init ();
 extern int relay_config_read ();
 extern int relay_config_write ();

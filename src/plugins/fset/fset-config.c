@@ -1,7 +1,7 @@
 /*
  * fset-config.c - Fast Set configuration options (file fset.conf)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -63,6 +63,7 @@ struct t_config_option *fset_config_format_option[2] = { NULL, NULL };
 
 /* fset config, color section */
 
+struct t_config_option *fset_config_color_allowed_values[2] = { NULL, NULL };
 struct t_config_option *fset_config_color_color_name[2] = { NULL, NULL };
 struct t_config_option *fset_config_color_default_value[2] = { NULL, NULL };
 struct t_config_option *fset_config_color_description[2] = { NULL, NULL };
@@ -141,9 +142,7 @@ fset_config_change_auto_refresh_cb (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    if (fset_config_auto_refresh)
-        weechat_string_free_split (fset_config_auto_refresh);
-
+    weechat_string_free_split (fset_config_auto_refresh);
     fset_config_auto_refresh = weechat_string_split (
         weechat_config_string (fset_config_look_auto_refresh),
         ",",
@@ -205,9 +204,7 @@ fset_config_change_sort_cb (const void *pointer, void *data,
     (void) data;
     (void) option;
 
-    if (fset_config_sort_fields)
-        weechat_string_free_split (fset_config_sort_fields);
-
+    weechat_string_free_split (fset_config_sort_fields);
     fset_config_sort_fields = weechat_string_split (
         weechat_config_string (fset_config_look_sort),
         ",",
@@ -255,7 +252,7 @@ fset_config_change_use_keys_cb (const void *pointer, void *data,
     (void) option;
 
     if (fset_buffer)
-        fset_buffer_set_keys ();
+        fset_buffer_set_keys (NULL);
 }
 
 /*
@@ -584,8 +581,8 @@ fset_config_init ()
             NULL, 0, 0,
             "${marked} ${name}  ${type}  ${value2}${newline}"
             "  ${empty_name}  ${_default_value}${color:244} -- "
-            "${min}..${max}${newline}"
-            "  ${empty_name}  ${description}",
+            "${_allowed_values}${newline}"
+            "  ${empty_name}  ${_description}",
             NULL, 0,
             NULL, NULL, NULL,
             &fset_config_change_format_cb, NULL, NULL,
@@ -603,6 +600,22 @@ fset_config_init ()
         NULL, NULL, NULL);
     if (fset_config_section_color)
     {
+        fset_config_color_allowed_values[0] = weechat_config_new_option (
+            fset_config_file, fset_config_section_color,
+            "allowed_values", "color",
+            N_("color for allowed values"),
+            NULL, 0, 0, "default", NULL, 0,
+            NULL, NULL, NULL,
+            &fset_config_change_color_cb, NULL, NULL,
+            NULL, NULL, NULL);
+        fset_config_color_allowed_values[1] = weechat_config_new_option (
+            fset_config_file, fset_config_section_color,
+            "allowed_values_selected", "color",
+            N_("color for allowed values on the selected line"),
+            NULL, 0, 0, "white", NULL, 0,
+            NULL, NULL, NULL,
+            &fset_config_change_color_cb, NULL, NULL,
+            NULL, NULL, NULL);
         fset_config_color_color_name[0] = weechat_config_new_option (
             fset_config_file, fset_config_section_color,
             "color_name", "color",
@@ -1169,6 +1182,7 @@ void
 fset_config_free ()
 {
     weechat_config_free (fset_config_file);
+    fset_config_file = NULL;
 
     if (fset_config_auto_refresh)
     {

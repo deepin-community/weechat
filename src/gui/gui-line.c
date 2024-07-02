@@ -1,7 +1,7 @@
 /*
  * gui-line.c - line functions (used by all GUI)
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,13 +30,13 @@
 #include <regex.h>
 
 #include "../core/weechat.h"
-#include "../core/wee-config.h"
-#include "../core/wee-hashtable.h"
-#include "../core/wee-hdata.h"
-#include "../core/wee-hook.h"
-#include "../core/wee-infolist.h"
-#include "../core/wee-log.h"
-#include "../core/wee-string.h"
+#include "../core/core-config.h"
+#include "../core/core-hashtable.h"
+#include "../core/core-hdata.h"
+#include "../core/core-hook.h"
+#include "../core/core-infolist.h"
+#include "../core/core-log.h"
+#include "../core/core-string.h"
 #include "../plugins/plugin.h"
 #include "gui-line.h"
 #include "gui-buffer.h"
@@ -304,7 +304,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
 
     /* return immediately if alignment for end of lines is "time" */
     if (!first_line
-        && (CONFIG_INTEGER(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_TIME))
+        && (CONFIG_ENUM(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_TIME))
     {
         return 0;
     }
@@ -319,7 +319,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
 
     /* return immediately if alignment for end of lines is "buffer" */
     if (!first_line
-        && (CONFIG_INTEGER(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_BUFFER))
+        && (CONFIG_ENUM(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_BUFFER))
     {
         return length_time;
     }
@@ -327,12 +327,12 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
     /* length of buffer name (when many buffers are merged) */
     if (buffer->mixed_lines && (buffer->active != 2))
     {
-        if ((CONFIG_INTEGER(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
-            && (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE))
+        if ((CONFIG_ENUM(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
+            && (CONFIG_ENUM(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE))
             length_buffer = gui_chat_strlen_screen (gui_buffer_get_short_name (line->data->buffer)) + 1;
         else
         {
-            if (CONFIG_INTEGER(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
+            if (CONFIG_ENUM(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
                 length_buffer = buffer->mixed_lines->buffer_max_length + 1;
             else
                 length_buffer = ((CONFIG_INTEGER(config_look_prefix_buffer_align_max) > 0)
@@ -345,7 +345,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
 
     /* return immediately if alignment for end of lines is "prefix" */
     if (!first_line
-        && (CONFIG_INTEGER(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_PREFIX))
+        && (CONFIG_ENUM(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_PREFIX))
     {
         return length_time + length_buffer;
     }
@@ -356,7 +356,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
     if (prefix_is_nick)
         prefix_length += config_length_nick_prefix_suffix;
 
-    if (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE)
+    if (CONFIG_ENUM(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE)
     {
         return length_time + length_buffer + prefix_length + ((prefix_length > 0) ? 1 : 0);
     }
@@ -403,6 +403,37 @@ gui_line_build_string_prefix_message (const char *prefix, const char *message)
     string_dyn_free (string, 1);
 
     return string_without_colors;
+}
+
+/*
+ * Builds a string with action message and nick with nick offline color.
+ *
+ * Note: result must be freed after use.
+ */
+
+char *
+gui_line_build_string_message_nick_offline (const char *message)
+{
+    const char *ptr_message;
+    char *message2;
+
+    if (!message)
+        return NULL;
+
+    ptr_message = gui_chat_string_next_char (NULL, NULL,
+                                             (unsigned char *)message,
+                                             0, 0, 0);
+    if (!ptr_message)
+        return strdup ("");
+
+    if (string_asprintf (&message2, "%s%s",
+                         GUI_COLOR(GUI_COLOR_CHAT_NICK_OFFLINE),
+                         ptr_message) >= 0)
+    {
+        return message2;
+    }
+
+    return NULL;
 }
 
 /*
@@ -593,7 +624,7 @@ gui_line_search_text (struct t_gui_buffer *buffer, struct t_gui_line *line)
 
     rc = 0;
 
-    if ((buffer->text_search_where & GUI_TEXT_SEARCH_IN_PREFIX)
+    if ((buffer->text_search_where & GUI_BUFFER_SEARCH_IN_PREFIX)
         && line->data->prefix)
     {
         prefix = gui_color_decode (line->data->prefix, NULL);
@@ -621,7 +652,7 @@ gui_line_search_text (struct t_gui_buffer *buffer, struct t_gui_line *line)
         }
     }
 
-    if (!rc && (buffer->text_search_where & GUI_TEXT_SEARCH_IN_MESSAGE))
+    if (!rc && (buffer->text_search_where & GUI_BUFFER_SEARCH_IN_MESSAGE))
     {
         if (gui_chat_display_tags)
         {
@@ -712,10 +743,8 @@ gui_line_match_regex (struct t_gui_line_data *line_data, regex_t *regex_prefix,
             match_message = 0;
     }
 
-    if (prefix)
-        free (prefix);
-    if (message)
-        free (message);
+    free (prefix);
+    free (message);
 
     return (match_prefix && match_message);
 }
@@ -1022,8 +1051,7 @@ gui_line_has_highlight (struct t_gui_line *line)
     rc = string_has_highlight (ptr_msg_no_color,
                                (highlight_words) ?
                                highlight_words : line->data->buffer->highlight_words);
-    if (highlight_words)
-        free (highlight_words);
+    free (highlight_words);
     if (rc)
         goto end;
 
@@ -1032,8 +1060,7 @@ gui_line_has_highlight (struct t_gui_line *line)
     rc = string_has_highlight (ptr_msg_no_color,
                                (highlight_words) ?
                                highlight_words : CONFIG_STRING(config_look_highlight));
-    if (highlight_words)
-        free (highlight_words);
+    free (highlight_words);
     if (rc)
         goto end;
 
@@ -1052,8 +1079,7 @@ gui_line_has_highlight (struct t_gui_line *line)
     }
 
 end:
-    if (msg_no_color)
-        free (msg_no_color);
+    free (msg_no_color);
 
     return rc;
 }
@@ -1071,14 +1097,40 @@ gui_line_has_offline_nick (struct t_gui_line *line)
 {
     const char *nick;
 
-    if (line && gui_line_search_tag_starting_with (line, "prefix_nick"))
+    if (!line)
+        return 0;
+
+    nick = gui_line_get_nick_tag (line);
+    if (nick
+        && (line->data->buffer->nicklist_root
+            && (line->data->buffer->nicklist_root->nicks
+                || line->data->buffer->nicklist_root->children))
+        && !gui_nicklist_search_nick (line->data->buffer, NULL, nick))
     {
-        nick = gui_line_get_nick_tag (line);
-        if (nick
-            && (line->data->buffer->nicklist_root
-                && (line->data->buffer->nicklist_root->nicks
-                    || line->data->buffer->nicklist_root->children))
-            && !gui_nicklist_search_nick (line->data->buffer, NULL, nick))
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Checks if line is an action (eg: `/me` in irc plugin).
+ *
+ * Returns:
+ *   1: line is an action
+ *   0: line is not an action
+ */
+
+int
+gui_line_is_action (struct t_gui_line *line)
+{
+    int i, length;
+
+    for (i = 0; i < line->data->tags_count; i++)
+    {
+        length = strlen (line->data->tags_array[i]);
+        if ((length >= 7)
+            && (strcmp (line->data->tags_array[i] + length - 7, "_action") == 0))
         {
             return 1;
         }
@@ -1192,13 +1244,10 @@ gui_line_add_to_list (struct t_gui_lines *lines,
 void
 gui_line_free_data (struct t_gui_line *line)
 {
-    if (line->data->str_time)
-        free (line->data->str_time);
+    free (line->data->str_time);
     gui_line_tags_free (line->data);
-    if (line->data->prefix)
-        string_shared_free (line->data->prefix);
-    if (line->data->message)
-        free (line->data->message);
+    string_shared_free (line->data->prefix);
+    free (line->data->message);
     free (line->data);
 
     line->data = NULL;
@@ -1480,8 +1529,10 @@ gui_line_set_highlight (struct t_gui_line *line, int max_notify_level)
  */
 
 struct t_gui_line *
-gui_line_new (struct t_gui_buffer *buffer, int y, time_t date,
-              time_t date_printed, const char *tags,
+gui_line_new (struct t_gui_buffer *buffer, int y,
+              time_t date, int date_usec,
+              time_t date_printed, int date_usec_printed,
+              const char *tags,
               const char *prefix, const char *message)
 {
     struct t_gui_line *new_line;
@@ -1523,8 +1574,9 @@ gui_line_new (struct t_gui_buffer *buffer, int y, time_t date,
             0 : buffer->next_line_id + 1;
         new_line->data->y = -1;
         new_line->data->date = date;
+        new_line->data->date_usec = date_usec;
         new_line->data->date_printed = date_printed;
-        new_line->data->str_time = gui_chat_get_time_string (date);
+        new_line->data->date_usec_printed = date_usec_printed;
         gui_line_tags_alloc (new_line->data, tags);
         new_line->data->refresh_needed = 0;
         new_line->data->prefix = (prefix) ?
@@ -1536,13 +1588,17 @@ gui_line_new (struct t_gui_buffer *buffer, int y, time_t date,
         gui_line_set_highlight (new_line, max_notify_level);
         if (new_line->data->highlight && (new_line->data->notify_level >= 0))
             new_line->data->notify_level = GUI_HOTLIST_HIGHLIGHT;
+        new_line->data->str_time = gui_chat_get_time_string (
+            date, date_usec, new_line->data->highlight);
     }
     else
     {
         new_line->data->id = y;
         new_line->data->y = y;
         new_line->data->date = date;
+        new_line->data->date_usec = date_usec;
         new_line->data->date_printed = date_printed;
+        new_line->data->date_usec_printed = date_usec_printed;
         new_line->data->str_time = NULL;
         gui_line_tags_alloc (new_line->data, tags);
         new_line->data->refresh_needed = 1;
@@ -1636,47 +1692,6 @@ gui_line_hook_update (struct t_gui_line *line,
         }
     }
 
-    ptr_value2 = hashtable_get (hashtable2, "date");
-    if (ptr_value2)
-    {
-        error = NULL;
-        value = strtol (ptr_value2, &error, 10);
-        if (error && !error[0] && (value >= 0))
-        {
-            line->data->date = (time_t)value;
-            if (line->data->str_time)
-                free (line->data->str_time);
-            line->data->str_time = gui_chat_get_time_string (line->data->date);
-        }
-    }
-
-    ptr_value2 = hashtable_get (hashtable2, "date_printed");
-    if (ptr_value2)
-    {
-        error = NULL;
-        value = strtol (ptr_value2, &error, 10);
-        if (error && !error[0] && (value >= 0))
-            line->data->date_printed = (time_t)value;
-    }
-
-    ptr_value = hashtable_get (hashtable, "str_time");
-    ptr_value2 = hashtable_get (hashtable2, "str_time");
-    if (ptr_value2 && (!ptr_value || (strcmp (ptr_value, ptr_value2) != 0)))
-    {
-        if (line->data->str_time)
-            free (line->data->str_time);
-        line->data->str_time = (ptr_value2) ? strdup (ptr_value2) : NULL;
-    }
-
-    ptr_value = hashtable_get (hashtable, "tags");
-    ptr_value2 = hashtable_get (hashtable2, "tags");
-    if (ptr_value2 && (!ptr_value || (strcmp (ptr_value, ptr_value2) != 0)))
-    {
-        tags_updated = 1;
-        gui_line_tags_free (line->data);
-        gui_line_tags_alloc (line->data, ptr_value2);
-    }
-
     ptr_value2 = hashtable_get (hashtable2, "notify_level");
     if (ptr_value2)
     {
@@ -1701,12 +1716,78 @@ gui_line_hook_update (struct t_gui_line *line,
         }
     }
 
+    ptr_value2 = hashtable_get (hashtable2, "date");
+    if (ptr_value2)
+    {
+        error = NULL;
+        value = strtol (ptr_value2, &error, 10);
+        if (error && !error[0] && (value >= 0))
+        {
+            line->data->date = (time_t)value;
+            free (line->data->str_time);
+            line->data->str_time = gui_chat_get_time_string (
+                line->data->date,
+                line->data->date_usec,
+                line->data->highlight);
+        }
+    }
+
+    ptr_value2 = hashtable_get (hashtable2, "date_usec");
+    if (ptr_value2)
+    {
+        error = NULL;
+        value = strtol (ptr_value2, &error, 10);
+        if (error && !error[0] && (value >= 0) && (value <= 999999))
+        {
+            line->data->date_usec = (int)value;
+            free (line->data->str_time);
+            line->data->str_time = gui_chat_get_time_string (
+                line->data->date,
+                line->data->date_usec,
+                line->data->highlight);
+        }
+    }
+
+    ptr_value2 = hashtable_get (hashtable2, "date_printed");
+    if (ptr_value2)
+    {
+        error = NULL;
+        value = strtol (ptr_value2, &error, 10);
+        if (error && !error[0] && (value >= 0))
+            line->data->date_printed = (time_t)value;
+    }
+
+    ptr_value2 = hashtable_get (hashtable2, "date_usec_printed");
+    if (ptr_value2)
+    {
+        error = NULL;
+        value = strtol (ptr_value2, &error, 10);
+        if (error && !error[0] && (value >= 0) && (value <= 999999))
+            line->data->date_usec_printed = (int)value;
+    }
+
+    ptr_value = hashtable_get (hashtable, "str_time");
+    ptr_value2 = hashtable_get (hashtable2, "str_time");
+    if (ptr_value2 && (!ptr_value || (strcmp (ptr_value, ptr_value2) != 0)))
+    {
+        free (line->data->str_time);
+        line->data->str_time = (ptr_value2) ? strdup (ptr_value2) : NULL;
+    }
+
+    ptr_value = hashtable_get (hashtable, "tags");
+    ptr_value2 = hashtable_get (hashtable2, "tags");
+    if (ptr_value2 && (!ptr_value || (strcmp (ptr_value, ptr_value2) != 0)))
+    {
+        tags_updated = 1;
+        gui_line_tags_free (line->data);
+        gui_line_tags_alloc (line->data, ptr_value2);
+    }
+
     ptr_value = hashtable_get (hashtable, "prefix");
     ptr_value2 = hashtable_get (hashtable2, "prefix");
     if (ptr_value2 && (!ptr_value || (strcmp (ptr_value, ptr_value2) != 0)))
     {
-        if (line->data->prefix)
-            string_shared_free (line->data->prefix);
+        string_shared_free (line->data->prefix);
         line->data->prefix = (char *)string_shared_get (
             (ptr_value2) ? ptr_value2 : "");
         line->data->prefix_length = (line->data->prefix) ?
@@ -1725,11 +1806,9 @@ gui_line_hook_update (struct t_gui_line *line,
             if (pos_newline)
                 pos_newline[0] = '\0';
         }
-        if (line->data->message)
-            free (line->data->message);
+        free (line->data->message);
         line->data->message = (new_message) ? strdup (new_message) : NULL;
-        if (new_message)
-            free (new_message);
+        free (new_message);
     }
 
     max_notify_level = gui_line_get_max_notify_level (line);
@@ -1845,9 +1924,10 @@ gui_line_add (struct t_gui_line *line)
     }
     else
     {
-        (void) hook_signal_send ("buffer_lines_hidden",
-                                 WEECHAT_HOOK_SIGNAL_POINTER,
-                                 line->data->buffer);
+        (void) gui_buffer_send_signal (line->data->buffer,
+                                       "buffer_lines_hidden",
+                                       WEECHAT_HOOK_SIGNAL_POINTER,
+                                       line->data->buffer);
     }
 
     /* add mixed line, if buffer is attached to at least one other buffer */
@@ -1874,8 +1954,9 @@ gui_line_add (struct t_gui_line *line)
         }
     }
 
-    (void) hook_signal_send ("buffer_line_added",
-                             WEECHAT_HOOK_SIGNAL_POINTER, line);
+    (void) gui_buffer_send_signal (line->data->buffer,
+                                   "buffer_line_added",
+                                   WEECHAT_HOOK_SIGNAL_POINTER, line);
 }
 
 /*
@@ -1954,9 +2035,10 @@ gui_line_add_y (struct t_gui_line *line)
     if (old_line_displayed && !ptr_line->data->displayed)
     {
         (ptr_line->data->buffer->own_lines->lines_hidden)++;
-        (void) hook_signal_send ("buffer_lines_hidden",
-                                 WEECHAT_HOOK_SIGNAL_POINTER,
-                                 ptr_line->data->buffer);
+        (void) gui_buffer_send_signal (ptr_line->data->buffer,
+                                       "buffer_lines_hidden",
+                                       WEECHAT_HOOK_SIGNAL_POINTER,
+                                       ptr_line->data->buffer);
     }
     else if (!old_line_displayed && ptr_line->data->displayed)
     {
@@ -1967,6 +2049,10 @@ gui_line_add_y (struct t_gui_line *line)
     ptr_line->data->refresh_needed = 1;
 
     gui_buffer_ask_chat_refresh (ptr_line->data->buffer, 1);
+
+    (void) gui_buffer_send_signal (ptr_line->data->buffer,
+                                   "buffer_line_added",
+                                   WEECHAT_HOOK_SIGNAL_POINTER, ptr_line);
 }
 
 /*
@@ -1977,7 +2063,9 @@ void
 gui_line_clear (struct t_gui_line *line)
 {
     line->data->date = 0;
+    line->data->date_usec = 0;
     line->data->date_printed = 0;
+    line->data->date_usec_printed = 0;
     if (line->data->str_time)
     {
         free (line->data->str_time);
@@ -1992,8 +2080,7 @@ gui_line_clear (struct t_gui_line *line)
     line->data->prefix_length = 0;
     line->data->notify_level = 0;
     line->data->highlight = 0;
-    if (line->data->message)
-        free (line->data->message);
+    free (line->data->message);
     line->data->message = strdup ("");
 }
 
@@ -2176,9 +2263,27 @@ gui_line_hdata_line_data_update_cb (void *data,
         if (value)
         {
             hdata_set (hdata, pointer, "date", value);
-            if (line_data->str_time)
-                free (line_data->str_time);
-            line_data->str_time = gui_chat_get_time_string (line_data->date);
+            free (line_data->str_time);
+            line_data->str_time = gui_chat_get_time_string (
+                line_data->date,
+                line_data->date_usec,
+                line_data->highlight);
+            rc++;
+            update_coords = 1;
+        }
+    }
+
+    if (hashtable_has_key (hashtable, "date_usec"))
+    {
+        value = hashtable_get (hashtable, "date_usec");
+        if (value)
+        {
+            hdata_set (hdata, pointer, "date_usec", value);
+            free (line_data->str_time);
+            line_data->str_time = gui_chat_get_time_string (
+                line_data->date,
+                line_data->date_usec,
+                line_data->highlight);
             rc++;
             update_coords = 1;
         }
@@ -2190,6 +2295,16 @@ gui_line_hdata_line_data_update_cb (void *data,
         if (value)
         {
             hdata_set (hdata, pointer, "date_printed", value);
+            rc++;
+        }
+    }
+
+    if (hashtable_has_key (hashtable, "date_usec_printed"))
+    {
+        value = hashtable_get (hashtable, "date_usec_printed");
+        if (value)
+        {
+            hdata_set (hdata, pointer, "date_usec_printed", value);
             rc++;
         }
     }
@@ -2227,8 +2342,7 @@ gui_line_hdata_line_data_update_cb (void *data,
         hdata_set (hdata, pointer, "message", new_value);
         rc++;
         update_coords = 1;
-        if (new_value)
-            free (new_value);
+        free (new_value);
     }
 
     if (rc > 0)
@@ -2269,7 +2383,9 @@ gui_line_hdata_line_data_cb (const void *pointer, void *data,
         HDATA_VAR(struct t_gui_line_data, id, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, y, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, date, TIME, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date_usec, INTEGER, 1, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, date_printed, TIME, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date_usec_printed, INTEGER, 1, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, str_time, STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, tags_array, SHARED_STRING, 1, "*,tags_count", NULL);
@@ -2314,7 +2430,11 @@ gui_line_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!infolist_new_var_time (ptr_item, "date", line->data->date))
         return 0;
+    if (!infolist_new_var_integer (ptr_item, "date_usec", line->data->date_usec))
+        return 0;
     if (!infolist_new_var_time (ptr_item, "date_printed", line->data->date_printed))
+        return 0;
+    if (!infolist_new_var_integer (ptr_item, "date_usec_printed", line->data->date_usec_printed))
         return 0;
     if (!infolist_new_var_string (ptr_item, "str_time", line->data->str_time))
         return 0;
@@ -2374,15 +2494,15 @@ gui_lines_print_log (struct t_gui_lines *lines)
 {
     if (lines)
     {
-        log_printf ("    first_line . . . . . . . : 0x%lx", lines->first_line);
-        log_printf ("    last_line. . . . . . . . : 0x%lx", lines->last_line);
-        log_printf ("    last_read_line . . . . . : 0x%lx", lines->last_read_line);
-        log_printf ("    lines_count. . . . . . . : %d",    lines->lines_count);
-        log_printf ("    first_line_not_read. . . : %d",    lines->first_line_not_read);
-        log_printf ("    lines_hidden . . . . . . : %d",    lines->lines_hidden);
-        log_printf ("    buffer_max_length. . . . : %d",    lines->buffer_max_length);
-        log_printf ("    buffer_max_length_refresh: %d",    lines->buffer_max_length_refresh);
-        log_printf ("    prefix_max_length. . . . : %d",    lines->prefix_max_length);
-        log_printf ("    prefix_max_length_refresh: %d",    lines->prefix_max_length_refresh);
+        log_printf ("    first_line . . . . . . . : %p", lines->first_line);
+        log_printf ("    last_line. . . . . . . . : %p", lines->last_line);
+        log_printf ("    last_read_line . . . . . : %p", lines->last_read_line);
+        log_printf ("    lines_count. . . . . . . : %d", lines->lines_count);
+        log_printf ("    first_line_not_read. . . : %d", lines->first_line_not_read);
+        log_printf ("    lines_hidden . . . . . . : %d", lines->lines_hidden);
+        log_printf ("    buffer_max_length. . . . : %d", lines->buffer_max_length);
+        log_printf ("    buffer_max_length_refresh: %d", lines->buffer_max_length_refresh);
+        log_printf ("    prefix_max_length. . . . : %d", lines->prefix_max_length);
+        log_printf ("    prefix_max_length_refresh: %d", lines->prefix_max_length_refresh);
     }
 }

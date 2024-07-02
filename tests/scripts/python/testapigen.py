@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017-2023 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -110,8 +110,10 @@ class WeechatScript(object):  # pylint: disable=too-many-instance-attributes
         functions = {
             'prnt': 'print',
             'prnt_date_tags': 'print_date_tags',
+            'prnt_datetime_tags': 'print_datetime_tags',
             'prnt_y': 'print_y',
             'prnt_y_date_tags': 'print_y_date_tags',
+            'prnt_y_datetime_tags': 'print_y_datetime_tags',
         }
         tests_count = 0
         for node in ast.walk(self.tree):

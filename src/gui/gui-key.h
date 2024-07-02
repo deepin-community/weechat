@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,6 +34,7 @@ enum t_gui_key_context
 {
     GUI_KEY_CONTEXT_DEFAULT = 0,
     GUI_KEY_CONTEXT_SEARCH,
+    GUI_KEY_CONTEXT_HISTSEARCH,
     GUI_KEY_CONTEXT_CURSOR,
     GUI_KEY_CONTEXT_MOUSE,
     /* number of key contexts */
@@ -82,6 +83,7 @@ extern int gui_key_grab;
 extern int gui_key_grab_count;
 extern int *gui_key_buffer;
 extern int gui_key_buffer_size;
+extern int gui_key_last_key_pressed_sent;
 extern int gui_key_paste_pending;
 extern int gui_key_paste_bracketed;
 extern time_t gui_key_last_activity_time;

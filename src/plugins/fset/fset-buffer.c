@@ -1,7 +1,7 @@
 /*
  * fset-buffer.c - buffer for Fast Set plugin
  *
- * Copyright (C) 2003-2023 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -625,7 +625,9 @@ fset_buffer_display_option_eval (struct t_fset_option *fset_option)
     }
 
     /* min */
-    snprintf (str_field, length_field, "%s", fset_option->min);
+    snprintf (str_field, length_field,
+              "%s",
+              (fset_option->min) ? fset_option->min : "");
     weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
                            "__min", str_field);
     snprintf (str_field, length_field,
@@ -642,7 +644,9 @@ fset_buffer_display_option_eval (struct t_fset_option *fset_option)
                            "empty_min", str_field2);
 
     /* max */
-    snprintf (str_field, length_field, "%s", fset_option->max);
+    snprintf (str_field, length_field,
+              "%s",
+              (fset_option->max) ? fset_option->max : "");
     weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
                            "__max", str_field);
     snprintf (str_field, length_field,
@@ -743,6 +747,25 @@ fset_buffer_display_option_eval (struct t_fset_option *fset_option)
                            "string_values", str_field);
     weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
                            "empty_string_values", str_field2);
+
+    /* allowed_values */
+    snprintf (str_field, length_field,
+              "%s",
+              (fset_option->allowed_values) ? fset_option->allowed_values : "");
+    weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
+                           "__allowed_values", str_field);
+    snprintf (str_field, length_field,
+              "%s%s",
+              weechat_color (weechat_config_string (fset_config_color_allowed_values[selected_line])),
+              (fset_option->allowed_values) ? fset_option->allowed_values : "");
+    weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
+                           "_allowed_values", str_field);
+    fset_buffer_fills_field (str_field, str_field2, length_field,
+                             fset_option_max_length->allowed_values, 1, 1);
+    weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
+                           "allowed_values", str_field);
+    weechat_hashtable_set (fset_buffer_hashtable_extra_vars,
+                           "empty_allowed_values", str_field2);
 
     /* marked */
     snprintf (str_field, length_field,
@@ -1048,8 +1071,7 @@ fset_buffer_display_option_predefined_format (struct t_fset_option *fset_option)
         str_type,
         (str_value) ? str_value : "");
 
-    if (str_value)
-        free (str_value);
+    free (str_value);
 
     return fset_option->index;
 }
@@ -1215,11 +1237,7 @@ fset_buffer_get_window_info (struct t_gui_window *window,
 }
 
 /*
- * Checks if current line is outside window.
- *
- * Returns:
- *   1: line is outside window
- *   0: line is inside window
+ * Checks if current line is outside window and adjusts scroll if needed.
  */
 
 void
@@ -1414,7 +1432,7 @@ fset_buffer_input_cb (const void *pointer, void *data,
         return WEECHAT_RC_OK;
     }
 
-    /* execute action on an option */
+    /* execute action */
     for (i = 0; actions[i][0]; i++)
     {
         if (strcmp (input_data, actions[i][0]) == 0)
@@ -1478,10 +1496,13 @@ fset_buffer_set_callbacks ()
 
 /*
  * Sets keys on fset buffer.
+ *
+ * If hashtable is not NULL, it is used to set keys, otherwise keys are directly
+ * set in the fset buffer.
  */
 
 void
-fset_buffer_set_keys ()
+fset_buffer_set_keys (struct t_hashtable *hashtable)
 {
     char *keys[][2] = {
         { "up",            "/fset -up"                                     },
@@ -1515,12 +1536,18 @@ fset_buffer_set_keys ()
         if (weechat_config_boolean (fset_config_look_use_keys))
         {
             snprintf (str_key, sizeof (str_key), "key_bind_%s", keys[i][0]);
-            weechat_buffer_set (fset_buffer, str_key, keys[i][1]);
+            if (hashtable)
+                weechat_hashtable_set (hashtable, str_key, keys[i][1]);
+            else
+                weechat_buffer_set (fset_buffer, str_key, keys[i][1]);
         }
         else
         {
             snprintf (str_key, sizeof (str_key), "key_unbind_%s", keys[i][0]);
-            weechat_buffer_set (fset_buffer, str_key, "");
+            if (hashtable)
+                weechat_hashtable_set (hashtable, str_key, "");
+            else
+                weechat_buffer_set (fset_buffer, str_key, "");
         }
     }
 }
@@ -1554,13 +1581,14 @@ fset_buffer_open ()
     buffer_props = weechat_hashtable_new (
         32,
         WEECHAT_HASHTABLE_STRING,
-        WEECHAT_HASHTABLE_POINTER,
+        WEECHAT_HASHTABLE_STRING,
         NULL,
         NULL);
     if (buffer_props)
     {
         weechat_hashtable_set (buffer_props, "type", "free");
         weechat_hashtable_set (buffer_props, "localvar_set_type", "option");
+        fset_buffer_set_keys (buffer_props);
     }
 
     fset_buffer = weechat_buffer_new_props (
@@ -1569,13 +1597,11 @@ fset_buffer_open ()
         &fset_buffer_input_cb, NULL, NULL,
         &fset_buffer_close_cb, NULL, NULL);
 
-    if (buffer_props)
-        weechat_hashtable_free (buffer_props);
+    weechat_hashtable_free (buffer_props);
 
     if (!fset_buffer)
         return;
 
-    fset_buffer_set_keys ();
     fset_buffer_set_localvar_filter ();
 
     fset_buffer_selected_line = 0;
@@ -1626,9 +1652,21 @@ fset_buffer_init ()
 void
 fset_buffer_end ()
 {
-    weechat_hashtable_free (fset_buffer_hashtable_pointers);
-    fset_buffer_hashtable_pointers = NULL;
+    if (fset_buffer)
+    {
+        weechat_buffer_close (fset_buffer);
+        fset_buffer = NULL;
+    }
 
-    weechat_hashtable_free (fset_buffer_hashtable_extra_vars);
-    fset_buffer_hashtable_extra_vars = NULL;
+    if (fset_buffer_hashtable_pointers)
+    {
+        weechat_hashtable_free (fset_buffer_hashtable_pointers);
+        fset_buffer_hashtable_pointers = NULL;
+    }
+
+    if (fset_buffer_hashtable_extra_vars)
+    {
+        weechat_hashtable_free (fset_buffer_hashtable_extra_vars);
+        fset_buffer_hashtable_extra_vars = NULL;
+    }
 }
