@@ -1,7 +1,7 @@
 /*
  * gui-input.c - input functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -123,7 +123,7 @@ gui_input_replace_input (struct t_gui_buffer *buffer, const char *new_input)
  */
 
 void
-gui_input_paste_pending_signal ()
+gui_input_paste_pending_signal (void)
 {
     if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
         && gui_window_bare_display)
@@ -158,7 +158,8 @@ gui_input_text_changed_modifier_and_signal (struct t_gui_buffer *buffer,
             gui_buffer_undo_add (buffer);
 
         /* send modifier, and change input if needed */
-        snprintf (str_buffer, sizeof (str_buffer), "%p", buffer);
+        snprintf (str_buffer, sizeof (str_buffer),
+                  "0x%lx", (unsigned long)buffer);
         new_input = hook_modifier_exec (NULL,
                                         "input_text_content",
                                         str_buffer,

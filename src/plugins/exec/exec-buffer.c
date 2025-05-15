@@ -1,7 +1,7 @@
 /*
  * exec-buffer.c - buffers with output of commands
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -111,7 +111,7 @@ exec_buffer_close_cb (const void *pointer, void *data,
  */
 
 void
-exec_buffer_set_callbacks ()
+exec_buffer_set_callbacks (void)
 {
     struct t_infolist *ptr_infolist;
     struct t_gui_buffer *ptr_buffer;

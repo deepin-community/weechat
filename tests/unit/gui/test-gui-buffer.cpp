@@ -1,7 +1,7 @@
 /*
  * test-gui-buffer.cpp - test buffer functions
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -161,7 +161,7 @@ TEST(GuiBuffer, GetPluginName)
                              NULL, NULL, NULL);
     CHECK(buffer);
 
-    POINTERS_EQUAL(NULL, gui_buffer_get_plugin_name (NULL));
+    STRCMP_EQUAL(NULL, gui_buffer_get_plugin_name (NULL));
 
     STRCMP_EQUAL("core", gui_buffer_get_plugin_name (buffer));
 
@@ -173,11 +173,10 @@ TEST(GuiBuffer, GetPluginName)
 
 /*
  * Tests functions:
- *   gui_buffer_get_short_name
  *   gui_buffer_set_short_name
  */
 
-TEST(GuiBuffer, GetSetShortName)
+TEST(GuiBuffer, SetShortName)
 {
     struct t_gui_buffer *buffer;
 
@@ -186,22 +185,14 @@ TEST(GuiBuffer, GetSetShortName)
                              NULL, NULL, NULL);
     CHECK(buffer);
 
-    POINTERS_EQUAL(NULL, gui_buffer_get_short_name (NULL));
+    STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->short_name);
 
-    POINTERS_EQUAL(NULL, buffer->short_name);
-    STRCMP_EQUAL(TEST_BUFFER_NAME, gui_buffer_get_short_name (buffer));
-
-    gui_buffer_set_short_name (buffer, NULL);
-    POINTERS_EQUAL(NULL, buffer->short_name);
-    STRCMP_EQUAL(TEST_BUFFER_NAME, gui_buffer_get_short_name (buffer));
-
-    gui_buffer_set_short_name (buffer, "short");
-    STRCMP_EQUAL("short", buffer->short_name);
-    STRCMP_EQUAL("short", gui_buffer_get_short_name (buffer));
-
+    /* forbidden value => short_name unchanged */
     gui_buffer_set_short_name (buffer, "");
-    POINTERS_EQUAL(NULL, buffer->short_name);
-    STRCMP_EQUAL(TEST_BUFFER_NAME, gui_buffer_get_short_name (buffer));
+    STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->short_name);
+
+    gui_buffer_set_short_name (buffer, "t");
+    STRCMP_EQUAL("t", buffer->short_name);
 
     gui_buffer_close (buffer);
 }
@@ -280,8 +271,8 @@ TEST(GuiBuffer, LocalVarAddRemove)
     gui_buffer_local_var_remove_all (NULL);
 
     gui_buffer_local_var_remove_all (buffer);
-    POINTERS_EQUAL(NULL,
-                   hashtable_get_string (buffer->local_variables, "keys_values"));
+    STRCMP_EQUAL(NULL,
+                 hashtable_get_string (buffer->local_variables, "keys_values"));
 
     gui_buffer_close (buffer);
 }
@@ -468,7 +459,7 @@ TEST(GuiBuffer, ApplyConfigProperties)
                              NULL, NULL, NULL);
     CHECK(buffer);
 
-    POINTERS_EQUAL(NULL, buffer->short_name);
+    STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->short_name);
 
     gui_buffer_close (buffer);
 }
@@ -476,7 +467,6 @@ TEST(GuiBuffer, ApplyConfigProperties)
 /*
  * Test callback for buffer input.
  */
-
 
 int
 test_buffer_input_cb (const void *pointer, void *data,
@@ -529,14 +519,14 @@ TEST(GuiBuffer, NewProps)
                                    &test_buffer_close_cb, NULL, NULL);
     CHECK(buffer);
     POINTERS_EQUAL(NULL, buffer->plugin);
-    POINTERS_EQUAL(NULL, buffer->plugin_name_for_upgrade);
+    STRCMP_EQUAL(NULL, buffer->plugin_name_for_upgrade);
     LONGS_EQUAL(2, buffer->number);
     LONGS_EQUAL(0, buffer->layout_number);
     LONGS_EQUAL(0, buffer->layout_number_merge_order);
     STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->name);
     STRCMP_EQUAL("core." TEST_BUFFER_NAME, buffer->full_name);
-    POINTERS_EQUAL(NULL, buffer->old_full_name);
-    POINTERS_EQUAL(NULL, buffer->short_name);
+    STRCMP_EQUAL(NULL, buffer->old_full_name);
+    STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->short_name);
     LONGS_EQUAL(GUI_BUFFER_TYPE_FREE, buffer->type);
     LONGS_EQUAL(GUI_BUFFER_NOTIFY_ALL, buffer->notify);
     LONGS_EQUAL(0, buffer->num_displayed);
@@ -551,8 +541,8 @@ TEST(GuiBuffer, NewProps)
     POINTERS_EQUAL(NULL, buffer->close_callback_pointer);
     POINTERS_EQUAL(NULL, buffer->close_callback_data);
     LONGS_EQUAL(0, buffer->closing);
-    POINTERS_EQUAL(NULL, buffer->title);
-    POINTERS_EQUAL(NULL, buffer->modes);
+    STRCMP_EQUAL(NULL, buffer->title);
+    STRCMP_EQUAL(NULL, buffer->modes);
     CHECK(buffer->own_lines);
     POINTERS_EQUAL(NULL, buffer->own_lines->first_line);
     POINTERS_EQUAL(NULL, buffer->own_lines->last_line);
@@ -582,7 +572,7 @@ TEST(GuiBuffer, NewProps)
     LONGS_EQUAL(0, buffer->input_get_unknown_commands);
     LONGS_EQUAL(0, buffer->input_get_empty);
     LONGS_EQUAL(0, buffer->input_multiline);
-    POINTERS_EQUAL(NULL, buffer->input_prompt);
+    STRCMP_EQUAL(NULL, buffer->input_prompt);
     STRCMP_EQUAL("", buffer->input_buffer);
     CHECK(buffer->input_buffer_alloc > 0);
     LONGS_EQUAL(0, buffer->input_buffer_size);
@@ -590,7 +580,7 @@ TEST(GuiBuffer, NewProps)
     LONGS_EQUAL(0, buffer->input_buffer_pos);
     LONGS_EQUAL(0, buffer->input_buffer_1st_display);
     CHECK(buffer->input_undo_snap);
-    POINTERS_EQUAL(NULL, buffer->input_undo_snap->data);
+    STRCMP_EQUAL(NULL, buffer->input_undo_snap->data);
     LONGS_EQUAL(0, buffer->input_undo_snap->pos);
     POINTERS_EQUAL(NULL, buffer->input_undo_snap->prev_undo);
     POINTERS_EQUAL(NULL, buffer->input_undo_snap->next_undo);
@@ -612,14 +602,14 @@ TEST(GuiBuffer, NewProps)
     LONGS_EQUAL(0, buffer->text_search_history);
     LONGS_EQUAL(0, buffer->text_search_found);
     POINTERS_EQUAL(NULL, buffer->text_search_ptr_history);
-    POINTERS_EQUAL(NULL, buffer->text_search_input);
-    POINTERS_EQUAL(NULL, buffer->highlight_words);
-    POINTERS_EQUAL(NULL, buffer->highlight_regex);
+    STRCMP_EQUAL(NULL, buffer->text_search_input);
+    STRCMP_EQUAL(NULL, buffer->highlight_words);
+    STRCMP_EQUAL(NULL, buffer->highlight_regex);
     POINTERS_EQUAL(NULL, buffer->highlight_regex_compiled);
-    POINTERS_EQUAL(NULL, buffer->highlight_tags_restrict);
+    STRCMP_EQUAL(NULL, buffer->highlight_tags_restrict);
     LONGS_EQUAL(0, buffer->highlight_tags_restrict_count);
     POINTERS_EQUAL(NULL, buffer->highlight_tags_restrict_array);
-    POINTERS_EQUAL(NULL, buffer->highlight_tags);
+    STRCMP_EQUAL(NULL, buffer->highlight_tags);
     LONGS_EQUAL(0, buffer->highlight_tags_count);
     POINTERS_EQUAL(NULL, buffer->highlight_tags_array);
     POINTERS_EQUAL(NULL, buffer->hotlist);
@@ -683,14 +673,14 @@ TEST(GuiBuffer, New)
                              &test_buffer_close_cb, NULL, NULL);
     CHECK(buffer);
     POINTERS_EQUAL(NULL, buffer->plugin);
-    POINTERS_EQUAL(NULL, buffer->plugin_name_for_upgrade);
+    STRCMP_EQUAL(NULL, buffer->plugin_name_for_upgrade);
     LONGS_EQUAL(2, buffer->number);
     LONGS_EQUAL(0, buffer->layout_number);
     LONGS_EQUAL(0, buffer->layout_number_merge_order);
     STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->name);
     STRCMP_EQUAL("core." TEST_BUFFER_NAME, buffer->full_name);
-    POINTERS_EQUAL(NULL, buffer->old_full_name);
-    POINTERS_EQUAL(NULL, buffer->short_name);
+    STRCMP_EQUAL(NULL, buffer->old_full_name);
+    STRCMP_EQUAL(TEST_BUFFER_NAME, buffer->short_name);
     gui_buffer_close (buffer);
 }
 
@@ -875,7 +865,6 @@ TEST(GuiBuffer, GetInteger)
     LONGS_EQUAL(1, gui_buffer_get_integer (gui_buffers, "number"));
     LONGS_EQUAL(0, gui_buffer_get_integer (gui_buffers, "layout_number"));
     LONGS_EQUAL(0, gui_buffer_get_integer (gui_buffers, "layout_number_merge_order"));
-    LONGS_EQUAL(1, gui_buffer_get_integer (gui_buffers, "short_name_is_set"));
     LONGS_EQUAL(GUI_BUFFER_TYPE_FORMATTED, gui_buffer_get_integer (gui_buffers, "type"));
     LONGS_EQUAL(GUI_BUFFER_NOTIFY_ALL, gui_buffer_get_integer (gui_buffers, "notify"));
     LONGS_EQUAL(1, gui_buffer_get_integer (gui_buffers, "num_displayed"));
@@ -926,27 +915,27 @@ TEST(GuiBuffer, GetInteger)
 
 TEST(GuiBuffer, GetString)
 {
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, NULL));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, ""));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "zzz"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, NULL));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, ""));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "zzz"));
 
     STRCMP_EQUAL("core", gui_buffer_get_string (gui_buffers, "plugin"));
     STRCMP_EQUAL("weechat", gui_buffer_get_string (gui_buffers, "name"));
     STRCMP_EQUAL("core.weechat", gui_buffer_get_string (gui_buffers, "full_name"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "old_full_name"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "old_full_name"));
     STRCMP_EQUAL("weechat", gui_buffer_get_string (gui_buffers, "short_name"));
     STRCMP_EQUAL("formatted", gui_buffer_get_string (gui_buffers, "type"));
     STRNCMP_EQUAL("WeeChat ", gui_buffer_get_string (gui_buffers, "title"), 8);
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "modes"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "input_prompt"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "modes"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "input_prompt"));
     STRCMP_EQUAL("", gui_buffer_get_string (gui_buffers, "input"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "text_search_input"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_words"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_disable_regex"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_regex"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_tags_restrict"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_tags"));
-    POINTERS_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "hotlist_max_level_nicks"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "text_search_input"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_words"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_disable_regex"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_regex"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_tags_restrict"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "highlight_tags"));
+    STRCMP_EQUAL(NULL, gui_buffer_get_string (gui_buffers, "hotlist_max_level_nicks"));
 }
 
 /*
@@ -1104,10 +1093,10 @@ TEST(GuiBuffer, SetHighlightWords)
     gui_buffer_set_highlight_words (NULL, NULL);
 
     gui_buffer_set_highlight_words (buffer, NULL);
-    POINTERS_EQUAL(NULL, buffer->highlight_words);
+    STRCMP_EQUAL(NULL, buffer->highlight_words);
 
     gui_buffer_set_highlight_words (buffer, "");
-    POINTERS_EQUAL(NULL, buffer->highlight_words);
+    STRCMP_EQUAL(NULL, buffer->highlight_words);
 
     gui_buffer_set_highlight_words (buffer, "test");
     STRCMP_EQUAL("test", buffer->highlight_words);
@@ -1131,12 +1120,12 @@ TEST(GuiBuffer, SetHighlightWordsList)
     CHECK(buffer);
 
     gui_buffer_set_highlight_words_list (buffer, NULL);
-    POINTERS_EQUAL(NULL, buffer->highlight_words);
+    STRCMP_EQUAL(NULL, buffer->highlight_words);
 
     list = weelist_new ();
 
     gui_buffer_set_highlight_words_list (buffer, list);
-    POINTERS_EQUAL(NULL, buffer->highlight_words);
+    STRCMP_EQUAL(NULL, buffer->highlight_words);
 
     /* add "word1" */
     weelist_add (list, "word1", WEECHAT_LIST_POS_END, NULL);
@@ -1240,13 +1229,13 @@ TEST(GuiBuffer, RemoveHotlistMaxLevelNicks)
 
 TEST(GuiBuffer, SetInputPrompt)
 {
-    POINTERS_EQUAL(NULL, gui_buffers->input_prompt);
+    STRCMP_EQUAL(NULL, gui_buffers->input_prompt);
 
     gui_buffer_set_input_prompt (gui_buffers, "test");
     STRCMP_EQUAL("test", gui_buffers->input_prompt);
 
     gui_buffer_set_input_prompt (gui_buffers, "");
-    POINTERS_EQUAL(NULL, gui_buffers->input_prompt);
+    STRCMP_EQUAL(NULL, gui_buffers->input_prompt);
 }
 
 /*
@@ -1403,6 +1392,7 @@ TEST(GuiBuffer, SearchMain)
 TEST(GuiBuffer, SearchById)
 {
     struct t_gui_buffer *buffer;
+    long long id;
 
     buffer = gui_buffer_new (NULL, TEST_BUFFER_NAME,
                              NULL, NULL, NULL,
@@ -1415,7 +1405,9 @@ TEST(GuiBuffer, SearchById)
     POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id (gui_buffers->id));
     POINTERS_EQUAL(buffer, gui_buffer_search_by_id (buffer->id));
 
+    id = buffer->id;
     gui_buffer_close (buffer);
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id (id));
 }
 
 /*
@@ -1568,37 +1560,46 @@ TEST(GuiBuffer, SearchByNumber)
 
 /*
  * Tests functions:
- *   gui_buffer_search_by_number_or_name
+ *   gui_buffer_search_by_id_number_name
  */
 
-TEST(GuiBuffer, SearchByNumberOrName)
+TEST(GuiBuffer, SearchByIdNumberName)
 {
     struct t_gui_buffer *buffer;
+    char str_id[64];
 
     buffer = gui_buffer_new (NULL, TEST_BUFFER_NAME,
                              NULL, NULL, NULL,
                              NULL, NULL, NULL);
     CHECK(buffer);
 
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name (NULL));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name (""));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("xxx"));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("-1"));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("0"));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("3"));
+    /* buffer not found */
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name (NULL));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name (""));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("xxx"));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("-1"));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("0"));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("3"));
 
-    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_number_or_name ("1"));
-    POINTERS_EQUAL(buffer, gui_buffer_search_by_number_or_name ("2"));
+    /* search by id */
+    snprintf (str_id, sizeof (str_id), "%lld", gui_buffers->id);
+    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id_number_name (str_id));
+    snprintf (str_id, sizeof (str_id), "%lld", buffer->id);
+    POINTERS_EQUAL(buffer, gui_buffer_search_by_id_number_name (str_id));
 
-    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_number_or_name ("weechat"));
-    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_number_or_name ("core.weechat"));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("CORE.WEECHAT"));
-    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_number_or_name ("(?i)CORE.WEECHAT"));
+    /* search by number */
+    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id_number_name ("1"));
+    POINTERS_EQUAL(buffer, gui_buffer_search_by_id_number_name ("2"));
 
-    POINTERS_EQUAL(buffer, gui_buffer_search_by_number_or_name (TEST_BUFFER_NAME));
-    POINTERS_EQUAL(buffer, gui_buffer_search_by_number_or_name ("core." TEST_BUFFER_NAME));
-    POINTERS_EQUAL(NULL, gui_buffer_search_by_number_or_name ("CORE." TEST_BUFFER_NAME));
-    POINTERS_EQUAL(buffer, gui_buffer_search_by_number_or_name ("(?i)CORE." TEST_BUFFER_NAME));
+    /* search by name */
+    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id_number_name ("weechat"));
+    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id_number_name ("core.weechat"));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("CORE.WEECHAT"));
+    POINTERS_EQUAL(gui_buffers, gui_buffer_search_by_id_number_name ("(?i)CORE.WEECHAT"));
+    POINTERS_EQUAL(buffer, gui_buffer_search_by_id_number_name (TEST_BUFFER_NAME));
+    POINTERS_EQUAL(buffer, gui_buffer_search_by_id_number_name ("core." TEST_BUFFER_NAME));
+    POINTERS_EQUAL(NULL, gui_buffer_search_by_id_number_name ("CORE." TEST_BUFFER_NAME));
+    POINTERS_EQUAL(buffer, gui_buffer_search_by_id_number_name ("(?i)CORE." TEST_BUFFER_NAME));
 
     gui_buffer_close (buffer);
 }

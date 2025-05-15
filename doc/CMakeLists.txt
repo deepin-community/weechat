@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -28,7 +28,8 @@ if(ENABLE_MAN OR ENABLE_DOC)
   set(SCRIPTING_LANG de en fr it ja pl sr)
   set(FAQ_LANG de en es fr it ja pl sr)
   set(QUICKSTART_LANG cs de en es fr it ja pl ru sr)
-  set(RELAY_LANG en fr ja sr)
+  set(RELAY_API_LANG en fr)
+  set(RELAY_WEECHAT_LANG en fr ja sr)
   set(DEV_LANG en fr ja sr)
 
   find_package(Asciidoctor)
@@ -39,7 +40,6 @@ if(ENABLE_MAN OR ENABLE_DOC)
       -a reproducible
       -a "prewrap!"
       -a "webfonts!"
-      -a icons=font
       -a revnumber="${VERSION}"
       -a sectanchors
       -a source-highlighter=pygments
@@ -93,8 +93,17 @@ if(ENABLE_MAN OR ENABLE_DOC)
       -a docinfo1
     )
 
-    # asciidoctor arguments for relay protocol
-    set(ASCIIDOCTOR_RELAY_ARGS
+    # asciidoctor arguments for relay "api"
+    set(ASCIIDOCTOR_RELAY_API_ARGS
+      -a toc=left
+      -a toclevels=3
+      -a sectnums
+      -a sectnumlevels=2
+      -a docinfo1
+    )
+
+    # asciidoctor arguments for relay "weechat"
+    set(ASCIIDOCTOR_RELAY_WEECHAT_ARGS
       -a toc=left
       -a toclevels=3
       -a sectnums
@@ -110,54 +119,6 @@ if(ENABLE_MAN OR ENABLE_DOC)
       -a sectnumlevels=2
       -a docinfo1
     )
-
-    # sed arguments used to replace links in ChangeLog and release notes
-    set(SED_LINKS_ARGS
-      -e "'s/issue #\\([0-9][0-9]*\\)/https:\\/\\/github.com\\/weechat\\/weechat\\/issues\\/\\1[issue #\\1^]/g'"
-      -e "'s/bug #\\([0-9][0-9]*\\)/https:\\/\\/savannah.nongnu.org\\/bugs\\/?\\1[bug #\\1^]/g'"
-      -e "'s/task #\\([0-9][0-9]*\\)/https:\\/\\/savannah.nongnu.org\\/task\\/?\\1[task #\\1^]/g'"
-      -e "'s/patch #\\([0-9][0-9]*\\)/https:\\/\\/savannah.nongnu.org\\/patch\\/?\\1[patch #\\1^]/g'"
-      -e "'s/debian #\\([0-9][0-9]*\\)/http:\\/\\/bugs.debian.org\\/cgi-bin\\/bugreport.cgi?bug=\\1[debian bug #\\1^]/g'"
-      -e "'s/\\(CVE-[0-9][0-9]*-[0-9][0-9]*\\)/https:\\/\\/cve.mitre.org\\/cgi-bin\\/cvename.cgi?name=\\1[\\1^]/g'"
-    )
-
-    # ChangeLog
-    add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog-links.adoc"
-      COMMAND sed ARGS ${SED_LINKS_ARGS} "${CMAKE_CURRENT_SOURCE_DIR}/../ChangeLog.adoc" > "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog-links.adoc"
-      DEPENDS
-      "${CMAKE_CURRENT_SOURCE_DIR}/../ChangeLog.adoc"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    )
-    add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog.html"
-      COMMAND "${ASCIIDOCTOR_EXECUTABLE}" ARGS ${ASCIIDOCTOR_ARGS} -o ChangeLog.html "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog-links.adoc"
-      DEPENDS
-      "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
-      "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog-links.adoc"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-      COMMENT "Building ChangeLog.html"
-    )
-    add_custom_target(changelog DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/ChangeLog.html")
-
-    # Release notes
-    add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes-links.adoc"
-      COMMAND sed ARGS ${SED_LINKS_ARGS} "${CMAKE_CURRENT_SOURCE_DIR}/../ReleaseNotes.adoc" > "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes-links.adoc"
-      DEPENDS
-      "${CMAKE_CURRENT_SOURCE_DIR}/../ReleaseNotes.adoc"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    )
-    add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes.html"
-      COMMAND "${ASCIIDOCTOR_EXECUTABLE}" ARGS ${ASCIIDOCTOR_ARGS} -o ReleaseNotes.html "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes-links.adoc"
-      DEPENDS
-      "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
-      "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes-links.adoc"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-      COMMENT "Building ReleaseNotes.html"
-    )
-    add_custom_target(rn DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/ReleaseNotes.html")
 
     if(ENABLE_DOC)
       set(AUTOGEN_FILES "")
@@ -243,6 +204,7 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_user.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/cmdline_options.${lang}.adoc"
           doc-autogen
           "${CMAKE_CURRENT_BINARY_DIR}/autogen/autogen_user_commands.${lang}.adoc"
@@ -263,6 +225,7 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_plugin_api.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           doc-autogen
           "${CMAKE_CURRENT_BINARY_DIR}/autogen/autogen_api_completions.${lang}.adoc"
           "${CMAKE_CURRENT_BINARY_DIR}/autogen/autogen_api_config_priority.${lang}.adoc"
@@ -286,6 +249,7 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_scripting.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           doc-autogen
           "${CMAKE_CURRENT_BINARY_DIR}/autogen/autogen_scripting_functions.${lang}.adoc"
           "${CMAKE_CURRENT_BINARY_DIR}/autogen/autogen_scripting_constants.${lang}.adoc"
@@ -303,6 +267,7 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_faq.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
           COMMENT "Building weechat_faq.${lang}.html"
         )
@@ -317,25 +282,44 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_quickstart.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
           COMMENT "Building weechat_quickstart.${lang}.html"
         )
         add_custom_target(doc-quickstart-${lang} ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.${lang}.html")
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.${lang}.html" DESTINATION "${DATAROOTDIR}/doc/${PROJECT_NAME}")
       endforeach()
-      # relay protocol
-      foreach(lang ${RELAY_LANG})
+      # relay "api"
+      foreach(lang ${RELAY_API_LANG})
         add_custom_command(
-          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.${lang}.html"
-          COMMAND "${ASCIIDOCTOR_EXECUTABLE}" ARGS ${ASCIIDOCTOR_ARGS} ${ASCIIDOCTOR_RELAY_ARGS} -o "weechat_relay_protocol.${lang}.html" "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_protocol.${lang}.adoc"
+          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_api.${lang}.html"
+          COMMAND "${ASCIIDOCTOR_EXECUTABLE}" ARGS ${ASCIIDOCTOR_ARGS} ${ASCIIDOCTOR_RELAY_API_ARGS} -o "weechat_relay_api.${lang}.html" "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_api.${lang}.adoc"
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
-          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_protocol.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_api.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/relay.${lang}.adoc"
           WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-          COMMENT "Building weechat_relay_protocol.${lang}.html"
+          COMMENT "Building weechat_relay_api.${lang}.html"
         )
-        add_custom_target(doc-relay-protocol-${lang} ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.${lang}.html")
-        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.${lang}.html" DESTINATION "${DATAROOTDIR}/doc/${PROJECT_NAME}")
+        add_custom_target(doc-relay-api-${lang} ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_api.${lang}.html")
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_api.${lang}.html" DESTINATION "${DATAROOTDIR}/doc/${PROJECT_NAME}")
+      endforeach()
+      # relay "weechat"
+      foreach(lang ${RELAY_WEECHAT_LANG})
+        add_custom_command(
+          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_weechat.${lang}.html"
+          COMMAND "${ASCIIDOCTOR_EXECUTABLE}" ARGS ${ASCIIDOCTOR_ARGS} ${ASCIIDOCTOR_RELAY_WEECHAT_ARGS} -o "weechat_relay_weechat.${lang}.html" "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_weechat.${lang}.adoc"
+          DEPENDS
+          "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_relay_weechat.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/relay.${lang}.adoc"
+          WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+          COMMENT "Building weechat_relay_weechat.${lang}.html"
+        )
+        add_custom_target(doc-relay-weechat-${lang} ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_weechat.${lang}.html")
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_weechat.${lang}.html" DESTINATION "${DATAROOTDIR}/doc/${PROJECT_NAME}")
       endforeach()
       # developer's guide
       foreach(lang ${DEV_LANG})
@@ -345,6 +329,7 @@ if(ENABLE_MAN OR ENABLE_DOC)
           DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/docinfo.html"
           "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/weechat_dev.${lang}.adoc"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${lang}/includes/attributes-${lang}.adoc"
           WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
           COMMENT "Building weechat_dev.${lang}.html"
         )

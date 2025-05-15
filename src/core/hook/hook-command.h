@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -66,6 +66,11 @@ struct t_hook_command
     /* concatenation of arg N for each template */
     int cplt_template_num_args_concat; /* number of concatenated arguments  */
     char **cplt_template_args_concat;  /* concatenated arguments            */
+
+    /* other features */
+    int keep_spaces_right;             /* if set to 1: don't strip trailing */
+                                       /* spaces in args when the command   */
+                                       /* is executed                       */
 };
 
 struct t_hook_command_similar

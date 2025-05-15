@@ -1,7 +1,7 @@
 /*
  * core-hdata.c - direct access to WeeChat data using hashtables
  *
- * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -657,6 +657,27 @@ end:
 }
 
 /*
+ * Returns number of item in this hdata, starting at "pointer".
+ */
+
+int
+hdata_count (struct t_hdata *hdata, void *pointer)
+{
+    int count;
+
+    if (!hdata || !pointer)
+        return 0;
+
+    count = 0;
+    while (pointer)
+    {
+        count++;
+        pointer = hdata_move (hdata, pointer, 1);
+    }
+    return count;
+}
+
+/*
  * Extracts index from name of a variable.
  *
  * A name can contain index with this format: "NNN|name" (where NNN is an
@@ -859,7 +880,7 @@ hdata_string (struct t_hdata *hdata, void *pointer, const char *name)
                 return (*((char ***)(pointer + var->offset)))[index];
             else
             {
-                /* we can not index a static array of strings */
+                /* we cannot index a static array of strings */
                 return NULL;
             }
         }
@@ -977,7 +998,7 @@ hdata_hashtable (struct t_hdata *hdata, void *pointer, const char *name)
 /*
  * Compares a hdata variable of two objects.
  *
- * If case_sensitive == 1, the comparison of strings is case sensitive.
+ * If case_sensitive == 1, the comparison of strings is case-sensitive.
  *
  * Returns:
  *   -1: variable1 < variable2
@@ -1163,6 +1184,12 @@ hdata_compare (struct t_hdata *hdata, void *pointer1, void *pointer2,
                             rc = (time_value1 < time_value2) ?
                                 -1 : ((time_value1 > time_value2) ? 1 : 0);
                             break;
+                        case HASHTABLE_LONGLONG:
+                            longlong_value1 = *((long long *)ptr_value1);
+                            longlong_value2 = *((long long *)ptr_value2);
+                            rc = (longlong_value1 < longlong_value2) ?
+                                -1 : ((longlong_value1 > longlong_value2) ? 1 : 0);
+                            break;
                         case HASHTABLE_NUM_TYPES:
                             break;
                     }
@@ -1217,10 +1244,10 @@ hdata_set (struct t_hdata *hdata, void *pointer, const char *name,
            const char *value)
 {
     struct t_hdata_var *var;
+    void *ptr;
     char **ptr_string, *error;
     long number;
     long long number_longlong;
-    unsigned long ptr;
     int rc;
 
     if (!hdata->update_pending)
@@ -1240,7 +1267,6 @@ hdata_set (struct t_hdata *hdata, void *pointer, const char *name,
         case WEECHAT_HDATA_CHAR:
             *((char *)(pointer + var->offset)) = (value) ? value[0] : '\0';
             return 1;
-            break;
         case WEECHAT_HDATA_INTEGER:
             error = NULL;
             number = strtol (value, &error, 10);
@@ -1273,20 +1299,18 @@ hdata_set (struct t_hdata *hdata, void *pointer, const char *name,
             free (*ptr_string);
             *ptr_string = (value) ? strdup (value) : NULL;
             return 1;
-            break;
         case WEECHAT_HDATA_SHARED_STRING:
             ptr_string = (char **)(pointer + var->offset);
             string_shared_free (*ptr_string);
             *ptr_string = (value) ? (char *)string_shared_get (value) : NULL;
             return 1;
-            break;
         case WEECHAT_HDATA_POINTER:
             if (value)
             {
-                rc = sscanf (value, "%lx", &ptr);
+                rc = sscanf (value, "%p", &ptr);
                 if ((rc != EOF) && (rc != 0))
                 {
-                    *((void **)(pointer + var->offset)) = (void *)ptr;
+                    *((void **)(pointer + var->offset)) = ptr;
                     return 1;
                 }
             }
@@ -1443,7 +1467,7 @@ hdata_free_all_plugin (struct t_weechat_plugin *plugin)
  */
 
 void
-hdata_free_all ()
+hdata_free_all (void)
 {
     hashtable_remove_all (weechat_hdata);
 }
@@ -1516,7 +1540,7 @@ hdata_print_log_map_cb (void *data, struct t_hashtable *hashtable,
  */
 
 void
-hdata_print_log ()
+hdata_print_log (void)
 {
     hashtable_map (weechat_hdata, &hdata_print_log_map_cb, NULL);
 }
@@ -1541,7 +1565,7 @@ hdata_free_hdata_cb (struct t_hashtable *hashtable,
  */
 
 void
-hdata_init ()
+hdata_init (void)
 {
     weechat_hdata = hashtable_new (32,
                                    WEECHAT_HASHTABLE_STRING,
@@ -1556,7 +1580,7 @@ hdata_init ()
  */
 
 void
-hdata_end ()
+hdata_end (void)
 {
     hdata_free_all ();
     hashtable_free (weechat_hdata);

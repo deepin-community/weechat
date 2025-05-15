@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -53,6 +53,8 @@ struct t_irc_channel;
         return WEECHAT_RC_OK;                                           \
     }
 
+#define IRC_COMMAND_KEEP_SPACES weechat_hook_set (ptr_hook, "keep_spaces_right", "1")
+
 /*
  * list of supported capabilities
  * (enabled if supported by the server + completion in command /cap)
@@ -83,6 +85,6 @@ extern void irc_command_part_channel (struct t_irc_server *server,
                                       const char *part_message);
 extern void irc_command_quit_server (struct t_irc_server *server,
                                      const char *arguments);
-extern void irc_command_init ();
+extern void irc_command_init (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_COMMAND_H */

@@ -1,7 +1,7 @@
 /*
  * buflist-command.c - buflist command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -99,7 +99,7 @@ buflist_command_buflist (const void *pointer, void *data,
  */
 
 void
-buflist_command_init ()
+buflist_command_init (void)
 {
     weechat_hook_command (
         "buflist",

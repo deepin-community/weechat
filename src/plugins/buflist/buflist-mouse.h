@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,7 +22,7 @@
 
 #define BUFLIST_MOUSE_HSIGNAL "buflist_mouse"
 
-extern int buflist_mouse_init ();
-extern void buflist_mouse_end ();
+extern int buflist_mouse_init (void);
+extern void buflist_mouse_end (void);
 
 #endif /* WEECHAT_PLUGIN_BUFLIST_MOUSE_H */

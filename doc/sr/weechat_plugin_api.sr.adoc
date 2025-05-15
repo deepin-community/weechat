@@ -2,11 +2,11 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: sr
-:toc-title: Садржај
+include::includes/attributes-sr.adoc[]
 
 Превод:
 
-* Иван Пешић (<ivan.pesic@gmail.com>), 2021.
+* Иван Пешић (<ivan.pesic@gmail.com>), 2025.
 
 Ово упутство описује WeeChat чет клијент и део је програма WeeChat.
 
@@ -151,9 +151,10 @@ int weechat_plugin_end (struct t_weechat_plugin *plugin);
 
 Да бисте компајлирали додатак који има само један фајл „toto.c” (на систему GNU/Linux):
 
+[source,shell]
 ----
-$ gcc -fPIC -Wall -c toto.c
-$ gcc -shared -fPIC -o toto.so toto.o
+gcc -fPIC -Wall -c toto.c
+gcc -shared -fPIC -o toto.so toto.o
 ----
 
 [[load_plugin]]
@@ -2529,7 +2530,7 @@ str3 = weechat.string_input_for_buffer("//test")  # "/test"
 
 ==== string_eval_expression
 
-_WeeChat ≥ 0.4.0, ажурирано у верзијама 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6 и 3.8, 4.0.0, 4.2.0, 4.3.0._
+_WeeChat ≥ 0.4.0, ажурирано у верзијама 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6 и 3.8, 4.0.0, 4.2.0, 4.3.0, 4.4.0._
 
 Израчунава израз и враћа вредност као стринг. Специјалне променљиве у формату `+${променљива}+` се развијају (погледајте табелу испод).
 
@@ -3215,11 +3216,17 @@ str5 = weechat.string_eval_expression("password=abc password=def", {}, {}, optio
   +
   ^(1)^ пример из француског
 
-| `+${define:name,value}+` | 3.4
+| `+${define:име,вредност}+` | 3.4
 | Дефинисање променљиве `име` постављене на `вредност`, која онда може да се користи у истом
   израчунатом изразу са `+${име}+`.
 | >> `+${define:len,${calc:5+3}}${len}x${len}+` +
   == `+8x8+`
+
+| `+${hdata_count:име[листа]}+` +
+  `+${hdata_count:име[показивач]}+` | 4.4.0
+| Број ставки у hdata листи или почевши од `показивач`.
+| >> `+${hdata_count:buffer[gui_buffers]}+` +
+  == `+15+`
 
 | `+${sec.data.име}+` |
 | Вредност обезбеђених података `име`.
@@ -3444,7 +3451,7 @@ const char *weechat_string_concat (const char *separator, ...);
 
 [NOTE]
 Последњи аргумент *MUST* увек да буде NULL. +
-Може да се употреби макро `WEECHAT_STR_CONCAT`, тамо где није потребна 
+Може да се употреби макро `WEECHAT_STR_CONCAT`, тамо где није потребна
 завршна NULL вредност (препоручује се уптореба овог макроа).
 
 Повратна вредност:
@@ -5664,7 +5671,7 @@ weechat_arraylist_free (arraylist);
 
 ==== hashtable_new
 
-_WeeChat ≥ 0.3.3._
+_WeeChat ≥ 0.3.3, ажурирано у верзији 4.4.0._
 
 Креира нову хеш табелу.
 
@@ -5691,12 +5698,14 @@ struct t_hashtable *weechat_hashtable_new (int size,
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _type_values_: тип вредности у хеш табели:
 ** _WEECHAT_HASHTABLE_INTEGER_
 ** _WEECHAT_HASHTABLE_STRING_
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _callback_hash_key_: функција повратног позива која се користи за „хеширање” кључа (кључ у облику целог броја), може да буде NULL ако тип кључа није „buffer” (користи се подразумевана хеш функција), аргументи и повратна вредност су:
 ** _struct t_hashtable *hashtable_: показивач на хеш табелу
 ** _const void *key_: кључ
@@ -6050,12 +6059,14 @@ const char *weechat_hashtable_get_string (struct t_hashtable *hashtable,
 *** _pointer_: показивач
 *** _buffer_: бафер
 *** _time_: време
+*** _longlong_: long long цео број
 ** _type_values_: тип вредности:
 *** _integer_: цео број
 *** _string_: стринг
 *** _pointer_: показивач
 *** _buffer_: бафер
 *** _time_: време
+*** _longlong_: long long цео број
 ** _keys_: стринг са листом кључева (у формату: „кључ1,кључ2,кључ3”)
 ** _keys_sorted_: стринг са листом сортираних кључева (у формату: „кључ1,кључ2,кључ3”)
 ** _values_: стринг са листом вредности
@@ -7889,7 +7900,7 @@ def config_boolean_inherited(option: str) -> int: ...
 
 # пример
 option = weechat.config_get("irc.server.libera.autoconnect")
-autoconect = weechat.config_boolean_inherited(option)
+autoconnect = weechat.config_boolean_inherited(option)
 ----
 
 ==== config_integer
@@ -9222,7 +9233,7 @@ _WeeChat ≥ 0.3.6, ажурирано у верзији 2.0._
 
 Уклања тастерску пречицу (или више њих).
 
-[WARNING]
+[CAUTION]
 Када се ова функција позива, обезбедите да не уклоните корисникове тастерске пречице.
 
 Прототип:
@@ -10691,6 +10702,12 @@ _WeeChat ≥ 4.1.0._
 
 URL трансфер.
 
+// TRANSLATION MISSING
+This function is similar to <<_hook_process,hook_process>> and
+<<_hook_process_hashtable,hook_process_hashtable>> with command "url:..."
+but it uses a thread instead of new process, making it more lightweight
+and thus recommended for this usage.
+
 Прототип:
 
 [source,c]
@@ -10832,7 +10849,7 @@ hook2 = weechat.hook_url("http://localhost:8080/", options, 20000, "my_url_cb", 
 
 ==== hook_connect
 
-_Ажурирано у верзијама 1.5, 2.0._
+_Ажурирано у верзијама 1.5, 2.0, 4.4.0._
 
 Качи се на везу (везу у позадини са удаљеним хостом).
 
@@ -10866,7 +10883,10 @@ struct t_hook *weechat_hook_connect (const char *proxy,
 * _proxy_: име проксија који се користи за везу (није обавезно, NULL значи да је веза без проксија)
 * _address_: име или IP адреса са којом се повезује
 * _port_: број порта
-* _ipv6_: 1 да се користи IPv6 (или IPv4 у случају да не може), 0 да се користи само IPv4
+* _ipv6_:
+** `WEECHAT_HOOK_CONNECT_IPV6_DISABLE` ^(1)^: искључује IPv6 (користи се само IPv4)
+** `WEECHAT_HOOK_CONNECT_IPV6_AUTO` ^(1)^: користи се IPv6 са преласком на IPv4 по потреби
+** `WEECHAT_HOOK_CONNECT_IPV6_FORCE` ^(1)^: форсира се IPv6 (не користи се IPv4) _(WeeChat ≥ 4.4.0)_
 * _retry_: број поновних покушаја, користи се за прелаз на IPv4 хостове ако се IPv6 хостови успостављају везу али онда не прихватају клијента
 * _gnutls_sess_: GnuTLS сесија (није обавезна)
 * _gnutls_cb_: GnuTLS функција повратног позива (није обавезна)
@@ -10882,7 +10902,7 @@ struct t_hook *weechat_hook_connect (const char *proxy,
 * _callback_: функција која се позива када је веза OK или не успе да се успостави, аргументи и повратна вредност су:
 ** _const void *pointer_: показивач
 ** _void *data_: показивач
-** _int status_: статус везе:
+** _int status_: статус везе ^(2)^:
 *** _WEECHAT_HOOK_CONNECT_OK_: веза је OK
 *** _WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND_: адреса није пронађена
 *** _WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND_: IP адреса није пронађена
@@ -10894,8 +10914,8 @@ struct t_hook *weechat_hook_connect (const char *proxy,
 *** _WEECHAT_HOOK_CONNECT_MEMORY_ERROR_: нема довољно слободне меморије
 *** _WEECHAT_HOOK_CONNECT_TIMEOUT_: тајмаут
 *** _WEECHAT_HOOK_CONNECT_SOCKET_ERROR_: сокет није могао да се креира
-** _gnutls_rc_: повратна вредност функције _gnutls_handshake()_
-** _sock_: сокет који се употребљен за везу
+** _gnutls_rc_: повратна вредност функције _gnutls_handshake()_ ^(2)^
+** _sock_: сокет који се употребљен за везу ^(2)^
 ** _const char *error_: повратна вредност _gnutls_strerror(gnutls_rc)_
 ** _const char *ip_address_: IP адреса није нађена
 ** повратна вредност:
@@ -10904,13 +10924,16 @@ struct t_hook *weechat_hook_connect (const char *proxy,
 * _callback_pointer_: показивач који се прослеђује функцији повратног позива када је позове програм WeeChat
 * _callback_data_: показивач који се прослеђује функцији повратног позива када је позове програм WeeChat; ако није NULL, алоцирала га је malloc (или нека слична функција) и аутоматски се ослобађа када се кука обрише
 
+[NOTE]
+^(1)^ Констате за параметар _ipv6_ су доступне почевши од WeeChat 4.4.0. +
+У старијим издањима су дозвољене вредности `1` (користи се IPv6 са преласком на IPv4 у случају потребе) и
+`0` (искључује се IPv6, користи се само IPv4). +
+^(2)^ У скриптама и програмом WeeChat ≥ 2.0, аргументи функције повратног позива _status_, _gnutls_rc_ и _sock_ су цели бројеви (у програму WeeChat ≤ 1.9, били су стрингови). +
+Да би се одржала компатибилност са свим верзијама, препоручује се да аргумент пре употребе конвертујете у цео број, на пример у језику Python: `int(sock)`.
+
 Повратна вредност:
 
 * показивач на нову куку, NULL у случају грешке
-
-[IMPORTANT]
-У скриптама и програмом WeeChat ≥ 2.0, аргументи функције повратног позива _status_, _gnutls_rc_ и _sock_ су цели бројеви (у програму WeeChat ≤ 1.9, били су стрингови). +
-Да би се одржала компатибилност са свим верзијама, препоручује се да аргумент пре употребе конвертујете у цео број, на пример у језику Python: `int(sock)`.
 
 C пример:
 
@@ -10961,7 +10984,8 @@ my_connect_cb (const void *pointer, void *data, int status, int gnutls_rc,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       1, 0,
+                                                       WEECHAT_HOOK_CONNECT_IPV6_AUTO,
+                                                       0,
                                                        NULL, NULL, 0,  /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL, NULL);
@@ -10977,31 +11001,32 @@ def hook_connect(proxy: str, address: str, port: int, ipv6: int, retry: int, loc
 
 # пример
 def my_connect_cb(data: str, status: int, gnutls_rc: int, sock: int, error: str, ip_address: str) -> int:
-    if status == WEECHAT_HOOK_CONNECT_OK:
+    if status == weechat.WEECHAT_HOOK_CONNECT_OK:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_PROXY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_PROXY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_TIMEOUT:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234,
+                            weechat.WEECHAT_HOOK_CONNECT_IPV6_AUTO, 0, "",
                             "my_connect_cb", "")
 ----
 
@@ -11250,7 +11275,7 @@ C пример:
 [source,c]
 ----
 int
-my_line_cb (const void *pointer, void *data, struct t_hasbtable *line)
+my_line_cb (const void *pointer, void *data, struct t_hashtable *line)
 {
     struct t_hashtable *hashtable;
 
@@ -11781,6 +11806,10 @@ struct t_hook *weechat_hook_signal (const char *signal,
 | Показивач: линија.
 | У бафер је додата линија.
 
+| weechat | [[hook_signal_buffer_line_data_changed]] buffer_line_data_changed | 4.4.0
+| Показивач: подаци линије.
+| У баферу су ажурирани подаци линије.
+
 | weechat | [[hook_signal_buffer_lines_hidden]] buffer_lines_hidden |
 | Показивач: бафер.
 | У баферу су сакривене линије.
@@ -11821,10 +11850,13 @@ struct t_hook *weechat_hook_signal (const char *signal,
 | Показивач: бафер.
 | Промењен је наслов бафера.
 
-// TRANSLATION MISSING
 | weechat | [[hook_signal_buffer_modes_changed]] buffer_modes_changed | 4.3.0
-| Pointer: buffer.
-| Modes of buffer changed.
+| Показивач: бафер.
+| Промењени су режими бафера.
+
+| weechat | [[hook_signal_buffer_time_for_each_line_changed]] buffer_time_for_each_line_changed | 4.4.0
+| Показивач: бафер.
+| Време приказа за сваку измењену линију.
 
 | weechat | [[hook_signal_buffer_type_changed]] buffer_type_changed |
 | Показивач: бафер.
@@ -11900,10 +11932,9 @@ struct t_hook *weechat_hook_signal (const char *signal,
 | Показивач: бафер.
 | Претрага текста у баферу.
 
-// TRANSLATION MISSING
 | weechat | [[hook_signal_input_prompt_changed]] input_prompt_changed | 4.3.0
-| Pointer: buffer.
-| Input prompt changed.
+| Показивач: бафер.
+| Промењено је питање уноса.
 
 | weechat | [[hook_signal_input_text_changed]] input_text_changed |
 | Показивач: бафер.
@@ -11936,6 +11967,14 @@ struct t_hook *weechat_hook_signal (const char *signal,
 | weechat | [[hook_signal_key_combo_cursor]] key_combo_cursor | 1.0
 | Стринг: комбинација тастера.
 | Комбинација тастера у _cursor_ контексту.
+
+| weechat | [[hook_signal_layout_buffers_applied]] layout_buffers_applied | 4.4.0
+| Стринг: име распореда.
+| Распоред који се примењује за бафере.
+
+| weechat | [[hook_signal_layout_windows_applied]] layout_windows_applied | 4.4.0
+| Стринг: име распореда.
+| Распоред који се примењује за прозоре.
 
 | weechat | [[hook_signal_mouse_enabled]] mouse_enabled | 1.1
 | - |
@@ -12130,7 +12169,7 @@ hook = weechat.hook_signal("quit;upgrade", "my_signal_cb", "")
 
 ==== hook_signal_send
 
-_Ажурирано у верзији 1.0._
+_Ажурирано у верзији 1.0, 4.5.0._
 
 Шаље сигнал.
 
@@ -12144,9 +12183,21 @@ int weechat_hook_signal_send (const char *signal, const char *type_data,
 
 Аргументи:
 
-* _signal_: сигнал који се шаље
+// TRANSLATION MISSING
+* _signal_: сигнал који се шаље; flags are allowed before the signal name (see below)
+  _(WeeChat ≥ 4.5.0)_
 * _type_data_: тип података који се шаљу уз сигнал (погледајте <<_hook_signal,hook_signal>>)
 * _signal_data_: подаци који се шаљу уз сигнал
+
+// TRANSLATION MISSING
+The signal name can contain flags with the following format: `[flags:xxx,yyy]signal`
+where `xxx` and `yyy` are names of flags, and `signal` the signal name. +
+The following flags are supported:
+
+* _stop_on_error_: exit immediately if a callback returns WEECHAT_RC_ERROR
+  (remaining callbacks are then NOT executed) _(WeeChat ≥ 4.5.0)_
+* _ignore_eat_: consider any callback returning WEECHAT_RC_OK_EAT is in fact
+  WEECHAT_RC_OK and execute remaining callbacks _(WeeChat ≥ 4.5.0)_
 
 Повратна вредност _(WeeChat ≥ 1.0)_:
 
@@ -12160,6 +12211,8 @@ C пример:
 [source,c]
 ----
 int rc = weechat_hook_signal_send ("my_signal", WEECHAT_HOOK_SIGNAL_STRING, my_string);
+int rc2 = weechat_hook_signal_send ("[flags:stop_on_error,ignore_eat]my_signal2",
+                                    WEECHAT_HOOK_SIGNAL_STRING, my_string);
 ----
 
 Скрипта (Python):
@@ -12169,8 +12222,10 @@ int rc = weechat_hook_signal_send ("my_signal", WEECHAT_HOOK_SIGNAL_STRING, my_s
 # прототип
 def hook_signal_send(signal: str, type_data: str, signal_data: str) -> int: ...
 
-# пример
+# примери
 rc = weechat.hook_signal_send("my_signal", weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
+rc2 = weechat.hook_signal_send("[flags:stop_on_error,ignore_eat]my_signal2",
+                               weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
 ----
 
 [[signal_logger_backlog]]
@@ -12443,7 +12498,7 @@ hook = weechat.hook_hsignal("test", "my_hsignal_cb", "")
 
 ==== hook_hsignal_send
 
-_WeeChat ≥ 0.3.4, ажурирано у верзији 1.0._
+_WeeChat ≥ 0.3.4, ажурирано у верзији 1.0, 4.5.0._
 
 Шаље hsignal (сигнал са хеш табелом).
 
@@ -12456,7 +12511,9 @@ int weechat_hook_hsignal_send (const char *signal, struct t_hashtable *hashtable
 
 Аргументи:
 
-* _signal_: сигнал који се шаље
+// TRANSLATION MISSING
+* _signal_: сигнал који се шаље; flags are allowed before the signal name
+  (see function <<_hook_signal_send,hook_signal_send>>) _(WeeChat ≥ 4.5.0)_
 * _hashtable_: хеш табела
 
 Повратна вредност _(WeeChat ≥ 1.0)_:
@@ -12470,7 +12527,7 @@ C пример:
 
 [source,c]
 ----
-int rc;
+int rc, rc2;
 struct t_hashtable *hashtable = weechat_hashtable_new (8,
                                                        WEECHAT_HASHTABLE_STRING,
                                                        WEECHAT_HASHTABLE_STRING,
@@ -12480,6 +12537,7 @@ if (hashtable)
 {
     weechat_hashtable_set (hashtable, "key", "value");
     rc = weechat_hook_hsignal_send ("my_hsignal", hashtable);
+    rc2 = weechat_hook_hsignal_send ("[flags:stop_on_error,ignore_eat]my_hsignal2", hashtable);
     weechat_hashtable_free (hashtable);
 }
 ----
@@ -12491,8 +12549,9 @@ if (hashtable)
 # прототип
 def hook_hsignal_send(signal: str, hashtable: Dict[str, str]) -> int: ...
 
-# пример
+# примери
 rc = weechat.hook_hsignal_send("my_hsignal", {"key": "value"})
+rc2 = weechat.hook_hsignal_send("[flags:stop_on_error,ignore_eat]my_hsignal2", {"key": "value"})
 ----
 
 [[hsignal_irc_redirect_command]]
@@ -13568,6 +13627,11 @@ void weechat_hook_set (struct t_hook *hook, const char *property,
 | Име под додатка (обично је то име скрипте које се приказује у
   `/help команда` за куку типа _command_).
 
+// TRANSLATION MISSING
+| keep_spaces_right | 4.6.0 | _command_, _command_run_
+| "0" or "1"
+| Keep trailing spaces in command arguments when it is executed.
+
 | stdin | 0.4.3 | _process_, _process_hashtable_ | било који стринг
 | Шаље податке на стандардни улаз (_stdin_) дете процеса.
 
@@ -14187,7 +14251,6 @@ int weechat_buffer_get_integer (struct t_gui_buffer *buffer,
 ** _number_: број бафера (почиње се од 1)
 ** _layout_number_: број бафера сачуван у распореду
 ** _layout_number_merge_order_: редослед у спајању за распоред
-** _short_name_is_set_: 1 ако је постављено кратко име, 0 ако није
 ** _type_: тип бафера (0: форматиран, 1: слободни садржај)
 ** _notify_: ниво обавештавања за бафер
 ** _num_displayed_: број прозора који приказују бафер
@@ -14290,11 +14353,9 @@ const char *weechat_buffer_get_string (struct t_gui_buffer *buffer,
 ** _short_name_: кратко име бафера (напомена: користи се само за приказ и корисник може да га промени, ово не сме да се употребљава за проналажење имена бафера, уместо њега употребите _name_, _full_name_ или локалну променљиву _channel_)
 ** _type_: тип бафера: „formatted” или „free” _(WeeChat ≥ 4.2.0)_
 ** _title_: наслов бафера
-// TRANSLATION MISSING
-** _modes_: modes _(WeeChat ≥ 4.3.0)_
+** _modes_: режими _(WeeChat ≥ 4.3.0)_
 ** _nicklist_last_id_assigned_: последњи јединствени идентификатор употребљен у овом баферу за групу или надимак _(WeeChat ≥ 4.3.0)_
-// TRANSLATION MISSING
-** _input_prompt_: input prompt _(WeeChat ≥ 4.3.0)_
+** _input_prompt_: питање уноса _(WeeChat ≥ 4.3.0)_
 ** _input_: текст уноса
 ** _text_search_input_: сачувани унос пре претраге текста
 ** _highlight_words_: листа речи које се истичу
@@ -14361,7 +14422,7 @@ C пример:
 
 [source,c]
 ----
-weechat_printf (NULL, "показивач на додатак мог бафера: %lx",
+weechat_printf (NULL, "показивач на додатак мог бафера: %p",
                 weechat_buffer_get_pointer (my_buffer, "plugin"));
 ----
 
@@ -14408,6 +14469,12 @@ void weechat_buffer_set (struct t_gui_buffer *buffer, const char *property,
   (услови дефинисани у опцији _weechat.look.hotlist_add_conditions_
   се *НЕ* проверавају) +
   "-1": уклања бафер из вруће листе _(WeeChat ≥ 1.0)_.
+
+| hotlist_conditions | 4.5.0 | WEECHAT_HOTLIST_LOW, WEECHAT_HOTLIST_MESSAGE,
+  WEECHAT_HOTLIST_PRIVATE, WEECHAT_HOTLIST_HIGHLIGHT
+| приоритет: бафер се на врућу листу додаје са овим приоритетом
+  (услови дефинисани у опцији _weechat.look.hotlist_add_conditions_
+  се проверавају).
 
 | completion_freeze | | "0" или "1"
 | "0": нема замрзавања довршавања (подразумевана вредност)
@@ -14469,9 +14536,8 @@ void weechat_buffer_set (struct t_gui_buffer *buffer, const char *property,
 | title | | било који стринг
 | Поставља нови наслов бафера.
 
-// TRANSLATION MISSING
-| modes | 4.3.0 | any string
-| Set new modes for buffer.
+| modes | 4.3.0 | било који стринг
+| Поставља нове режиме за бафер.
 
 | time_for_each_line | | "0" или "1"
 | "0" да се скрива време у свим линијама бафера, "1" да се приказује у свим
@@ -14535,9 +14601,8 @@ void weechat_buffer_set (struct t_gui_buffer *buffer, const char *property,
 | key_unbind_xxx | | -
 | Уклања тастерску пречицу _xxx_ за овај бафер.
 
-// TRANSLATION MISSING
-| input_prompt | 4.3.0 | any string
-| Set new value for input prompt.
+| input_prompt | 4.3.0 | било који стринг
+| Поставља нову вредност за питање уноса.
 
 | input | | било који стринг
 | Поставља нову вредност за унос у бафер.
@@ -14773,6 +14838,46 @@ if buffer:
     weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.oftc.*,python.*"))  # 0
 ----
 
+[[buffer_lines]]
+=== Линије бафера
+
+Функције за линије бафера.
+
+==== line_search_by_id
+
+_WeeChat ≥ 4.4.0._
+
+Претрага линије у баферу по идентификатору.
+
+Прототип:
+
+[source,c]
+----
+struct t_gui_line *weechat_line_search_by_id (struct t_gui_buffer *buffer, int id);
+----
+
+Повратна вредност:
+
+* показивач на пронађену линију, NULL ако се не пронађе
+
+C пример:
+
+[source,c]
+----
+struct t_gui_line *line = weechat_line_search_by_id (buffer, 123);
+----
+
+Скрипта (Python):
+
+[source,python]
+----
+# прототип
+def line_search_by_id(buffer: str, line_id: int) -> str: ...
+
+# пример
+line = weechat.line_search_by_id(buffer, 123)
+----
+
 [[windows]]
 === Прозори
 
@@ -14837,7 +14942,7 @@ C пример:
 [source,c]
 ----
 weechat_printf (NULL,
-                "прозор који приказује core бафер: %lx",
+                "прозор који приказује core бафер: %p",
                 weechat_window_search_with_buffer (weechat_buffer_search_main ()));
 ----
 
@@ -14970,7 +15075,7 @@ C пример:
 [source,c]
 ----
 weechat_printf (NULL,
-                "бафер који се приказује у текућем прозору: %lx",
+                "бафер који се приказује у текућем прозору: %p",
                 weechat_window_get_pointer (weechat_current_window (), "buffer"));
 ----
 
@@ -16324,7 +16429,7 @@ rc = weechat.command(weechat.buffer_search("irc", "libera.#weechat"), "/whois Fl
 
 ==== command_options
 
-_WeeChat ≥ 2.5, ажурирано у верзији 4.0.0._
+_WeeChat ≥ 2.5, ажурирано у верзији 4.0.0, 4.5.0._
 
 Извршава команду или шаље текст у бафер са опцијама.
 
@@ -16339,9 +16444,12 @@ int weechat_command_options (struct t_gui_buffer *buffer, const char *command,
 Аргументи:
 
 * _buffer_: показивач на бафер (команда се извршава у овом баферу, употребите NULL за текући бафер)
-* _command_: команда која се извршава (ако почиње са „/”), или текст који се шаље у бафер
+* _command_: команда која се извршава (ако почиње са `/` или командним карактером), или текст који се шаље у бафер
 * _options_: хеш табела са неким опцијама (кључеви и вредности морају бити стринг) (може да буде NULL):
-** _commands_: листа команди које смеју да се изврше током овог позива раздвојене запетама; за формат, погледајте функцију <<_string_match_list,string_match_list>>
+** _commands_: листа команди које смеју да се изврше током овог позива раздвојене запетама
+   (за формат, погледајте функцију <<_string_match_list,string_match_list>>);
+   специјална вредност `-` (цртица-минус) искључује извршавање команди
+   и стрингу _command_ се шаље у бафер онакав какав је (_WeeChat ≥ 4.5.0_)
 ** _delay_: пауза за извршавање команде, у милисекундама
 ** _split_newline_: `1` да се команде поделе на карактеру прелома линије (`\n`) (_WeeChat ≥ 4.0.0_)
 
@@ -16374,7 +16482,7 @@ rc = weechat_command_options (NULL, "/some_command arguments", options);
 def command_options(buffer: str, command: str, options: Dict[str, str]) -> int: ...
 
 # пример: дозвољава се било која команда осим /exec
-rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec"})
+rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec", "delay": "2000"})
 ----
 
 [[completion]]
@@ -16523,6 +16631,73 @@ def my_completion_cb(data: str, completion_item: str, buffer: str, completion: s
     # добавља аргументе команде
     args = weechat.completion_get_string(completion, "args")
     # довршавање у зависности од args
+    # ...
+    return weechat.WEECHAT_RC_OK
+----
+
+==== completion_set
+
+_WeeChat ≥ 4.6.0._
+
+// TRANSLATION MISSING
+Set a completion property.
+
+Прототип:
+
+[source,c]
+----
+void weechat_completion_get_string (struct t_gui_completion *completion,
+                                    const char *property,
+                                    const char *value);
+----
+
+Аргументи:
+
+* _completion_: показивач на довршавање
+* _property_: име особине (погледајте табелу испод)
+* _value_: нова вредност за особину
+
+Особине:
+
+[width="100%",cols="^2,^1,4,8",options="header"]
+|===
+| Име | Мин WeeChat | Вредност | Опис
+
+// TRANSLATION MISSING
+| add_space | 4.6.0 | "0" or "1"
+| "0": do not add space after completion +
+  "1": add space after completion (default).
+|===
+
+C пример:
+
+[source,c]
+----
+int
+my_completion_cb (const void *pointer, void *data, const char *completion_item,
+                  struct t_gui_buffer *buffer,
+                  struct t_gui_completion *completion)
+{
+    /* do not add space after completion */
+    weechat_completion_set (completion, "add_space", "0");
+
+    /* ... */
+
+    return WEECHAT_RC_OK;
+}
+----
+
+Скрипта (Python):
+
+[source,python]
+----
+# прототип
+def completion_set(completion: str, property: str, value: str) -> int: ...
+
+# пример
+def my_completion_cb(data: str, completion_item: str, buffer: str, completion: str) -> int:
+    # do not add space after completion
+    weechat.completion_set(completion, "add_space", "0")
     # ...
     return weechat.WEECHAT_RC_OK
 ----
@@ -18746,7 +18921,7 @@ C пример:
 ----
 struct t_hdata *hdata = weechat_hdata_get ("buffer");
 struct t_gui_buffer *buffer = weechat_buffer_search_main ();
-weechat_printf (NULL, "lines = %lx", weechat_hdata_pointer (hdata, buffer, "lines"));
+weechat_printf (NULL, "lines = %p", weechat_hdata_pointer (hdata, buffer, "lines"));
 ----
 
 Скрипта (Python):

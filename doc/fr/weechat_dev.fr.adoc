@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: fr
-:toc-title: Table des matières
+include::includes/attributes-fr.adoc[]
 
 Ce manuel documente le client de messagerie instantanée WeeChat, il fait
 partie de WeeChat.
@@ -328,6 +328,7 @@ Le cœur de WeeChat est situé dans les répertoires suivants :
 |    relay/                          | Extension Relay (proxy IRC et relai pour des interfaces distantes).
 |       relay.c                      | Fonctions principales de Relay.
 |       relay-auth.c                 | Authentification des clients.
+|       relay-bar-item.c             | Objets de barre Relay.
 |       relay-buffer.c               | Tampon Relay.
 |       relay-client.c               | Clients du relai.
 |       relay-command.c              | Commandes de Relay.
@@ -424,10 +425,11 @@ Le cœur de WeeChat est situé dans les répertoires suivants :
 |          test-core-crypto.cpp              | Tests : fonctions cryptographiques.
 |          test-core-dir.cpp                 | Tests : répertoires/fichiers.
 |          test-core-eval.cpp                | Tests : évaluation d'expressions.
-|          test-core-hashtble.cpp            | Tests : tables de hachage.
+|          test-core-hashtable.cpp           | Tests : tables de hachage.
 |          test-core-hdata.cpp               | Tests : hdata.
 |          test-core-hook.cpp                | Tests : hooks.
 |          test-core-infolist.cpp            | Tests : infolists.
+|          test-core-input.cpp               | Tests : fonctions d'entrée.
 |          test-core-list.cpp                | Tests : listes.
 |          test-core-network.cpp             | Tests : fonctions réseau.
 |          test-core-secure.cpp              | Tests : données sécurisées.
@@ -504,6 +506,7 @@ Le cœur de WeeChat est situé dans les répertoires suivants :
 |          relay/                            | Racine des tests unitaires pour l'extension Relay.
 |             test-relay-auth.cpp            | Tests : authentification des clients.
 |             test-relay-http.cpp            | Tests : fonctions HTTP pour l'extension Relay.
+|             test-relay-raw.cpp             | Tests : fonctions sur les messages bruts pour l'extension Relay.
 |             test-relay-remote.cpp          | Tests : fonctions remote pour l'extension Relay.
 |             test-relay-websocket.cpp       | Tests : fonctions websocket pour l'extension Relay.
 |             api/                           | Racine des tests unitaires pour le protocole relay "api".
@@ -533,7 +536,8 @@ Fichiers de documentation :
 |       weechat_faq.XX.adoc                     | link:weechat_faq.fr.html[FAQ ^↗^^] (questions fréquemment posées).
 |       weechat_plugin_api.XX.adoc              | link:weechat_plugin_api.fr.html[Référence API extension ^↗^^].
 |       weechat_quickstart.XX.adoc              | link:weechat_quickstart.fr.html[Guide de démarrage ^↗^^].
-|       weechat_relay_protocol.XX.adoc          | link:weechat_relay_protocol.fr.html[Protocole Relay ^↗^^] (pour les interfaces distantes).
+|       weechat_relay_api.XX.adoc               | link:weechat_relay_api.fr.html[Protocole relay "api" ^↗^^] (pour les interfaces distantes).
+|       weechat_relay_weechat.XX.adoc           | link:weechat_relay_weechat.fr.html[Protocole relay "weechat" ^↗^^] (pour les interfaces distantes).
 |       weechat_scripting.XX.adoc               | link:weechat_scripting.fr.html[Guide pour scripts ^↗^^].
 |       weechat_user.XX.adoc                    | link:weechat_user.fr.html[Guide utilisateur ^↗^^].
 |       includes/                               | Fichiers inclus dans la documentation.
@@ -574,7 +578,7 @@ Exemple en C :
 /*
  * weechat.c - core functions for WeeChat
  *
- * Copyright (C) 2024 Your Name <your@email.com>
+ * Copyright (C) 2025 Your Name <your@email.com>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1190,7 +1194,7 @@ server->hook_timer_sasl = weechat_hook_timer (timeout * 1000,
 Le dépôt Git est sur https://github.com/weechat/weechat[GitHub ^↗^^].
 
 Tout patch pour un bug ou une nouvelle fonctionnalité doit être effectué sur la
-branche master, le format préféré étant une "pull request" sur GitHub. Un patch
+branche `main`, le format préféré étant une "pull request" sur GitHub. Un patch
 peut aussi être envoyé par e-mail (fait avec `git diff` ou `git format-patch`).
 
 Le format du message de commit est le suivant (avec fermeture automatique
@@ -1207,15 +1211,15 @@ Où _composant_ est :
 | Composant | Fichiers | Description
 
 | core
-| AUTHORS.adoc +
-  ChangeLog.adoc +
-  Contributing.adoc +
+| AUTHORS.md +
+  CHANGELOG.md +
+  CONTRIBUTING.md +
   .github/FUNDING.yml +
   .github/ISSUE_TEMPLATE/* +
   icons/* +
   po/* +
-  README.adoc +
-  ReleaseNotes.adoc +
+  README.md +
+  UPGRADING.md +
   src/core/* +
   src/gui/* +
   version.sh +
@@ -1272,8 +1276,9 @@ Où _composant_ est :
 | Référence extension API
 
 | doc/relay
-| doc/xx/weechat_relay_protocol.xx.adoc
-| Protocole relay
+| doc/xx/weechat_relay_api.xx.adoc +
+  doc/xx/weechat_relay_weechat.xx.adoc
+| Protocoles relay
 
 | doc/dev
 | doc/xx/weechat_dev.en.adoc
@@ -1317,9 +1322,10 @@ Si vous souhaitez initialiser une nouvelle langue, utilisez la commande
 `msginit`. Par exemple pour créer un fichier qui est prêt à traduire en
 néerlandais :
 
+[source,shell]
 ----
-$ cd po
-$ msginit -i weechat.pot -l nl_NL -o nl.po
+cd po
+msginit -i weechat.pot -l nl_NL -o nl.po
 ----
 
 La langue de base pour WeeChat est l'anglais, donc vous devez évidemment
@@ -1328,8 +1334,9 @@ comprendre parfaitement l'anglais pour traduire vers votre langue.
 Après des changements dans les sources, vous pouvez regénérer toutes les
 traductions : lancez cette commande dans le répertoire "build" de CMake :
 
+[source,shell]
 ----
-$ make translations && make update-po
+make translations && make update-po
 ----
 
 Vous pouvez alors éditer les fichiers .po (si vous pouvez traduire dans une
@@ -1338,8 +1345,9 @@ langue).
 Une fois terminé, vous *devez* vérifier votre fichier avec
 https://github.com/flashcode/msgcheck[msgcheck ^↗^^] :
 
+[source,shell]
 ----
-$ msgcheck.py xx.po
+msgcheck.py xx.po
 ----
 
 Et vous pouvez alors recompiler WeeChat pour utiliser les nouvelles traductions.

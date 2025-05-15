@@ -1,7 +1,7 @@
 /*
  * gui-bar.c - bar functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -434,7 +434,7 @@ gui_bar_check_conditions (struct t_gui_bar *bar,
      */
     snprintf (str_modifier, sizeof (str_modifier),
               "bar_condition_%s", bar->name);
-    snprintf (str_window, sizeof (str_window), "%p", window);
+    snprintf (str_window, sizeof (str_window), "0x%lx", (unsigned long)window);
     str_displayed = hook_modifier_exec (NULL,
                                         str_modifier,
                                         str_window,
@@ -787,6 +787,13 @@ gui_bar_set_items_array (struct t_gui_bar *bar, const char *items)
                                                &bar->items_name[i][j],
                                                &bar->items_suffix[i][j]);
                     }
+                }
+                else
+                {
+                    bar->items_buffer[i] = NULL;
+                    bar->items_prefix[i] = NULL;
+                    bar->items_name[i] = NULL;
+                    bar->items_suffix[i] = NULL;
                 }
             }
         }
@@ -1828,7 +1835,7 @@ gui_bar_new_default (enum t_gui_bar_default bar)
  */
 
 void
-gui_bar_use_temp_bars ()
+gui_bar_use_temp_bars (void)
 {
     struct t_gui_bar *ptr_temp_bar, *next_temp_bar;
     int i, num_options_ok;
@@ -1901,10 +1908,9 @@ gui_bar_use_temp_bars ()
  */
 
 void
-gui_bar_create_default_input ()
+gui_bar_create_default_input (void)
 {
     struct t_gui_bar *ptr_bar;
-    int length;
     char *buf;
 
     /* search an input_text item */
@@ -1915,18 +1921,13 @@ gui_bar_create_default_input ()
         if (ptr_bar)
         {
             /* add item "input_text" to input bar */
-            length = 1;
-            if (CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS]))
-                length += strlen (CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS]));
-            length += 1; /* "," */
-            length += strlen (gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]);
-            buf = malloc (length);
-            if (buf)
+            if (string_asprintf (
+                    &buf,
+                    "%s,%s",
+                    (CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS])) ?
+                    CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS]) : "",
+                    gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]) >= 0)
             {
-                snprintf (buf, length, "%s,%s",
-                          (CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS])) ?
-                          CONFIG_STRING(ptr_bar->options[GUI_BAR_OPTION_ITEMS]) : "",
-                          gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]);
                 config_file_option_set (ptr_bar->options[GUI_BAR_OPTION_ITEMS], buf, 1);
                 gui_chat_printf (NULL, _("Bar \"%s\" updated"),
                                  gui_bar_default_name[GUI_BAR_DEFAULT_INPUT]);
@@ -1951,7 +1952,7 @@ gui_bar_create_default_input ()
  */
 
 void
-gui_bar_create_default_title ()
+gui_bar_create_default_title (void)
 {
     struct t_gui_bar *ptr_bar;
 
@@ -1973,7 +1974,7 @@ gui_bar_create_default_title ()
  */
 
 void
-gui_bar_create_default_status ()
+gui_bar_create_default_status (void)
 {
     struct t_gui_bar *ptr_bar;
 
@@ -1995,7 +1996,7 @@ gui_bar_create_default_status ()
  */
 
 void
-gui_bar_create_default_nicklist ()
+gui_bar_create_default_nicklist (void)
 {
     struct t_gui_bar *ptr_bar;
 
@@ -2017,7 +2018,7 @@ gui_bar_create_default_nicklist ()
  */
 
 void
-gui_bar_create_default ()
+gui_bar_create_default (void)
 {
     gui_bar_create_default_input ();
     gui_bar_create_default_title ();
@@ -2212,7 +2213,7 @@ gui_bar_free (struct t_gui_bar *bar)
  */
 
 void
-gui_bar_free_all ()
+gui_bar_free_all (void)
 {
     while (gui_bars)
     {
@@ -2382,7 +2383,7 @@ gui_bar_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-gui_bar_print_log ()
+gui_bar_print_log (void)
 {
     struct t_gui_bar *ptr_bar;
     int i, j;

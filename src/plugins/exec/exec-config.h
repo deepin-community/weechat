@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,9 +35,9 @@ extern struct t_config_option *exec_config_color_flag_running;
 extern char **exec_config_cmd_options;
 extern int exec_config_cmd_num_options;
 
-extern int exec_config_init ();
-extern int exec_config_read ();
-extern int exec_config_write ();
-extern void exec_config_free ();
+extern int exec_config_init (void);
+extern int exec_config_read (void);
+extern int exec_config_write (void);
+extern void exec_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_EXEC_CONFIG_H */

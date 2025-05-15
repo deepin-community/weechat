@@ -1,7 +1,7 @@
 /*
  * core-list.c - sorted lists
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -40,7 +40,7 @@
  */
 
 struct t_weelist *
-weelist_new ()
+weelist_new (void)
 {
     struct t_weelist *new_weelist;
 
@@ -164,7 +164,7 @@ weelist_add (struct t_weelist *weelist, const char *data, const char *where,
 }
 
 /*
- * Searches for data in a list (case sensitive).
+ * Searches for data in a list (case-sensitive).
  *
  * Returns pointer to item found, NULL if not found.
  */
@@ -188,7 +188,7 @@ weelist_search (struct t_weelist *weelist, const char *data)
 }
 
 /*
- * Searches for data in a list (case sensitive).
+ * Searches for data in a list (case-sensitive).
  *
  * Returns position of item found (>= 0), -1 if not found.
  */
@@ -215,7 +215,7 @@ weelist_search_pos (struct t_weelist *weelist, const char *data)
 }
 
 /*
- * Searches for data in a list (case insensitive).
+ * Searches for data in a list (case-insensitive).
  *
  * Returns pointer to item found, NULL if not found.
  */
@@ -239,7 +239,7 @@ weelist_casesearch (struct t_weelist *weelist, const char *data)
 }
 
 /*
- * Searches for data in a list (case insensitive).
+ * Searches for data in a list (case-insensitive).
  *
  * Returns position of item found (>= 0), -1 if not found.
  */

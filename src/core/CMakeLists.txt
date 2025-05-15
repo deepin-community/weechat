@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -87,10 +87,6 @@ else()
   check_symbol_exists(backtrace "execinfo.h" HAVE_BACKTRACE)
 endif()
 
-include_directories(${GNUTLS_INCLUDE_PATH})
-
-include_directories(${CURL_INCLUDE_DIRS})
-
 if(ENABLE_ZSTD)
   include_directories(${LIBZSTD_INCLUDE_DIRS})
 endif()
@@ -100,6 +96,6 @@ if(ENABLE_CJSON)
 endif()
 
 include_directories("${CMAKE_BINARY_DIR}")
-add_library(weechat_core STATIC ${LIB_CORE_SRC})
+add_library(weechat_core OBJECT ${LIB_CORE_SRC})
 target_link_libraries(weechat_core coverage_config)
 add_dependencies(weechat_core version_git)

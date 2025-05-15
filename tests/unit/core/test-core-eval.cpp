@@ -1,7 +1,7 @@
 /*
  * test-core-eval.cpp - test evaluation functions
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -98,7 +98,7 @@ TEST(CoreEval, EvalCondition)
     CHECK(options);
     hashtable_set (options, "type", "condition");
 
-    POINTERS_EQUAL(NULL, eval_expression (NULL, NULL, NULL, options));
+    STRCMP_EQUAL(NULL, eval_expression (NULL, NULL, NULL, options));
 
     /* conditions evaluated as false */
     WEE_CHECK_EVAL("0", "");
@@ -454,6 +454,7 @@ TEST(CoreEval, EvalExpression)
 {
     struct t_hashtable *pointers, *extra_vars, *options;
     struct t_config_option *ptr_option;
+    struct t_gui_buffer *test_buffer;
     char *value, str_value[256], str_expr[256], *error;
     const char *ptr_debug_output;
     long number;
@@ -481,7 +482,7 @@ TEST(CoreEval, EvalExpression)
                              NULL, NULL);
     CHECK(options);
 
-    POINTERS_EQUAL(NULL, eval_expression (NULL, NULL, NULL, NULL));
+    STRCMP_EQUAL(NULL, eval_expression (NULL, NULL, NULL, NULL));
 
     /* test with simple strings */
     WEE_CHECK_EVAL("", "");
@@ -996,6 +997,29 @@ TEST(CoreEval, EvalExpression)
     WEE_CHECK_EVAL("core", "${plugin}");
     WEE_CHECK_EVAL("weechat", "${name}");
 
+    /* test hdata count */
+    WEE_CHECK_EVAL("0", "${hdata_count:}");
+    WEE_CHECK_EVAL("0", "${hdata_count:xxx}");
+    WEE_CHECK_EVAL("0", "${hdata_count:buffer[xxx]}");
+    WEE_CHECK_EVAL("0", "${hdata_count:buffer[0x0]}");
+    WEE_CHECK_EVAL("1", "${hdata_count:buffer[gui_buffers]}");
+    snprintf (str_expr, sizeof (str_expr),
+              "${hdata_count:buffer[%p]}", gui_buffers);
+    WEE_CHECK_EVAL("1", str_expr);
+    test_buffer = gui_buffer_new (NULL, "test",
+                                  NULL, NULL, NULL,
+                                  NULL, NULL, NULL);
+    CHECK(test_buffer);
+    WEE_CHECK_EVAL("2", "${hdata_count:buffer[gui_buffers]}");
+    snprintf (str_expr, sizeof (str_expr),
+              "${hdata_count:buffer[%p]}", gui_buffers);
+    WEE_CHECK_EVAL("2", "${hdata_count:buffer[gui_buffers]}");
+    snprintf (str_expr, sizeof (str_expr),
+              "${hdata_count:buffer[%p]}", test_buffer);
+    WEE_CHECK_EVAL("1", str_expr);
+    gui_buffer_close (test_buffer);
+    WEE_CHECK_EVAL("0", "${hdata_count:layout[gui_layouts]}");
+
     /* test hdata */
     hashtable_set (pointers, "my_null_pointer", (const void *)0x0);
     hashtable_set (pointers, "my_buffer_pointer", gui_buffers);
@@ -1011,11 +1035,15 @@ TEST(CoreEval, EvalExpression)
     WEE_CHECK_EVAL("", "${buffer[].full_name}");
     WEE_CHECK_EVAL("", "${buffer[0x0].full_name}");
     WEE_CHECK_EVAL("", "${buffer[0x1].full_name}");
+    WEE_CHECK_EVAL("", "${buffer[0xZ].full_name}");
     WEE_CHECK_EVAL("", "${buffer[unknown_list].full_name}");
     WEE_CHECK_EVAL("", "${unknown_pointer}");
     WEE_CHECK_EVAL("", "${my_null_pointer}");
     snprintf (str_value, sizeof (str_value), "%p", gui_buffers);
     WEE_CHECK_EVAL(str_value, "${my_buffer_pointer}");
+    WEE_CHECK_EVAL(str_value, "${buffer}");
+    WEE_CHECK_EVAL("0x0", "${buffer.prev_buffer}");
+    WEE_CHECK_EVAL("0x0", "${buffer.next_buffer}");
     WEE_CHECK_EVAL("0x1234abcd", "${my_other_pointer}");
     WEE_CHECK_EVAL("", "${buffer[unknown_pointer].full_name}");
     WEE_CHECK_EVAL("", "${buffer[my_null_pointer].full_name}");

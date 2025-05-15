@@ -1,7 +1,7 @@
 /*
  * logger-buffer.c - logger buffer list management
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -265,15 +265,7 @@ logger_buffer_create_log_file (struct t_logger_buffer *logger_buffer)
 
     /* create directory */
     if (!logger_create_directory ())
-    {
-        weechat_printf_date_tags (
-            NULL, 0, "no_log",
-            _("%s%s: unable to create directory for logs "
-              "(\"%s\")"),
-            weechat_prefix ("error"), LOGGER_PLUGIN_NAME,
-            weechat_config_string (logger_config_file_path));
         return 0;
-    }
     if (!logger_buffer->log_filename)
         logger_buffer_set_log_filename (logger_buffer);
     if (!logger_buffer->log_filename)
@@ -775,7 +767,7 @@ logger_buffer_start_all (int write_info_line)
  */
 
 void
-logger_buffer_flush ()
+logger_buffer_flush (void)
 {
     struct t_logger_buffer *ptr_logger_buffer;
 
@@ -808,7 +800,7 @@ logger_buffer_flush ()
  */
 
 void
-logger_buffer_adjust_log_filenames ()
+logger_buffer_adjust_log_filenames (void)
 {
     struct t_infolist *ptr_infolist;
     struct t_logger_buffer *ptr_logger_buffer;

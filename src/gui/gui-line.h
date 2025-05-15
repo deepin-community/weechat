@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -74,7 +74,7 @@ struct t_gui_lines
 
 /* line functions */
 
-extern struct t_gui_lines *gui_line_lines_alloc ();
+extern struct t_gui_lines *gui_line_lines_alloc (void);
 extern void gui_line_lines_free (struct t_gui_lines *lines);
 extern void gui_line_tags_alloc (struct t_gui_line_data *line_data,
                                  const char *tags);
@@ -97,6 +97,8 @@ extern struct t_gui_line *gui_line_get_first_displayed (struct t_gui_buffer *buf
 extern struct t_gui_line *gui_line_get_last_displayed (struct t_gui_buffer *buffer);
 extern struct t_gui_line *gui_line_get_prev_displayed (struct t_gui_line *line);
 extern struct t_gui_line *gui_line_get_next_displayed (struct t_gui_line *line);
+extern struct t_gui_line *gui_line_search_by_id (struct t_gui_buffer *buffer,
+                                                 int id);
 extern int gui_line_search_text (struct t_gui_buffer *buffer,
                                  struct t_gui_line *line);
 extern int gui_line_match_regex (struct t_gui_line_data *line_data,

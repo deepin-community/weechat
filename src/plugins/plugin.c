@@ -1,7 +1,7 @@
 /*
  * plugin.c - WeeChat plugins management (load/unload dynamic C libraries)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -58,6 +58,7 @@
 #include "../gui/gui-color.h"
 #include "../gui/gui-completion.h"
 #include "../gui/gui-key.h"
+#include "../gui/gui-line.h"
 #include "../gui/gui-nicklist.h"
 #include "../gui/gui-window.h"
 #include "plugin.h"
@@ -195,7 +196,7 @@ plugin_check_extension_allowed (const char *filename)
  *
  * Returns:
  *   1: plugin can be autoloaded
- *   0: plugin can not be autoloaded
+ *   0: plugin cannot be autoloaded
  */
 
 int
@@ -594,6 +595,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         ptr_option = config_weechat_debug_get (name);
         new_plugin->debug = (ptr_option) ? CONFIG_INTEGER(ptr_option) : 0;
         new_plugin->upgrading = weechat_upgrading;
+        new_plugin->unload_with_upgrade = 0;
         new_plugin->variables = hashtable_new (
             32,
             WEECHAT_HASHTABLE_STRING, WEECHAT_HASHTABLE_STRING,
@@ -845,6 +847,8 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->buffer_string_replace_local_var = &gui_buffer_string_replace_local_var;
         new_plugin->buffer_match_list = &gui_buffer_match_list;
 
+        new_plugin->line_search_by_id = &gui_line_search_by_id;
+
         new_plugin->window_search_with_buffer = &gui_window_search_with_buffer;
         new_plugin->window_get_integer = &gui_window_get_integer;
         new_plugin->window_get_string = &gui_window_get_string;
@@ -884,6 +888,7 @@ plugin_load (const char *filename, int init_plugin, int argc, char **argv)
         new_plugin->completion_new = &gui_completion_new;
         new_plugin->completion_search = &gui_completion_search;
         new_plugin->completion_get_string = &gui_completion_get_string;
+        new_plugin->completion_set = &gui_completion_set;
         new_plugin->completion_list_add = &gui_completion_list_add;
         new_plugin->completion_free = &gui_completion_free;
 
@@ -1049,7 +1054,7 @@ plugin_auto_load (char *force_plugin_autoload,
     struct t_plugin_args plugin_args;
     struct t_arraylist *arraylist;
     struct t_hashtable *options;
-    int length, i;
+    int i;
 
     plugin_args.argc = argc;
     plugin_args.argv = argv;
@@ -1102,23 +1107,20 @@ plugin_auto_load (char *force_plugin_autoload,
         extra_libdir = getenv (WEECHAT_EXTRA_LIBDIR);
         if (extra_libdir && extra_libdir[0])
         {
-            length = strlen (extra_libdir) + 16 + 1;
-            dir_name = malloc (length);
-            snprintf (dir_name, length, "%s/plugins", extra_libdir);
-            dir_exec_on_files (dir_name, 1, 0,
-                               &plugin_auto_load_file, &plugin_args);
-            free (dir_name);
+            if (string_asprintf (&dir_name, "%s/plugins", extra_libdir) >= 0)
+            {
+                dir_exec_on_files (dir_name, 1, 0,
+                                   &plugin_auto_load_file, &plugin_args);
+                free (dir_name);
+            }
         }
     }
 
     /* auto-load plugins in WeeChat global lib dir */
     if (load_from_lib_dir)
     {
-        length = strlen (WEECHAT_LIBDIR) + 16 + 1;
-        dir_name = malloc (length);
-        if (dir_name)
+        if (string_asprintf (&dir_name,"%s/plugins", WEECHAT_LIBDIR) >= 0)
         {
-            snprintf (dir_name, length, "%s/plugins", WEECHAT_LIBDIR);
             dir_exec_on_files (dir_name, 1, 0,
                                &plugin_auto_load_file, &plugin_args);
             free (dir_name);
@@ -1293,7 +1295,7 @@ plugin_unload_name (const char *name)
  */
 
 void
-plugin_unload_all ()
+plugin_unload_all (void)
 {
     int plugins_loaded;
 
@@ -1347,50 +1349,45 @@ plugin_reload_name (const char *name, int argc, char **argv)
  */
 
 void
-plugin_display_short_list ()
+plugin_display_short_list (void)
 {
-    const char *plugins_loaded;
-    char *buf;
-    int length;
+    char **buf;
     struct t_weechat_plugin *ptr_plugin;
     struct t_weelist *list;
     struct t_weelist_item *ptr_item;
 
-    if (weechat_plugins)
+    if (!weechat_plugins)
+        return;
+
+    list = weelist_new ();
+    if (!list)
+        return;
+
+    for (ptr_plugin = weechat_plugins; ptr_plugin;
+         ptr_plugin = ptr_plugin->next_plugin)
     {
-        list = weelist_new ();
-        if (list)
-        {
-            plugins_loaded = _("Plugins loaded:");
-
-            length = strlen (plugins_loaded) + 1;
-
-            for (ptr_plugin = weechat_plugins; ptr_plugin;
-                 ptr_plugin = ptr_plugin->next_plugin)
-            {
-                length += strlen (ptr_plugin->name) + 2;
-                weelist_add (list, ptr_plugin->name, WEECHAT_LIST_POS_SORT, NULL);
-            }
-            length++;
-
-            buf = malloc (length);
-            if (buf)
-            {
-                strcpy (buf, plugins_loaded);
-                strcat (buf, " ");
-                for (ptr_item = list->items; ptr_item;
-                     ptr_item = ptr_item->next_item)
-                {
-                    strcat (buf, ptr_item->data);
-                    if (ptr_item->next_item)
-                        strcat (buf, ", ");
-                }
-                gui_chat_printf (NULL, "%s", buf);
-                free (buf);
-            }
-            weelist_free (list);
-        }
+        weelist_add (list, ptr_plugin->name, WEECHAT_LIST_POS_SORT, NULL);
     }
+
+    buf = string_dyn_alloc (256);
+    if (!buf)
+    {
+        weelist_free (list);
+        return;
+    }
+
+    string_dyn_concat (buf, _("Plugins loaded:"), -1);
+    string_dyn_concat (buf, " ", -1);
+    for (ptr_item = list->items; ptr_item; ptr_item = ptr_item->next_item)
+    {
+        string_dyn_concat (buf, ptr_item->data, -1);
+        if (ptr_item->next_item)
+            string_dyn_concat (buf, ", ", -1);
+    }
+    gui_chat_printf (NULL, "%s", *buf);
+
+    string_dyn_free (buf, 1);
+    weelist_free (list);
 }
 
 /*
@@ -1416,7 +1413,7 @@ plugin_init (char *force_plugin_autoload, int argc, char *argv[])
  */
 
 void
-plugin_end ()
+plugin_end (void)
 {
     /* write plugins configuration options */
     plugin_config_write ();
@@ -1458,6 +1455,7 @@ plugin_hdata_plugin_cb (const void *pointer, void *data,
         HDATA_VAR(struct t_weechat_plugin, initialized, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_weechat_plugin, debug, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_weechat_plugin, upgrading, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_weechat_plugin, unload_with_upgrade, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_weechat_plugin, variables, HASHTABLE, 0, NULL, NULL);
         HDATA_VAR(struct t_weechat_plugin, prev_plugin, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_weechat_plugin, next_plugin, POINTER, 0, NULL, hdata_name);
@@ -1518,6 +1516,8 @@ plugin_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!infolist_new_var_integer (ptr_item, "upgrading", plugin->upgrading))
         return 0;
+    if (!infolist_new_var_integer (ptr_item, "unload_with_upgrade", plugin->unload_with_upgrade))
+        return 0;
     if (!hashtable_add_to_infolist (plugin->variables, ptr_item, "var"))
         return 0;
 
@@ -1529,7 +1529,7 @@ plugin_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-plugin_print_log ()
+plugin_print_log (void)
 {
     struct t_weechat_plugin *ptr_plugin;
 
@@ -1550,6 +1550,7 @@ plugin_print_log ()
         log_printf ("  initialized. . . . . . : %d", ptr_plugin->initialized);
         log_printf ("  debug. . . . . . . . . : %d", ptr_plugin->debug);
         log_printf ("  upgrading. . . . . . . : %d", ptr_plugin->upgrading);
+        log_printf ("  unload_with_upgrade. . : %d", ptr_plugin->unload_with_upgrade);
         hashtable_print_log (ptr_plugin->variables, "variables");
         log_printf ("  prev_plugin. . . . . . : %p", ptr_plugin->prev_plugin);
         log_printf ("  next_plugin. . . . . . : %p", ptr_plugin->next_plugin);

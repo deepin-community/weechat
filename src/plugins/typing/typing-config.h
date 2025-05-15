@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -31,9 +31,9 @@ extern struct t_config_option *typing_config_look_enabled_self;
 extern struct t_config_option *typing_config_look_input_min_chars;
 extern struct t_config_option *typing_config_look_item_max_length;
 
-extern int typing_config_init ();
-extern int typing_config_read ();
-extern int typing_config_write ();
-extern void typing_config_free ();
+extern int typing_config_init (void);
+extern int typing_config_read (void);
+extern int typing_config_write (void);
+extern void typing_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_TYPING_CONFIG_H */

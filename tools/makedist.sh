@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -43,7 +43,7 @@ error ()
 
 # check git repository
 root_dir=$(git rev-parse --show-toplevel)
-if [ -z "${root_dir}" ] || [ ! -d "${root_dir}/.git" ]; then
+if [ -z "${root_dir}" ] || [ ! -e "${root_dir}/.git" ]; then
     error "this script must be run from WeeChat git repository."
 fi
 cd "${root_dir}"

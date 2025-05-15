@@ -1,7 +1,7 @@
 /*
  * irc-input.c - input data management for IRC buffers
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -193,7 +193,7 @@ irc_input_user_message_display (struct t_irc_server *server,
                 server->nick,
                 (ptr_text && ptr_text[0]) ? IRC_COLOR_RESET : "",
                 (ptr_text && ptr_text[0]) ? " " : "",
-                (ptr_text && ptr_text[0]) ? ptr_text : "");
+                IRC_COLOR_MSG(ptr_text));
         }
         else
         {
@@ -209,7 +209,7 @@ irc_input_user_message_display (struct t_irc_server *server,
                 server->nick,
                 IRC_COLOR_RESET,
                 (ptr_text && ptr_text[0]) ? " " : "",
-                (ptr_text && ptr_text[0]) ? ptr_text : "");
+                IRC_COLOR_MSG(ptr_text));
         }
     }
     else if (ctcp_type)
@@ -229,7 +229,7 @@ irc_input_user_message_display (struct t_irc_server *server,
             ctcp_type,
             IRC_COLOR_RESET,
             (ptr_text && ptr_text[0]) ? " " : "",
-            (ptr_text && ptr_text[0]) ? ptr_text : "");
+            IRC_COLOR_MSG(ptr_text));
     }
     else if (display_target)
     {
@@ -256,7 +256,7 @@ irc_input_user_message_display (struct t_irc_server *server,
             IRC_COLOR_CHAT_CHANNEL : irc_nick_color_for_msg (server, 0, NULL, target),
             target,
             IRC_COLOR_RESET,
-            (ptr_text) ? ptr_text : "");
+            IRC_COLOR_MSG(ptr_text));
     }
     else
     {
@@ -315,8 +315,8 @@ irc_input_send_user_message (struct t_gui_buffer *buffer, int flags,
         /* display only if capability "echo-message" is NOT enabled */
         if (!weechat_hashtable_has_key (ptr_server->cap_list, "echo-message"))
         {
-            action = ((strncmp (message, "\01ACTION ", 8) == 0)
-                      || (strncmp (message, "\01ACTION\01", 8) == 0));
+            action = ((strncmp (message, "\001ACTION ", 8) == 0)
+                      || (strncmp (message, "\001ACTION\001", 8) == 0));
             list_size = weechat_arraylist_size (list_messages);
             for (i = 0; i < list_size; i++)
             {

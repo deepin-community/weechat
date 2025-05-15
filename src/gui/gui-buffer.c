@@ -1,7 +1,7 @@
 /*
  * gui-buffer.c - buffer functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -76,7 +76,8 @@ int gui_buffers_visited_count = 0;              /* number of visited buffers*/
 int gui_buffers_visited_frozen = 0;             /* 1 to forbid list updates */
 struct t_gui_buffer *gui_buffer_last_displayed = NULL; /* last b. displayed */
 
-long long gui_buffer_last_id_assigned = -1;      /* last id assigned         */
+struct t_hashtable *gui_buffer_by_id = NULL;    /* buffers by id            */
+long long gui_buffer_last_id_assigned = -1;     /* last id assigned         */
 
 char *gui_buffer_reserved_names[] =
 { GUI_BUFFER_MAIN, SECURE_BUFFER_NAME, GUI_COLOR_BUFFER_NAME,
@@ -93,8 +94,8 @@ char *gui_buffer_notify_string[GUI_BUFFER_NUM_NOTIFY] =
 { "none", "highlight", "message", "all" };
 
 char *gui_buffer_properties_get_integer[] =
-{ "opening", "number", "layout_number", "layout_number_merge_order", "type",
-  "notify", "num_displayed", "active", "hidden", "zoomed",
+{ "opening", "number", "old_number", "layout_number", "layout_number_merge_order",
+  "type", "notify", "num_displayed", "active", "hidden", "zoomed",
   "print_hooks_enabled", "day_change", "clear", "filter", "closing",
   "lines_hidden", "prefix_max_length", "next_line_id", "time_for_each_line",
   "nicklist", "nicklist_case_sensitive", "nicklist_max_length",
@@ -122,8 +123,9 @@ char *gui_buffer_properties_get_pointer[] =
   NULL
 };
 char *gui_buffer_properties_set[] =
-{ "hotlist", "unread", "display", "hidden", "print_hooks_enabled", "day_change",
-  "clear", "filter", "number", "name", "short_name", "type", "notify", "title",
+{ "hotlist", "hotlist_conditions", "unread", "display", "hidden",
+  "print_hooks_enabled", "day_change", "clear", "filter", "number",
+  "name", "short_name", "type", "notify", "title",
   "modes", "time_for_each_line", "nicklist", "nicklist_case_sensitive",
   "nicklist_display_groups", "highlight_words", "highlight_words_add",
   "highlight_words_del", "highlight_disable_regex", "highlight_regex",
@@ -182,7 +184,8 @@ gui_buffer_search_notify (const char *notify)
 }
 
 /*
- * Sends a buffer signal (only if the buffer is completely opened.
+ * Sends a buffer signal, only if the buffer is completely opened or if
+ * the signal is "buffer_switch".
  */
 
 int
@@ -190,8 +193,10 @@ gui_buffer_send_signal (struct t_gui_buffer *buffer,
                         const char *signal,
                         const char *type_data, void *signal_data)
 {
-    return (buffer->opening) ?
-        WEECHAT_RC_OK : hook_signal_send (signal, type_data, signal_data);
+    if (buffer->opening && (string_strcmp (signal, "buffer_switch") != 0))
+        return WEECHAT_RC_OK;
+
+    return hook_signal_send (signal, type_data, signal_data);
 }
 
 /*
@@ -214,21 +219,6 @@ gui_buffer_get_plugin_name (struct t_gui_buffer *buffer)
 }
 
 /*
- * Get short name of buffer (or name if short_name is NULL).
- *
- * Note: this function never returns NULL.
- */
-
-const char *
-gui_buffer_get_short_name (struct t_gui_buffer *buffer)
-{
-    if (!buffer)
-        return NULL;
-
-    return (buffer->short_name) ? buffer->short_name : buffer->name;
-}
-
-/*
  * Builds "full_name" of buffer (for example after changing name or
  * plugin_name_for_upgrade).
  */
@@ -236,20 +226,14 @@ gui_buffer_get_short_name (struct t_gui_buffer *buffer)
 void
 gui_buffer_build_full_name (struct t_gui_buffer *buffer)
 {
-    int length;
-
     if (!buffer)
         return;
 
     free (buffer->full_name);
-    length = strlen (gui_buffer_get_plugin_name (buffer)) + 1 +
-        strlen (buffer->name) + 1;
-    buffer->full_name = malloc (length);
-    if (buffer->full_name)
-    {
-        snprintf (buffer->full_name, length, "%s.%s",
-                  gui_buffer_get_plugin_name (buffer), buffer->name);
-    }
+    string_asprintf (&buffer->full_name,
+                     "%s.%s",
+                     gui_buffer_get_plugin_name (buffer),
+                     buffer->name);
 }
 
 /*
@@ -403,7 +387,7 @@ gui_buffer_notify_set (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_notify_set_all ()
+gui_buffer_notify_set_all (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -461,7 +445,8 @@ gui_buffer_find_pos (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_shift_numbers (struct t_gui_buffer *buffer)
+gui_buffer_shift_numbers (struct t_gui_buffer *buffer,
+                          int send_signal_buffer_moved)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -473,6 +458,13 @@ gui_buffer_shift_numbers (struct t_gui_buffer *buffer)
             break;
         }
         ptr_buffer->number++;
+        if (send_signal_buffer_moved)
+        {
+            (void) gui_buffer_send_signal (ptr_buffer,
+                                           "buffer_moved",
+                                           WEECHAT_HOOK_SIGNAL_POINTER,
+                                           ptr_buffer);
+        }
     }
 }
 
@@ -566,7 +558,11 @@ gui_buffer_insert (struct t_gui_buffer *buffer)
             gui_buffers = buffer;
         pos_buffer->prev_buffer = buffer;
         if (buffer->number == pos_buffer->number)
-            gui_buffer_shift_numbers (pos_buffer);
+        {
+            gui_buffer_shift_numbers (
+                pos_buffer,
+                1);  /* send_signal_buffer_moved */
+        }
     }
     else
     {
@@ -621,7 +617,7 @@ gui_buffer_insert (struct t_gui_buffer *buffer)
  */
 
 long long
-gui_buffer_generate_id ()
+gui_buffer_generate_id (void)
 {
     struct timeval tv;
     long long id;
@@ -700,7 +696,7 @@ gui_buffer_apply_properties_cb (void *data,
 }
 
 /*
- * Applies a buffer property defined in a an option "weechat.buffer.xxx".
+ * Applies a buffer property defined in an option "weechat.buffer.xxx".
  */
 
 void
@@ -833,6 +829,16 @@ gui_buffer_new_props_with_id (long long id,
     if (!new_buffer)
         return NULL;
 
+    if (!gui_buffer_by_id)
+    {
+        gui_buffer_by_id = hashtable_new (
+            64,
+            WEECHAT_HASHTABLE_LONGLONG,
+            WEECHAT_HASHTABLE_POINTER,
+            NULL, NULL);
+    }
+    hashtable_set (gui_buffer_by_id, &id, new_buffer);
+
     /* init buffer */
     new_buffer->id = id;
     if (new_buffer->id > gui_buffer_last_id_assigned)
@@ -851,7 +857,7 @@ gui_buffer_new_props_with_id (long long id,
     new_buffer->full_name = NULL;
     new_buffer->old_full_name = NULL;
     gui_buffer_build_full_name (new_buffer);
-    new_buffer->short_name = NULL;
+    new_buffer->short_name = strdup (name);
     new_buffer->type = GUI_BUFFER_TYPE_DEFAULT;
     new_buffer->notify = CONFIG_ENUM(config_look_buffer_notify_default);
     new_buffer->num_displayed = 0;
@@ -1175,7 +1181,7 @@ gui_buffer_new_user (const char *name, enum t_gui_buffer_type buffer_type)
  */
 
 void
-gui_buffer_user_set_callbacks ()
+gui_buffer_user_set_callbacks (void)
 {
     struct t_gui_buffer *ptr_buffer;
     const char *ptr_type;
@@ -1319,7 +1325,7 @@ gui_buffer_string_replace_local_var (struct t_gui_buffer *buffer,
  * List is a comma-separated list of buffers, where exclusion is possible with
  * char '!', and "*" means all buffers.
  *
- * Comparison is case sensitive.
+ * Comparison is case-sensitive.
  *
  * Examples:
  *   "*"
@@ -1424,8 +1430,6 @@ gui_buffer_get_integer (struct t_gui_buffer *buffer, const char *property)
         return buffer->layout_number;
     else if (strcmp (property, "layout_number_merge_order") == 0)
         return buffer->layout_number_merge_order;
-    else if (strcmp (property, "short_name_is_set") == 0)
-        return (buffer->short_name) ? 1 : 0;
     else if (strcmp (property, "type") == 0)
         return buffer->type;
     else if (strcmp (property, "notify") == 0)
@@ -1541,7 +1545,7 @@ gui_buffer_get_string (struct t_gui_buffer *buffer, const char *property)
     else if (strcmp (property, "old_full_name") == 0)
         return buffer->old_full_name;
     else if (strcmp (property, "short_name") == 0)
-        return gui_buffer_get_short_name (buffer);
+        return buffer->short_name;
     else if (strcmp (property, "type") == 0)
        return gui_buffer_type_string[buffer->type];
     else if (strcmp (property, "title") == 0)
@@ -1686,6 +1690,9 @@ gui_buffer_set_name (struct t_gui_buffer *buffer, const char *name)
         free (buffer->old_full_name);
         buffer->old_full_name = NULL;
     }
+
+    /* apply properties (from options weechat.buffer.*) */
+    gui_buffer_apply_config_properties (buffer);
 }
 
 /*
@@ -1695,12 +1702,14 @@ gui_buffer_set_name (struct t_gui_buffer *buffer, const char *name)
 void
 gui_buffer_set_short_name (struct t_gui_buffer *buffer, const char *short_name)
 {
-    if (!buffer || (string_strcmp (buffer->short_name, short_name) == 0))
+    if (!buffer || !short_name || !short_name[0]
+        || (string_strcmp (buffer->short_name, short_name) == 0))
+    {
         return;
+    }
 
     free (buffer->short_name);
-    buffer->short_name = (short_name && short_name[0]) ?
-        strdup (short_name) : NULL;
+    buffer->short_name = strdup (short_name);
 
     if (buffer->mixed_lines)
         buffer->mixed_lines->buffer_max_length_refresh = 1;
@@ -1836,6 +1845,10 @@ gui_buffer_set_time_for_each_line (struct t_gui_buffer *buffer,
 
     buffer->time_for_each_line = time_for_each_line;
     gui_buffer_ask_chat_refresh (buffer, 2);
+
+    (void) gui_buffer_send_signal (buffer,
+                                   "buffer_time_for_each_line_changed",
+                                   WEECHAT_HOOK_SIGNAL_POINTER, buffer);
 }
 
 /*
@@ -1932,7 +1945,7 @@ gui_buffer_set_highlight_words_list (struct t_gui_buffer *buffer,
             ptr_string = weelist_string (ptr_list_item);
             if (ptr_string)
             {
-                if (*words[0])
+                if ((*words)[0])
                     string_dyn_concat (words, ",", -1);
                 string_dyn_concat (words, ptr_string, -1);
             }
@@ -2592,7 +2605,27 @@ gui_buffer_set (struct t_gui_buffer *buffer, const char *property,
         return;
 
     /* properties that need a buffer */
-    if (strcmp (property, "unread") == 0)
+    if (strcmp (property, "hotlist_conditions") == 0)
+    {
+        error = NULL;
+        number = strtol (value, &error, 10);
+        if (error && !error[0])
+        {
+            if (number < 0)
+            {
+                gui_hotlist_remove_buffer (buffer, 0);
+            }
+            else
+            {
+                (void) gui_hotlist_add (
+                    buffer,
+                    number,
+                    NULL,  /* creation_time */
+                    1);  /* check_conditions */
+            }
+        }
+    }
+    else if (strcmp (property, "unread") == 0)
     {
         gui_buffer_set_unread (buffer, value);
     }
@@ -2874,7 +2907,7 @@ gui_buffer_set_pointer (struct t_gui_buffer *buffer, const char *property,
  */
 
 void
-gui_buffer_compute_num_displayed ()
+gui_buffer_compute_num_displayed (void)
 {
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_window *ptr_window;
@@ -2955,7 +2988,7 @@ gui_buffer_is_main (const char *plugin_name, const char *name)
  */
 
 struct t_gui_buffer *
-gui_buffer_search_main ()
+gui_buffer_search_main (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -2979,24 +3012,15 @@ gui_buffer_search_main ()
 struct t_gui_buffer *
 gui_buffer_search_by_id (long long id)
 {
-    struct t_gui_buffer *ptr_buffer;
-
-    for (ptr_buffer = gui_buffers; ptr_buffer;
-         ptr_buffer = ptr_buffer->next_buffer)
-    {
-        if (ptr_buffer->id == id)
-            return ptr_buffer;
-    }
-
-    /* buffer not found */
-    return NULL;
+    return (gui_buffer_by_id) ?
+        hashtable_get (gui_buffer_by_id, &id) : NULL;
 }
 
 /*
  * Searches for a buffer by full name (example: "irc.libera.#weechat").
  *
  * If full_name starts with "(?i)", the search starts after this string
- * and the search is case insensitive.
+ * and the search is case-insensitive.
  */
 
 struct t_gui_buffer *
@@ -3112,7 +3136,7 @@ gui_buffer_search (const char *plugin, const char *name)
  * Searches for a buffer by plugin and partial name.
  *
  * If plugin or name starts with "(?i)", the search starts after this string
- * and the search is case insensitive.
+ * and the search is case-insensitive.
  */
 
 struct t_gui_buffer *
@@ -3249,14 +3273,14 @@ gui_buffer_search_by_number (int number)
 }
 
 /*
- * Searches for a buffer by number, full name or partial name.
+ * Searches for a buffer by id, number, full name or partial name.
  */
 
 struct t_gui_buffer *
-gui_buffer_search_by_number_or_name (const char *string)
+gui_buffer_search_by_id_number_name (const char *string)
 {
     struct t_gui_buffer *ptr_buffer;
-    long number;
+    long long number;
     char *error;
 
     if (!string)
@@ -3265,10 +3289,12 @@ gui_buffer_search_by_number_or_name (const char *string)
     ptr_buffer = NULL;
 
     error = NULL;
-    number = strtol (string, &error, 10);
+    number = strtoll (string, &error, 10);
     if (error && !error[0])
     {
-        ptr_buffer = gui_buffer_search_by_number (number);
+        ptr_buffer = gui_buffer_search_by_id (number);
+        if (!ptr_buffer)
+            ptr_buffer = gui_buffer_search_by_number (number);
     }
     else
     {
@@ -3385,7 +3411,7 @@ gui_buffer_clear (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_clear_all ()
+gui_buffer_clear_all (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -3491,7 +3517,7 @@ gui_buffer_get_previous_active_buffer (struct t_gui_buffer *buffer,
  */
 
 int
-gui_buffer_visited_get_index_previous ()
+gui_buffer_visited_get_index_previous (void)
 {
     if ((gui_buffers_visited_count < 2) || (gui_buffers_visited_index == 0))
         return -1;
@@ -3509,7 +3535,7 @@ gui_buffer_visited_get_index_previous ()
  */
 
 int
-gui_buffer_visited_get_index_next ()
+gui_buffer_visited_get_index_next (void)
 {
     if ((gui_buffers_visited_count < 2)
         || (gui_buffers_visited_index < 0)
@@ -3619,7 +3645,7 @@ gui_buffer_visited_remove_by_buffer (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_visited_remove_all ()
+gui_buffer_visited_remove_all (void)
 {
     while (gui_buffers_visited)
     {
@@ -3849,6 +3875,12 @@ gui_buffer_close (struct t_gui_buffer *buffer)
         gui_buffers = buffer->next_buffer;
     if (last_gui_buffer == buffer)
         last_gui_buffer = buffer->prev_buffer;
+    hashtable_remove (gui_buffer_by_id, &buffer->id);
+    if (gui_buffer_by_id->items_count == 0)
+    {
+        free (gui_buffer_by_id);
+        gui_buffer_by_id = NULL;
+    }
 
     for (ptr_window = gui_windows; ptr_window;
          ptr_window = ptr_window->next_window)
@@ -4059,7 +4091,7 @@ gui_buffer_zoom (struct t_gui_buffer *buffer)
 
 /*
  * Renumbers buffers with consecutive numbers between the range
- * number1 -> number2, sarting with new number "start_number".
+ * number1 -> number2, starting with new number "start_number".
  *
  * If number1 < 1, then renumber starts at first buffer in list (with lowest
  * number).
@@ -4218,6 +4250,16 @@ gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number)
         return;
     }
 
+    /*
+     * save old buffer numbers to send signal "buffer_moved" for each buffer
+     * really moved, after the move operation
+     */
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        ptr_buffer->old_number = ptr_buffer->number;
+    }
+
     /* remove buffer(s) from list */
     if (ptr_first_buffer->prev_buffer)
         (ptr_first_buffer->prev_buffer)->next_buffer = ptr_last_buffer->next_buffer;
@@ -4270,7 +4312,9 @@ gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number)
         if (ptr_last_buffer->next_buffer
             && (ptr_last_buffer->next_buffer->number == number))
         {
-            gui_buffer_shift_numbers (ptr_last_buffer->next_buffer);
+            gui_buffer_shift_numbers (
+                ptr_last_buffer->next_buffer,
+                0);  /* send_signal_buffer_moved */
         }
     }
     else
@@ -4293,9 +4337,16 @@ gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number)
         last_gui_buffer = ptr_last_buffer;
     }
 
-    (void) gui_buffer_send_signal (buffer,
-                                   "buffer_moved",
-                                   WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        if (ptr_buffer->number != ptr_buffer->old_number)
+        {
+            (void) gui_buffer_send_signal (ptr_buffer,
+                                           "buffer_moved",
+                                           WEECHAT_HOOK_SIGNAL_POINTER, ptr_buffer);
+        }
+    }
 }
 
 /*
@@ -4449,6 +4500,16 @@ gui_buffer_merge (struct t_gui_buffer *buffer,
     if (!ptr_first_buffer[1] || !ptr_last_buffer[1])
         return;
 
+    /*
+     * save old buffer numbers to send signal "buffer_moved" for each buffer
+     * really moved, after the merge operation
+     */
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        ptr_buffer->old_number = ptr_buffer->number;
+    }
+
     /* remove buffer(s) to merge from list */
     if (ptr_first_buffer[0]->prev_buffer)
         (ptr_first_buffer[0]->prev_buffer)->next_buffer = ptr_last_buffer[0]->next_buffer;
@@ -4500,6 +4561,17 @@ gui_buffer_merge (struct t_gui_buffer *buffer,
     (void) gui_buffer_send_signal (buffer,
                                    "buffer_merged",
                                    WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        if (ptr_buffer->number != ptr_buffer->old_number)
+        {
+            (void) gui_buffer_send_signal (ptr_buffer,
+                                           "buffer_moved",
+                                           WEECHAT_HOOK_SIGNAL_POINTER, ptr_buffer);
+        }
+    }
 }
 
 /*
@@ -4549,7 +4621,7 @@ gui_buffer_unmerge (struct t_gui_buffer *buffer, int number)
 
     if (num_merged == 2)
     {
-        /* only one buffer will remain, so it will not be merged any more */
+        /* only one buffer will remain, so it will not be merged anymore */
         gui_line_mixed_free_all (buffer);
         gui_line_lines_free (buffer->mixed_lines);
         for (ptr_buffer = gui_buffers; ptr_buffer;
@@ -4619,7 +4691,9 @@ gui_buffer_unmerge (struct t_gui_buffer *buffer, int number)
     if (buffer->next_buffer
         && (buffer->next_buffer->number == number))
     {
-        gui_buffer_shift_numbers (buffer->next_buffer);
+        gui_buffer_shift_numbers (
+            buffer->next_buffer,
+            1);  /* send_signal_buffer_moved */
     }
 
     gui_buffer_compute_num_displayed ();
@@ -4642,7 +4716,7 @@ gui_buffer_unmerge (struct t_gui_buffer *buffer, int number)
  */
 
 void
-gui_buffer_unmerge_all ()
+gui_buffer_unmerge_all (void)
 {
     struct t_gui_buffer *ptr_buffer, *ptr_next_buffer;
     int number;
@@ -4687,7 +4761,7 @@ gui_buffer_hide (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_hide_all ()
+gui_buffer_hide_all (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -4720,7 +4794,7 @@ gui_buffer_unhide (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_unhide_all ()
+gui_buffer_unhide_all (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -4736,7 +4810,7 @@ gui_buffer_unhide_all ()
  */
 
 void
-gui_buffer_sort_by_layout_number ()
+gui_buffer_sort_by_layout_number (void)
 {
     struct t_gui_buffer *ptr_buffer, *ptr_next_buffer;
     struct t_gui_buffer *extra_buffers, *last_extra_buffer;
@@ -5214,6 +5288,7 @@ gui_buffer_hdata_buffer_cb (const void *pointer, void *data,
         HDATA_VAR(struct t_gui_buffer, plugin, POINTER, 0, NULL, "plugin");
         HDATA_VAR(struct t_gui_buffer, plugin_name_for_upgrade, STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, number, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_buffer, old_number, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, layout_number, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, layout_number_merge_order, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, name, STRING, 0, NULL, NULL);
@@ -5412,6 +5487,8 @@ gui_buffer_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!infolist_new_var_integer (ptr_item, "number", buffer->number))
         return 0;
+    if (!infolist_new_var_integer (ptr_item, "old_number", buffer->old_number))
+        return 0;
     if (!infolist_new_var_integer (ptr_item, "layout_number", buffer->layout_number))
         return 0;
     if (!infolist_new_var_integer (ptr_item, "layout_number_merge_order", buffer->layout_number_merge_order))
@@ -5422,7 +5499,7 @@ gui_buffer_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!infolist_new_var_string (ptr_item, "old_full_name", buffer->old_full_name))
         return 0;
-    if (!infolist_new_var_string (ptr_item, "short_name", gui_buffer_get_short_name (buffer)))
+    if (!infolist_new_var_string (ptr_item, "short_name", buffer->short_name))
         return 0;
     if (!infolist_new_var_integer (ptr_item, "type", buffer->type))
         return 0;
@@ -5643,7 +5720,7 @@ gui_buffer_dump_hexa (struct t_gui_buffer *buffer)
  */
 
 void
-gui_buffer_print_log ()
+gui_buffer_print_log (void)
 {
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_line *ptr_line;
@@ -5674,6 +5751,7 @@ gui_buffer_print_log ()
                     ptr_buffer->plugin, gui_buffer_get_plugin_name (ptr_buffer));
         log_printf ("  plugin_name_for_upgrade : '%s'", ptr_buffer->plugin_name_for_upgrade);
         log_printf ("  number. . . . . . . . . : %d", ptr_buffer->number);
+        log_printf ("  old_number. . . . . . . : %d", ptr_buffer->old_number);
         log_printf ("  layout_number . . . . . : %d", ptr_buffer->layout_number);
         log_printf ("  layout_number_merge_order: %d", ptr_buffer->layout_number_merge_order);
         log_printf ("  name. . . . . . . . . . : '%s'", ptr_buffer->name);

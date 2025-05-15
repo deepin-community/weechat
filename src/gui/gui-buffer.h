@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -111,6 +111,7 @@ struct t_gui_buffer
     char *plugin_name_for_upgrade;     /* plugin name when upgrading        */
 
     int number;                        /* buffer number (first is 1)        */
+    int old_number;                    /* internally used when moving buffer*/
     int layout_number;                 /* number of buffer stored in layout */
     int layout_number_merge_order;     /* order in merge for layout         */
     char *name;                        /* buffer name                       */
@@ -162,7 +163,7 @@ struct t_gui_buffer
 
     /* nicklist */
     int nicklist;                      /* = 1 if nicklist is enabled        */
-    int nicklist_case_sensitive;       /* nicks are case sensitive ?        */
+    int nicklist_case_sensitive;       /* nicks are case-sensitive ?        */
     struct t_gui_nick_group *nicklist_root; /* pointer to groups root       */
     int nicklist_max_length;           /* max length for a nick             */
     int nicklist_display_groups;       /* display groups ?                  */
@@ -225,7 +226,7 @@ struct t_gui_buffer
     enum t_gui_buffer_search text_search; /* text search type               */
     enum t_gui_buffer_search_dir text_search_direction;
                                           /* search dir.: backward/forward  */
-    int text_search_exact;                /* case sensitive search?         */
+    int text_search_exact;                /* case-sensitive search?         */
     int text_search_regex;                /* search with a regex            */
     regex_t *text_search_regex_compiled;  /* regex used to search           */
     int text_search_where;                /* prefix and/or msg              */
@@ -284,6 +285,7 @@ extern int gui_buffers_visited_index;
 extern int gui_buffers_visited_count;
 extern int gui_buffers_visited_frozen;
 extern struct t_gui_buffer *gui_buffer_last_displayed;
+extern struct t_hashtable *gui_buffer_by_id;
 extern long long gui_buffer_last_id_assigned;
 extern char *gui_buffer_reserved_names[];
 extern char *gui_buffer_type_string[];
@@ -301,15 +303,14 @@ extern int gui_buffer_send_signal (struct t_gui_buffer *buffer,
                                    const char *signal,
                                    const char *type_data, void *signal_data);
 extern const char *gui_buffer_get_plugin_name (struct t_gui_buffer *buffer);
-extern const char *gui_buffer_get_short_name (struct t_gui_buffer *buffer);
 extern void gui_buffer_build_full_name (struct t_gui_buffer *buffer);
 extern void gui_buffer_local_var_add (struct t_gui_buffer *buffer,
                                       const char *name,
                                       const char *value);
 extern void gui_buffer_local_var_remove (struct t_gui_buffer *buffer,
                                          const char *name);
-extern void gui_buffer_notify_set_all ();
-extern long long gui_buffer_generate_id ();
+extern void gui_buffer_notify_set_all (void);
+extern long long gui_buffer_generate_id (void);
 extern int gui_buffer_is_reserved_name (const char *name);
 extern void gui_buffer_apply_config_option_property (struct t_gui_buffer *buffer,
                                                      struct t_config_option *option);
@@ -357,7 +358,7 @@ extern struct t_gui_buffer *gui_buffer_new (struct t_weechat_plugin *plugin,
                                             void *close_callback_data);
 extern struct t_gui_buffer *gui_buffer_new_user (const char *name,
                                                  enum t_gui_buffer_type buffer_type);
-extern void gui_buffer_user_set_callbacks ();
+extern void gui_buffer_user_set_callbacks (void);
 extern int gui_buffer_valid (struct t_gui_buffer *buffer);
 extern char *gui_buffer_string_replace_local_var (struct t_gui_buffer *buffer,
                                                   const char *string);
@@ -378,6 +379,8 @@ extern void gui_buffer_set_title (struct t_gui_buffer *buffer,
                                   const char *new_title);
 extern void gui_buffer_set_modes (struct t_gui_buffer *buffer,
                                   const char *new_modes);
+extern void gui_buffer_set_time_for_each_line (struct t_gui_buffer *buffer,
+                                               int time_for_each_line);
 extern void gui_buffer_set_highlight_words (struct t_gui_buffer *buffer,
                                             const char *new_highlight_words);
 extern void gui_buffer_set_highlight_disable_regex (struct t_gui_buffer *buffer,
@@ -396,21 +399,21 @@ extern void gui_buffer_set (struct t_gui_buffer *buffer, const char *property,
                             const char *value);
 extern void gui_buffer_set_pointer (struct t_gui_buffer *buffer,
                                     const char *property, void *pointer);
-extern void gui_buffer_compute_num_displayed ();
+extern void gui_buffer_compute_num_displayed (void);
 extern void gui_buffer_add_value_num_displayed (struct t_gui_buffer *buffer,
                                                 int value);
 extern int gui_buffer_is_main (const char *plugin_name, const char *name);
-extern struct t_gui_buffer *gui_buffer_search_main ();
+extern struct t_gui_buffer *gui_buffer_search_main (void);
 extern struct t_gui_buffer *gui_buffer_search_by_id (long long id);
 extern struct t_gui_buffer *gui_buffer_search_by_full_name (const char *full_name);
 extern struct t_gui_buffer *gui_buffer_search (const char *plugin, const char *name);
 extern struct t_gui_buffer *gui_buffer_search_by_partial_name (const char *plugin,
                                                                const char *name);
 extern struct t_gui_buffer *gui_buffer_search_by_number (int number);
-extern struct t_gui_buffer *gui_buffer_search_by_number_or_name (const char *string);
+extern struct t_gui_buffer *gui_buffer_search_by_id_number_name (const char *string);
 extern int gui_buffer_count_merged_buffers (int number);
 extern void gui_buffer_clear (struct t_gui_buffer *buffer);
-extern void gui_buffer_clear_all ();
+extern void gui_buffer_clear_all (void);
 extern void gui_buffer_close (struct t_gui_buffer *buffer);
 extern void gui_buffer_switch_by_number (struct t_gui_window *window,
                                          int number);
@@ -424,12 +427,12 @@ extern void gui_buffer_swap (int number1, int number2);
 extern void gui_buffer_merge (struct t_gui_buffer *buffer,
                               struct t_gui_buffer *target_buffer);
 extern void gui_buffer_unmerge (struct t_gui_buffer *buffer, int number);
-extern void gui_buffer_unmerge_all ();
+extern void gui_buffer_unmerge_all (void);
 extern void gui_buffer_hide (struct t_gui_buffer *buffer);
-extern void gui_buffer_hide_all ();
+extern void gui_buffer_hide_all (void);
 extern void gui_buffer_unhide (struct t_gui_buffer *buffer);
-extern void gui_buffer_unhide_all ();
-extern void gui_buffer_sort_by_layout_number ();
+extern void gui_buffer_unhide_all (void);
+extern void gui_buffer_sort_by_layout_number (void);
 extern void gui_buffer_undo_snap (struct t_gui_buffer *buffer);
 extern void gui_buffer_undo_snap_free (struct t_gui_buffer *buffer);
 extern void gui_buffer_undo_add (struct t_gui_buffer *buffer);
@@ -456,6 +459,6 @@ extern struct t_hdata *gui_buffer_hdata_buffer_visited_cb (const void *pointer,
 extern int gui_buffer_add_to_infolist (struct t_infolist *infolist,
                                        struct t_gui_buffer *buffer);
 extern void gui_buffer_dump_hexa (struct t_gui_buffer *buffer);
-extern void gui_buffer_print_log ();
+extern void gui_buffer_print_log (void);
 
 #endif /* WEECHAT_GUI_BUFFER_H */

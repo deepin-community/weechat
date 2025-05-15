@@ -1,7 +1,7 @@
 /*
  * gui-bar-item-custom.c - custom bar item functions (used by all GUI)
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -193,19 +193,17 @@ gui_bar_item_custom_create_option (const char *item_name, int index_option,
                                    const char *value)
 {
     struct t_config_option *ptr_option;
-    int length;
     char *option_name;
 
     ptr_option = NULL;
 
-    length = strlen (item_name) + 1 +
-        strlen (gui_bar_item_custom_option_string[index_option]) + 1;
-    option_name = malloc (length);
-    if (!option_name)
+    if (string_asprintf (&option_name,
+                         "%s.%s",
+                         item_name,
+                         gui_bar_item_custom_option_string[index_option]) < 0)
+    {
         return NULL;
-
-    snprintf (option_name, length, "%s.%s",
-              item_name, gui_bar_item_custom_option_string[index_option]);
+    }
 
     switch (index_option)
     {
@@ -490,7 +488,7 @@ error:
  */
 
 void
-gui_bar_item_custom_use_temp_items ()
+gui_bar_item_custom_use_temp_items (void)
 {
     struct t_gui_bar_item_custom *ptr_temp_item, *ptr_next_temp_item;
     int i;
@@ -655,7 +653,7 @@ gui_bar_item_custom_free (struct t_gui_bar_item_custom *item)
  */
 
 void
-gui_bar_item_custom_free_all ()
+gui_bar_item_custom_free_all (void)
 {
     while (gui_custom_bar_items)
     {

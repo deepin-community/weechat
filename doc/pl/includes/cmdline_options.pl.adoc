@@ -33,6 +33,9 @@
 *-h*, *--help*::
     Wyświetla pomoc.
 
+*-i*, *--build-info*::
+    Wyświetla informację o kompilacji.
+
 *-l*, *--license*::
     Wyświetla licencję.
 

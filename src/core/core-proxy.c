@@ -1,7 +1,7 @@
 /*
  * core-proxy.c - proxy functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -40,9 +40,11 @@
 char *proxy_option_string[PROXY_NUM_OPTIONS] =
 { "type", "ipv6", "address", "port", "username", "password" };
 char *proxy_option_default[PROXY_NUM_OPTIONS] =
-{ "http", "off", "127.0.0.1", "3128", "", "" };
+{ "http", "auto", "127.0.0.1", "3128", "", "" };
 char *proxy_type_string[PROXY_NUM_TYPES] =
 { "http", "socks4", "socks5" };
+char *proxy_ipv6_string[PROXY_NUM_IPV6] =
+{ "disable", "auto", "force" };
 
 struct t_proxy *weechat_proxies = NULL;    /* first proxy                   */
 struct t_proxy *last_weechat_proxy = NULL; /* last proxy                    */
@@ -252,19 +254,17 @@ proxy_create_option (const char *proxy_name, int index_option,
                      const char *value)
 {
     struct t_config_option *ptr_option;
-    int length;
     char *option_name;
 
     ptr_option = NULL;
 
-    length = strlen (proxy_name) + 1 +
-        strlen (proxy_option_string[index_option]) + 1;
-    option_name = malloc (length);
-    if (!option_name)
+    if (string_asprintf (&option_name,
+                         "%s.%s",
+                         proxy_name,
+                         proxy_option_string[index_option]) < 0)
+    {
         return NULL;
-
-    snprintf (option_name, length, "%s.%s",
-              proxy_name, proxy_option_string[index_option]);
+    }
 
     switch (index_option)
     {
@@ -279,9 +279,9 @@ proxy_create_option (const char *proxy_name, int index_option,
         case PROXY_OPTION_IPV6:
             ptr_option = config_file_new_option (
                 weechat_config_file, weechat_config_section_proxy,
-                option_name, "boolean",
-                N_("connect to proxy using ipv6"),
-                NULL, 0, 0, value, NULL, 0,
+                option_name, "enum",
+                N_("connect to proxy using IPv6"),
+                "disable|auto|force", 0, 0, value, NULL, 0,
                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             break;
         case PROXY_OPTION_ADDRESS:
@@ -472,7 +472,7 @@ proxy_new (const char *name, const char *type, const char *ipv6,
  */
 
 void
-proxy_use_temp_proxies ()
+proxy_use_temp_proxies (void)
 {
     struct t_proxy *ptr_temp_proxy, *next_temp_proxy;
     int i, num_options_ok;
@@ -566,7 +566,7 @@ proxy_free (struct t_proxy *proxy)
  */
 
 void
-proxy_free_all ()
+proxy_free_all (void)
 {
     while (weechat_proxies)
     {
@@ -647,7 +647,7 @@ proxy_add_to_infolist (struct t_infolist *infolist, struct t_proxy *proxy)
  */
 
 void
-proxy_print_log ()
+proxy_print_log (void)
 {
     struct t_proxy *ptr_proxy;
 
@@ -660,7 +660,9 @@ proxy_print_log ()
         log_printf ("  type . . . . . . . . . : %d (%s)",
                     CONFIG_ENUM(ptr_proxy->options[PROXY_OPTION_TYPE]),
                     proxy_type_string[CONFIG_ENUM(ptr_proxy->options[PROXY_OPTION_TYPE])]);
-        log_printf ("  ipv6 . . . . . . . . . : %d", CONFIG_INTEGER(ptr_proxy->options[PROXY_OPTION_IPV6]));
+        log_printf ("  ipv6 . . . . . . . . . : %d (%s)",
+                    CONFIG_ENUM(ptr_proxy->options[PROXY_OPTION_IPV6]),
+                    proxy_ipv6_string[CONFIG_ENUM(ptr_proxy->options[PROXY_OPTION_IPV6])]);
         log_printf ("  address. . . . . . . . : '%s'", CONFIG_STRING(ptr_proxy->options[PROXY_OPTION_ADDRESS]));
         log_printf ("  port . . . . . . . . . : %d", CONFIG_INTEGER(ptr_proxy->options[PROXY_OPTION_PORT]));
         log_printf ("  username . . . . . . . : '%s'", CONFIG_STRING(ptr_proxy->options[PROXY_OPTION_USERNAME]));

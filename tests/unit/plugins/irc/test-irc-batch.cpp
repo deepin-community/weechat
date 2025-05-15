@@ -1,7 +1,7 @@
 /*
  * test-irc-batch.cpp - test IRC batch functions
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -135,9 +135,9 @@ TEST(IrcBatch, StartBatch)
     CHECK(batch);
     POINTERS_EQUAL(batch, server->batches);
     STRCMP_EQUAL("ref", batch->reference);
-    POINTERS_EQUAL(NULL, batch->parent_ref);
+    STRCMP_EQUAL(NULL, batch->parent_ref);
     STRCMP_EQUAL("type", batch->type);
-    POINTERS_EQUAL(NULL, batch->parameters);
+    STRCMP_EQUAL(NULL, batch->parameters);
     POINTERS_EQUAL(NULL, batch->tags);
     CHECK(batch->start_time > 0);
     POINTERS_EQUAL(NULL, batch->messages);

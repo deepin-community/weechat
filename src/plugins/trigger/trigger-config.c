@@ -1,7 +1,7 @@
 /*
  * trigger-config.c - trigger configuration options (file trigger.conf)
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -345,19 +345,17 @@ trigger_config_create_trigger_option (const char *trigger_name, int index_option
                                       const char *value)
 {
     struct t_config_option *ptr_option;
-    int length;
     char *option_name;
 
     ptr_option = NULL;
 
-    length = strlen (trigger_name) + 1 +
-        strlen (trigger_option_string[index_option]) + 1;
-    option_name = malloc (length);
-    if (!option_name)
+    if (weechat_asprintf (&option_name,
+                          "%s.%s",
+                          trigger_name,
+                          trigger_option_string[index_option]) < 0)
+    {
         return NULL;
-
-    snprintf (option_name, length, "%s.%s",
-              trigger_name, trigger_option_string[index_option]);
+    }
 
     switch (index_option)
     {
@@ -366,7 +364,7 @@ trigger_config_create_trigger_option (const char *trigger_name, int index_option
                 trigger_config_file, trigger_config_section_trigger,
                 option_name, "boolean",
                 N_("if disabled, the hooks are removed from trigger, so it is "
-                   "not called any more"),
+                   "not called anymore"),
                 NULL, 0, 0, value, NULL, 0,
                 NULL, NULL, NULL,
                 &trigger_config_change_trigger_enabled, NULL, NULL,
@@ -487,7 +485,7 @@ trigger_config_create_option_temp (struct t_trigger *temp_trigger,
  */
 
 void
-trigger_config_use_temp_triggers ()
+trigger_config_use_temp_triggers (void)
 {
     struct t_trigger *ptr_temp_trigger, *next_temp_trigger;
     int i, num_options_ok;
@@ -686,7 +684,7 @@ trigger_config_reload_cb (const void *pointer, void *data,
  */
 
 int
-trigger_config_init ()
+trigger_config_init (void)
 {
     trigger_config_file = weechat_config_new (
         TRIGGER_CONFIG_PRIO_NAME,
@@ -801,7 +799,7 @@ trigger_config_init ()
  */
 
 int
-trigger_config_read ()
+trigger_config_read (void)
 {
     int rc;
 
@@ -817,7 +815,7 @@ trigger_config_read ()
  */
 
 int
-trigger_config_write ()
+trigger_config_write (void)
 {
     return weechat_config_write (trigger_config_file);
 }
@@ -827,7 +825,7 @@ trigger_config_write ()
  */
 
 void
-trigger_config_free ()
+trigger_config_free (void)
 {
     weechat_config_free (trigger_config_file);
     trigger_config_file = NULL;

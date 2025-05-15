@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: pl
-:toc-title: Spis treści
+include::includes/attributes-pl.adoc[]
 
 Tłumaczenie:
 
@@ -51,12 +51,14 @@ Jeśli nadal występują jakieś problemy zgłoś je do developerów.
 
 Zaleca się użycie https://brew.sh/[Homebrew ^↗^^], pomoc uzyskasz za pomocą komendy:
 
+[source,shell]
 ----
 brew info weechat
 ----
 
 Możesz zainstalować WeeChat za pomocą komendy:
 
+[source,shell]
 ----
 brew install weechat
 ----
@@ -311,10 +313,14 @@ samą zawartość obecnie wybranego okna, bez żadnego formatowania.
 Możesz użyć terminala z prostokątnym zaznaczaniem (jak rxvt-unicode,
 konsole, gnome-terminal, ...). Klawisze to zazwyczaj kbd:[Ctrl] + kbd:[Alt] + zaznaczenie myszką.
 
+Możesz wyłączyć listę nicków i włączyć ją, kiedy będzie potrzebna za pomocą
+kbd:[Alt+Shift+N].
+
 Innym rozwiązaniem jest przesunięcie listy nicków na górę lub dół, na przykład:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 [[urls]]
@@ -324,10 +330,13 @@ Możesz użyć prostego trybu wyświetlania (domyślnie: kbd:[Alt+l] (`L`)).
 
 Żeby operowanie na URLach było latwiejsze możesz:
 
+* wyłączyć listę nicków i pokazać ja tylko, kiedy będzie potrzebna, za pomocą kbd:[Alt+Shift+N]
+
 * przenieść listę nicków na górę:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 * wyłączyć wyrównanie dla wieloliniowych słów:
@@ -378,6 +387,7 @@ być ustawiona na odpowiednią wartość.
 
 W pliku inicjalizującym powłokę lub w linii poleceń, przed uruchomieniem WeeChat wpisz:
 
+[source,shell]
 ----
 export TZ=Europe/Warsaw
 ----
@@ -682,16 +692,18 @@ W zależności od używanego terminfo, mysz może nie być wspierana.
 
 Możesz sprawdzić wsparcie myszy w terminalu:
 
+[source,shell]
 ----
-$ printf '\033[?1002h'
+printf '\033[?1002h'
 ----
 
 Następnie kliknij pierwszy znak w terminalu (górny lewy róg). Powinieneś zobaczyć " !!#!!".
 
 Aby wyłączyć wsparcie dla myszy w terminalu:
 
+[source,shell]
 ----
-$ printf '\033[?1002l'
+printf '\033[?1002l'
 ----
 
 [[mouse_coords]]
@@ -747,7 +759,7 @@ możesz podać sumę kontrolną (SHA-512, SHA-256 lub SHA-1):
 Możesz spróbować innego ciągu priorytetu, zamień "xxx" nazwą serwera:
 
 ----
-/set irc.server.xxx.tls_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
+/set irc.server.xxx.tls_priorities "NORMAL:%COMPAT"
 ----
 
 [[irc_tls_libera]]
@@ -1001,8 +1013,9 @@ w tym dokumencie.
 
 Jeśli to nie pomoże spróbuj ręcznie usunąć plik z listą skryptów (z poziomu powłoki):
 
+[source,shell]
 ----
-$ rm ~/.cache/weechat/script/plugins.xml.gz
+rm ~/.cache/weechat/script/plugins.xml.gz
 ----
 
 [NOTE]
@@ -1026,15 +1039,17 @@ have to update manually the file yourself to get updates):
 
 * w powłoce, z zainstalowanym programem curl:
 
+[source,shell]
 ----
-$ cd ~/.cache/weechat/script
-$ curl -O https://weechat.org/files/plugins.xml.gz
+cd ~/.cache/weechat/script
+curl -O https://weechat.org/files/plugins.xml.gz
 ----
 
 Jeśli używasz macOS i pobrany plik ma wielkość 0 bajtów, spróbuj ustawić poniższą
 zmianną w inicjalizującym powłokę w terminalu lub z linii poleceń przed
 uruchomieniem WeeChat:
 
+[source,shell]
 ----
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ----
@@ -1204,6 +1219,7 @@ Zobacz https://weechat.org/about/support/[tą strone ^↗^^].
 
 Podczas uruchamiania WeeChat pod gdb, można spotkać się z takim błędem:
 
+[source,shell]
 ----
 $ gdb /scieżka/do/weechat
 (gdb) run
@@ -1214,6 +1230,7 @@ Cannot find new threads: generic error
 Żeby to naprawić, można użyć takiej komendy(należy zmienić ścieżki do libpthread oraz
 WeeChat na właściwe dla naszego systemu):
 
+[source,shell]
 ----
 $ LD_PRELOAD=/lib/libpthread.so.0 gdb /ścieżka/do/weechat
 (gdb) run
@@ -1222,7 +1239,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /ścieżka/do/weechat
 [[supported_os]]
 === Jaka jest lista platform wspieranych przez WeeChat? Czy będzie przeportowany na inne systemy operacyjne?
 
-WeeChat działa dobrze na większości systemów Linux/BSD, GNU/Hurd, Mac OS i Windowsie
+WeeChat działa dobrze na większości systemów Linux/BSD, GNU/Hurd, macOS i Windowsie
 (Cygwin i Windows Subsystem for Linux).
 
 Robimy co w naszej mocy, aby WeeChat działał na tylu platformach ile to tylko

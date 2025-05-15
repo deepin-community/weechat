@@ -1,7 +1,7 @@
 /*
  * irc-upgrade.c - save/restore IRC plugin data when upgrading WeeChat
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -293,7 +293,7 @@ irc_upgrade_save (int force_disconnected_state)
  */
 
 void
-irc_upgrade_set_buffer_callbacks ()
+irc_upgrade_set_buffer_callbacks (void)
 {
     struct t_infolist *infolist;
     struct t_gui_buffer *ptr_buffer;
@@ -489,7 +489,7 @@ irc_upgrade_read_cb (const void *pointer, void *data,
                     if (str)
                         irc_upgrade_current_server->isupport = strdup (str);
                     /*
-                     * "prefix" is not any more in this infolist (since
+                     * "prefix" is not anymore in this infolist (since
                      * WeeChat 0.3.4), but we read it to keep compatibility
                      * with old WeeChat versions, on /upgrade)
                      */
@@ -806,7 +806,7 @@ irc_upgrade_read_cb (const void *pointer, void *data,
                     if (ptr_nick)
                     {
                         /*
-                         * "flags" is not any more in this infolist (since
+                         * "flags" is not anymore in this infolist (since
                          * WeeChat 0.3.4), but we read it to keep compatibility
                          * with old WeeChat versions, on /upgrade)
                          * We try to restore prefixes with old flags, but
@@ -990,7 +990,7 @@ irc_upgrade_read_cb (const void *pointer, void *data,
  */
 
 void
-irc_upgrade_set_buffer_properties ()
+irc_upgrade_set_buffer_properties (void)
 {
     struct t_irc_server *ptr_server;
     struct t_irc_channel *ptr_channel;
@@ -1021,7 +1021,7 @@ irc_upgrade_set_buffer_properties ()
  */
 
 int
-irc_upgrade_load ()
+irc_upgrade_load (void)
 {
     int rc;
     struct t_upgrade_file *upgrade_file;

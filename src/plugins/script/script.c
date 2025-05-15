@@ -1,7 +1,7 @@
 /*
  * script.c - script manager for WeeChat
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -135,7 +135,7 @@ script_download_enabled (int display_error)
  */
 
 void
-script_get_loaded_plugins ()
+script_get_loaded_plugins (void)
 {
     int i, language;
     struct t_hdata *hdata;
@@ -163,7 +163,7 @@ script_get_loaded_plugins ()
  */
 
 void
-script_get_scripts ()
+script_get_scripts (void)
 {
     int i;
     char hdata_name[128], *filename, *ptr_base_name;

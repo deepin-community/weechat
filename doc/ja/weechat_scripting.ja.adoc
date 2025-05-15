@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: ja-jp
-:toc-title: 目次
+include::includes/attributes-ja.adoc[]
 
 翻訳者:
 
@@ -74,7 +74,7 @@ link:weechat_plugin_api.ja.html#_hook_process[WeeChat プラグイン API リフ
 
 WeeChat defines a `weechat` module which must be imported with `import weechat`. +
 A Python stub for WeeChat API is available in the repository:
-https://raw.githubusercontent.com/weechat/weechat/master/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
+https://raw.githubusercontent.com/weechat/weechat/main/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
 
 // TRANSLATION MISSING
 [[python_functions]]
@@ -381,9 +381,10 @@ _language/autoload_ ディレクトリ内にリンクを作ってください。
 
 例えば Python の場合:
 
+[source,shell]
 ----
-$ cd ~/.local/share/weechat/python/autoload
-$ ln -s ../script.py
+cd ~/.local/share/weechat/python/autoload
+ln -s ../script.py
 ----
 
 [NOTE]

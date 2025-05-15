@@ -1,7 +1,7 @@
 /*
  * buflist-bar-item.c - bar item for buflist plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -464,34 +464,37 @@ buflist_bar_item_buflist_cb (const void *pointer, void *data,
         /* nick prefix */
         str_nick_prefix[0] = '\0';
         str_color_nick_prefix[0] = '\0';
-        if (is_channel
+        if ((is_channel || is_private || is_list)
             && weechat_config_boolean (buflist_config_look_nick_prefix))
         {
             snprintf (str_nick_prefix, sizeof (str_nick_prefix),
                       "%s",
                       (weechat_config_boolean (buflist_config_look_nick_prefix_empty)) ?
                       " " : "");
-            ptr_nick = weechat_buffer_get_string (ptr_buffer, "localvar_nick");
-            if (ptr_nick)
+            if (is_channel)
             {
-                ptr_gui_nick = weechat_nicklist_search_nick (ptr_buffer, NULL,
-                                                             ptr_nick);
-                if (ptr_gui_nick)
+                ptr_nick = weechat_buffer_get_string (ptr_buffer, "localvar_nick");
+                if (ptr_nick)
                 {
-                    ptr_nick_prefix = weechat_nicklist_nick_get_string (
-                        ptr_buffer, ptr_gui_nick, "prefix");
-                    if (ptr_nick_prefix && (ptr_nick_prefix[0] != ' '))
+                    ptr_gui_nick = weechat_nicklist_search_nick (ptr_buffer, NULL,
+                                                                 ptr_nick);
+                    if (ptr_gui_nick)
                     {
-                        snprintf (str_color_nick_prefix,
-                                  sizeof (str_color_nick_prefix),
-                                  "%s",
-                                  weechat_color (
-                                      weechat_nicklist_nick_get_string (
-                                          ptr_buffer, ptr_gui_nick,
-                                          "prefix_color")));
-                        snprintf (str_nick_prefix, sizeof (str_nick_prefix),
-                                  "%s",
-                                  ptr_nick_prefix);
+                        ptr_nick_prefix = weechat_nicklist_nick_get_string (
+                            ptr_buffer, ptr_gui_nick, "prefix");
+                        if (ptr_nick_prefix && (ptr_nick_prefix[0] != ' '))
+                        {
+                            snprintf (str_color_nick_prefix,
+                                      sizeof (str_color_nick_prefix),
+                                      "%s",
+                                      weechat_color (
+                                          weechat_nicklist_nick_get_string (
+                                              ptr_buffer, ptr_gui_nick,
+                                              "prefix_color")));
+                            snprintf (str_nick_prefix, sizeof (str_nick_prefix),
+                                      "%s",
+                                      ptr_nick_prefix);
+                        }
                     }
                 }
             }
@@ -568,7 +571,7 @@ buflist_bar_item_buflist_cb (const void *pointer, void *data,
                                                    str_hotlist_count);
                     if (count > 0)
                     {
-                        if (*hotlist[0])
+                        if ((*hotlist)[0])
                         {
                             weechat_string_dyn_concat (
                                 hotlist,
@@ -644,7 +647,7 @@ buflist_bar_item_buflist_cb (const void *pointer, void *data,
 
         /* add newline between each buffer (if needed) */
         if (weechat_config_boolean (buflist_config_look_add_newline)
-            && *buflist[0])
+            && (*buflist)[0])
         {
             if (!weechat_string_dyn_concat (buflist, "\n", -1))
                 goto error;
@@ -699,7 +702,7 @@ end:
  */
 
 int
-buflist_bar_item_init ()
+buflist_bar_item_init (void)
 {
     int i;
 
@@ -758,7 +761,7 @@ buflist_bar_item_init ()
  */
 
 void
-buflist_bar_item_end ()
+buflist_bar_item_end (void)
 {
     int i;
 

@@ -1,7 +1,7 @@
 /*
  * alias-completion.c - completion for alias commands
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -115,7 +115,7 @@ alias_completion_alias_value_cb (const void *pointer, void *data,
  */
 
 void
-alias_completion_init ()
+alias_completion_init (void)
 {
     weechat_hook_completion ("alias", N_("list of aliases"),
                              &alias_completion_alias_cb, NULL, NULL);

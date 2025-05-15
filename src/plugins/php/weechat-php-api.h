@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006-2017 Adam Saponara <as@php.net>
- * Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2017-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -183,6 +183,7 @@ PHP_FUNCTION(weechat_buffer_get_pointer);
 PHP_FUNCTION(weechat_buffer_set);
 PHP_FUNCTION(weechat_buffer_string_replace_local_var);
 PHP_FUNCTION(weechat_buffer_match_list);
+PHP_FUNCTION(weechat_line_search_by_id);
 PHP_FUNCTION(weechat_current_window);
 PHP_FUNCTION(weechat_window_search_with_buffer);
 PHP_FUNCTION(weechat_window_get_integer);
@@ -218,6 +219,7 @@ PHP_FUNCTION(weechat_command_options);
 PHP_FUNCTION(weechat_completion_new);
 PHP_FUNCTION(weechat_completion_search);
 PHP_FUNCTION(weechat_completion_get_string);
+PHP_FUNCTION(weechat_completion_set);
 PHP_FUNCTION(weechat_completion_list_add);
 PHP_FUNCTION(weechat_completion_free);
 PHP_FUNCTION(weechat_info_get);

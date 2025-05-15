@@ -1,7 +1,7 @@
 /*
  * hook-url.c - WeeChat URL hook
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -105,7 +105,7 @@ hook_url_run_callback (struct t_hook *hook)
 }
 
 /*
- * Thread cleanup function: mark thread as not running any more.
+ * Thread cleanup function: mark thread as not running anymore.
  */
 
 void

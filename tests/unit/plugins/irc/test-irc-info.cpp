@@ -1,7 +1,7 @@
 /*
  * test-irc-info.cpp - test IRC info functions
  *
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -57,7 +57,7 @@ TEST(IrcInfo, CreateStringWithPointer)
 
     str = NULL;
     irc_info_create_string_with_pointer (&str, NULL);
-    POINTERS_EQUAL(NULL, str);
+    STRCMP_EQUAL(NULL, str);
 
     str = strdup ("test");
     irc_info_create_string_with_pointer (&str, (void *)0x1234abcd);
@@ -215,7 +215,10 @@ TEST(IrcInfo, InfoIrcBufferCb)
     struct t_irc_nick *nick;
     char *str, str_pointer[64];
 
-    server = irc_server_alloc ("local");
+    run_cmd_quiet ("/mute /server add local fake:127.0.0.1");
+    run_cmd_quiet ("/connect local");
+
+    server = irc_server_search ("local");
     CHECK(server);
 
     channel = irc_channel_new (server, IRC_CHANNEL_TYPE_CHANNEL, "#test", 0, 0);
@@ -224,18 +227,20 @@ TEST(IrcInfo, InfoIrcBufferCb)
     nick = irc_nick_new (server, channel, "bob", "user@host", "@", 0, NULL, NULL);
     CHECK(nick);
 
-    channel_pv = irc_channel_new (server, IRC_CHANNEL_TYPE_PRIVATE, "bob",
-                                  1, 0);
+    channel_pv = irc_channel_new (server, IRC_CHANNEL_TYPE_PRIVATE, "bob", 1, 0);
     CHECK(channel_pv);
 
-    POINTERS_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", NULL));
-    POINTERS_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", ""));
-    POINTERS_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", "xxx"));
+    STRCMP_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", NULL));
+    STRCMP_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", ""));
+    STRCMP_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", "xxx"));
 
-    WEE_TEST_STR(NULL, hook_info_get (NULL, "irc_buffer", "local"));
+    snprintf (str_pointer, sizeof (str_pointer), "%p", server->buffer);
+    WEE_TEST_STR(str_pointer, hook_info_get (NULL, "irc_buffer", "local"));
 
     snprintf (str_pointer, sizeof (str_pointer), "%p", channel->buffer);
     WEE_TEST_STR(str_pointer, hook_info_get (NULL, "irc_buffer", "local,#test"));
+
+    STRCMP_EQUAL(NULL, hook_info_get (NULL, "irc_buffer", "local,#xxx"));
 
     snprintf (str_pointer, sizeof (str_pointer), "%p", channel->buffer);
     WEE_TEST_STR(str_pointer, hook_info_get (NULL, "irc_buffer", "local,#test,bob"));
@@ -245,7 +250,9 @@ TEST(IrcInfo, InfoIrcBufferCb)
         gui_buffer_close (channel_pv->buffer);
     if (channel->buffer)
         gui_buffer_close (channel->buffer);
-    irc_server_free (server);
+
+    run_cmd_quiet ("/mute /disconnect local");
+    run_cmd_quiet ("/mute /server del local");
 }
 
 /*
@@ -748,7 +755,7 @@ TEST(IrcInfo, InfolistIrcNotifyCb)
     STRCMP_EQUAL("bob", infolist_string (infolist, "nick"));
     LONGS_EQUAL(1, infolist_integer (infolist, "check_away"));
     LONGS_EQUAL(-1, infolist_integer (infolist, "is_on_server"));
-    POINTERS_EQUAL(NULL, infolist_string (infolist, "away_message"));
+    STRCMP_EQUAL(NULL, infolist_string (infolist, "away_message"));
 
     CHECK(infolist_next (infolist));
     POINTERS_EQUAL(server, infolist_pointer (infolist, "server"));
@@ -756,7 +763,7 @@ TEST(IrcInfo, InfolistIrcNotifyCb)
     STRCMP_EQUAL("carol", infolist_string (infolist, "nick"));
     LONGS_EQUAL(1, infolist_integer (infolist, "check_away"));
     LONGS_EQUAL(-1, infolist_integer (infolist, "is_on_server"));
-    POINTERS_EQUAL(NULL, infolist_string (infolist, "away_message"));
+    STRCMP_EQUAL(NULL, infolist_string (infolist, "away_message"));
 
     POINTERS_EQUAL(NULL, infolist_next (infolist));
 
@@ -771,7 +778,7 @@ TEST(IrcInfo, InfolistIrcNotifyCb)
     STRCMP_EQUAL("bob", infolist_string (infolist, "nick"));
     LONGS_EQUAL(1, infolist_integer (infolist, "check_away"));
     LONGS_EQUAL(-1, infolist_integer (infolist, "is_on_server"));
-    POINTERS_EQUAL(NULL, infolist_string (infolist, "away_message"));
+    STRCMP_EQUAL(NULL, infolist_string (infolist, "away_message"));
 
     CHECK(infolist_next (infolist));
     POINTERS_EQUAL(server, infolist_pointer (infolist, "server"));
@@ -779,7 +786,7 @@ TEST(IrcInfo, InfolistIrcNotifyCb)
     STRCMP_EQUAL("carol", infolist_string (infolist, "nick"));
     LONGS_EQUAL(1, infolist_integer (infolist, "check_away"));
     LONGS_EQUAL(-1, infolist_integer (infolist, "is_on_server"));
-    POINTERS_EQUAL(NULL, infolist_string (infolist, "away_message"));
+    STRCMP_EQUAL(NULL, infolist_string (infolist, "away_message"));
 
     POINTERS_EQUAL(NULL, infolist_next (infolist));
 
@@ -801,7 +808,7 @@ TEST(IrcInfo, InfolistIrcNotifyCb)
     STRCMP_EQUAL("carol", infolist_string (infolist, "nick"));
     LONGS_EQUAL(1, infolist_integer (infolist, "check_away"));
     LONGS_EQUAL(-1, infolist_integer (infolist, "is_on_server"));
-    POINTERS_EQUAL(NULL, infolist_string (infolist, "away_message"));
+    STRCMP_EQUAL(NULL, infolist_string (infolist, "away_message"));
 
     POINTERS_EQUAL(NULL, infolist_next (infolist));
 

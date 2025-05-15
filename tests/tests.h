@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,14 +22,7 @@
 
 #define WEE_TEST_STR(__result, __test)                                  \
     str = __test;                                                       \
-    if (__result == NULL)                                               \
-    {                                                                   \
-        POINTERS_EQUAL(NULL, str);                                      \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        STRCMP_EQUAL(__result, str);                                    \
-    }                                                                   \
+    STRCMP_EQUAL(__result, str);                                        \
     free (str);
 
 extern void run_cmd (const char *command);

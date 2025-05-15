@@ -1,7 +1,7 @@
 /*
  * irc-buffer.c - buffer functions for IRC plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -199,7 +199,7 @@ irc_buffer_close_cb (const void *pointer, void *data,
                                              IRC_SERVER_OPTION_AUTOJOIN_DYNAMIC)
                 && ptr_server->is_connected
                 && !irc_signal_quit_received
-                && !irc_signal_upgrade_received)
+                && !weechat_irc_plugin->unload_with_upgrade)
             {
                 irc_join_remove_channel_from_autojoin (ptr_server,
                                                        ptr_channel->name);
@@ -305,7 +305,7 @@ irc_buffer_nickcmp_cb (const void *pointer, void *data,
  */
 
 struct t_gui_buffer *
-irc_buffer_search_server_lowest_number ()
+irc_buffer_search_server_lowest_number (void)
 {
     struct t_gui_buffer *ptr_buffer;
     struct t_irc_server *ptr_server;

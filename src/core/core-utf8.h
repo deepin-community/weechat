@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,15 +20,9 @@
 #ifndef WEECHAT_UTF8_H
 #define WEECHAT_UTF8_H
 
-#ifndef __USE_XOPEN
-#define __USE_XOPEN
-#endif
-
-#include <wchar.h>
-
 extern int local_utf8;
 
-extern void utf8_init ();
+extern void utf8_init (void);
 extern int utf8_has_8bits (const char *string);
 extern int utf8_is_valid (const char *string, int length, char **error);
 extern void utf8_normalize (char *string, char replacement);

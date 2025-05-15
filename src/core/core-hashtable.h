@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -43,7 +43,8 @@ struct t_infolist_item;
 #define HASHTABLE_SET_POINTER(__name, __pointer)                         \
     if (__pointer)                                                       \
     {                                                                    \
-        snprintf (str_value, sizeof (str_value), "%p", __pointer);      \
+        snprintf (str_value, sizeof (str_value),                         \
+                  "0x%lx", (unsigned long)__pointer);                    \
         hashtable_set (hashtable, __name, str_value);                    \
     }                                                                    \
     else                                                                 \
@@ -104,6 +105,7 @@ enum t_hashtable_type
     HASHTABLE_POINTER,
     HASHTABLE_BUFFER,
     HASHTABLE_TIME,
+    HASHTABLE_LONGLONG,
     /* number of hashtable types */
     HASHTABLE_NUM_TYPES,
 };

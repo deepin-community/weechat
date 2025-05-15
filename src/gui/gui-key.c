@@ -1,7 +1,7 @@
 /*
  * gui-key.c - keyboard functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -111,7 +111,7 @@ time_t gui_key_last_activity_time = 0; /* last activity time (key)          */
  */
 
 void
-gui_key_init ()
+gui_key_init (void)
 {
     int context;
 
@@ -168,7 +168,7 @@ gui_key_search_context (const char *context)
  */
 
 int
-gui_key_get_current_context ()
+gui_key_get_current_context (void)
 {
     if (gui_cursor_mode)
         return GUI_KEY_CONTEXT_CURSOR;
@@ -304,7 +304,7 @@ gui_key_grab_end_timer_cb (const void *pointer, void *data, int remaining_calls)
  * Gets internal code from user key name.
  *
  * Note: this function works with legacy keys (WeeChat < 4.0.0) and should not
- * be used any more.
+ * be used anymore.
  *
  * Examples:
  *   "ctrl-R" => "\x01" + "r" (lower case enforced for ctrl keys)
@@ -436,10 +436,10 @@ gui_key_expand (const char *key, char **key_name, char **key_name_alias)
         meta2 = 0;
         shift = 0;
 
-        if (*str_dyn_key[0])
+        if ((*str_dyn_key)[0])
             string_dyn_concat (str_dyn_key, ",", -1);
 
-        if (*str_dyn_key_alias[0])
+        if ((*str_dyn_key_alias)[0])
             string_dyn_concat (str_dyn_key_alias, ",", -1);
 
         str_raw[0] = '\0';
@@ -1213,12 +1213,12 @@ gui_key_set_score (struct t_gui_key *key)
 }
 
 /*
- * Checks if a key is safe or not: a safe key begins always with the "meta" or
- * "ctrl" code (except "@" allowed in cursor/mouse contexts).
+ * Checks if a key is safe or not: a safe key should begin with the "meta" or
+ * "ctrl" code (there are exceptions).
  *
  * Returns:
- *   1: key is safe
- *   0: key is NOT safe
+ *   1: key is safe for the given context
+ *   0: key is NOT safe for the given context
  */
 
 int
@@ -1229,13 +1229,13 @@ gui_key_is_safe (int context, const char *key)
     if (!key || !key[0])
         return 0;
 
-    /* "@" is allowed at beginning for cursor/mouse contexts */
-    if ((key[0] == '@')
-        && ((context == GUI_KEY_CONTEXT_CURSOR)
-            || (context == GUI_KEY_CONTEXT_MOUSE)))
-    {
+    /* all keys are safe in cursor mode */
+    if (context == GUI_KEY_CONTEXT_CURSOR)
         return 1;
-    }
+
+    /* "@" is allowed at beginning for mouse context */
+    if ((key[0] == '@') && (context == GUI_KEY_CONTEXT_MOUSE))
+        return 1;
 
     if (strncmp (key, "comma", 5) == 0)
         return 0;
@@ -1439,7 +1439,7 @@ gui_key_new_option (int context, const char *name, const char *value)
     else
     {
         snprintf (str_description, sizeof (str_description),
-                  _("key \"%s\" in context \"%s\""),
+                  "\"%s\" (%s)",
                   name,
                   gui_key_context_string[context]);
         ptr_key = gui_key_search (gui_default_keys[context], name);
@@ -2041,9 +2041,8 @@ gui_key_focus_command (const char *key, int context,
                        struct t_hashtable **hashtable_focus)
 {
     struct t_gui_key *ptr_key;
-    int i, matching, debug, rc;
-    unsigned long value;
-    char *command, **commands;
+    int matching, debug, rc;
+    char *command, **commands, **ptr_command;
     const char *str_buffer;
     struct t_hashtable *hashtable;
     struct t_gui_buffer *ptr_buffer;
@@ -2100,9 +2099,9 @@ gui_key_focus_command (const char *key, int context,
         str_buffer = hashtable_get (hashtable, "_buffer");
         if (str_buffer && str_buffer[0])
         {
-            rc = sscanf (str_buffer, "%lx", &value);
-            if ((rc != EOF) && (rc != 0))
-                ptr_buffer = (struct t_gui_buffer *)value;
+            rc = sscanf (str_buffer, "%p", &ptr_buffer);
+            if ((rc == EOF) || (rc == 0))
+                ptr_buffer = gui_current_window->buffer;
         }
         if (!ptr_buffer)
             continue;
@@ -2124,25 +2123,25 @@ gui_key_focus_command (const char *key, int context,
             commands = string_split_command (ptr_key->command, ';');
             if (commands)
             {
-                for (i = 0; commands[i]; i++)
+                for (ptr_command = commands; *ptr_command; ptr_command++)
                 {
-                    if (string_strncasecmp (commands[i], "hsignal:", 8) == 0)
+                    if (string_strncasecmp (*ptr_command, "hsignal:", 8) == 0)
                     {
-                        if (commands[i][8])
+                        if ((*ptr_command)[8])
                         {
                             if (debug)
                             {
                                 gui_chat_printf (NULL,
                                                  _("Sending hsignal: \"%s\""),
-                                                 commands[i] + 8);
+                                                 *ptr_command + 8);
                             }
-                            (void) hook_hsignal_send (commands[i] + 8,
+                            (void) hook_hsignal_send (*ptr_command + 8,
                                                       hashtable);
                         }
                     }
                     else
                     {
-                        command = eval_expression (commands[i], NULL,
+                        command = eval_expression (*ptr_command, NULL,
                                                    hashtable, NULL);
                         if (command)
                         {
@@ -2341,11 +2340,11 @@ gui_key_debug_print_key (const char *combo, const char *key_name,
 int
 gui_key_pressed (const char *key_str)
 {
-    int i, insert_into_input, context, length, length_key, signal_sent;
+    int insert_into_input, context, length, length_key, signal_sent;
     int rc, rc_expand, exact_match, chunks1_count, chunks2_count, event_size;
     int buffer_key;
     struct t_gui_key *ptr_key;
-    char saved_char, signal_name[128], **commands;
+    char saved_char, signal_name[128], **commands, **ptr_command;
     char *key_name, *key_name_alias, **chunks1, **chunks2;
 
     signal_sent = 0;
@@ -2525,11 +2524,11 @@ gui_key_pressed (const char *key_str)
                     commands = string_split_command (ptr_key->command, ';');
                     if (commands)
                     {
-                        for (i = 0; commands[i]; i++)
+                        for (ptr_command = commands; *ptr_command; ptr_command++)
                         {
                             (void) input_data (
                                 gui_current_window->buffer,
-                                commands[i],
+                                *ptr_command,
                                 NULL,
                                 0,
                                 (buffer_key) ? 1 : 0);
@@ -2681,7 +2680,7 @@ gui_key_free_all (int context, struct t_gui_key **keys,
  */
 
 void
-gui_key_buffer_optimize ()
+gui_key_buffer_optimize (void)
 {
     int optimal_size, *gui_key_buffer2;
 
@@ -2712,7 +2711,7 @@ gui_key_buffer_optimize ()
  */
 
 void
-gui_key_buffer_reset ()
+gui_key_buffer_reset (void)
 {
     if (!gui_key_buffer)
     {
@@ -2828,7 +2827,7 @@ gui_key_buffer_remove (int index, int number)
  */
 
 void
-gui_key_paste_remove_newline ()
+gui_key_paste_remove_newline (void)
 {
     if ((gui_key_buffer_size > 0)
         && ((gui_key_buffer[gui_key_buffer_size - 1] == '\r')
@@ -2844,7 +2843,7 @@ gui_key_paste_remove_newline ()
  */
 
 void
-gui_key_paste_replace_tabs ()
+gui_key_paste_replace_tabs (void)
 {
     int i;
 
@@ -2860,7 +2859,7 @@ gui_key_paste_replace_tabs ()
  */
 
 void
-gui_key_paste_start ()
+gui_key_paste_start (void)
 {
     gui_key_paste_pending = 1;
     gui_input_paste_pending_signal ();
@@ -2871,7 +2870,7 @@ gui_key_paste_start ()
  */
 
 void
-gui_key_paste_finish ()
+gui_key_paste_finish (void)
 {
     gui_key_paste_remove_newline ();
     gui_key_paste_replace_tabs ();
@@ -2884,7 +2883,7 @@ gui_key_paste_finish ()
  */
 
 int
-gui_key_get_paste_lines ()
+gui_key_get_paste_lines (void)
 {
     int length;
 
@@ -2969,7 +2968,7 @@ gui_key_paste_bracketed_timer_cb (const void *pointer, void *data,
  */
 
 void
-gui_key_paste_bracketed_timer_remove ()
+gui_key_paste_bracketed_timer_remove (void)
 {
     if (gui_key_paste_bracketed_timer)
     {
@@ -2983,7 +2982,7 @@ gui_key_paste_bracketed_timer_remove ()
  */
 
 void
-gui_key_paste_bracketed_timer_add ()
+gui_key_paste_bracketed_timer_add (void)
 {
     gui_key_paste_bracketed_timer_remove ();
     gui_key_paste_bracketed_timer = hook_timer (
@@ -2998,7 +2997,7 @@ gui_key_paste_bracketed_timer_add ()
  */
 
 void
-gui_key_paste_bracketed_start ()
+gui_key_paste_bracketed_start (void)
 {
     gui_key_paste_bracketed = 1;
     gui_key_paste_bracketed_timer_add ();
@@ -3010,7 +3009,7 @@ gui_key_paste_bracketed_start ()
  */
 
 void
-gui_key_paste_bracketed_stop ()
+gui_key_paste_bracketed_stop (void)
 {
     gui_key_paste_check (1);
     gui_key_paste_bracketed = 0;
@@ -3021,7 +3020,7 @@ gui_key_paste_bracketed_stop ()
  */
 
 void
-gui_key_paste_accept ()
+gui_key_paste_accept (void)
 {
     gui_key_paste_pending = 0;
     gui_input_paste_pending_signal ();
@@ -3033,7 +3032,7 @@ gui_key_paste_accept ()
  */
 
 void
-gui_key_paste_cancel ()
+gui_key_paste_cancel (void)
 {
     gui_key_buffer_reset ();
     gui_key_paste_pending = 0;
@@ -3045,7 +3044,7 @@ gui_key_paste_cancel ()
  */
 
 void
-gui_key_end ()
+gui_key_end (void)
 {
     int context;
 

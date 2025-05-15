@@ -1,7 +1,7 @@
 /*
  * test-relay-remote-network.cpp - test network functions for relay remote
  *
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -56,11 +56,11 @@ TEST_GROUP(RelayRemoteNetworkWithRemote)
         /* create two relay remotes */
         ptr_relay_remote = relay_remote_new ("remote",
                                              "http://localhost:9000",
-                                             "off", NULL, "on",
+                                             NULL, "off", NULL, "on",
                                              "secret", "secretbase32");
         ptr_relay_remote2 = relay_remote_new ("remote2",
                                               "https://localhost:9001/",
-                                              "off", "my_proxy", "off",
+                                              "30", "off", "my_proxy", "off",
                                               "secret", "secretbase32");
     }
 
@@ -232,17 +232,16 @@ TEST(RelayRemoteNetwork, UrlHandshakeCb)
 
 TEST(RelayRemoteNetwork, GetHandshakeRequest)
 {
-    const char *str_start = "{\"password_hash_algo\": [\"";
     char *str;
-    int i;
 
-    str = relay_remote_network_get_handshake_request ();
-    CHECK(str);
-    STRNCMP_EQUAL(str_start, str, strlen (str_start));
-    for (i = 0; i < RELAY_NUM_PASSWORD_HASH_ALGOS; i++)
-    {
-        CHECK(strstr (str, relay_auth_password_hash_algo_name[i]));
-    }
+    WEE_TEST_STR("{\"password_hash_algo\":["
+                 "\"plain\","
+                 "\"sha256\","
+                 "\"sha512\","
+                 "\"pbkdf2+sha256\","
+                 "\"pbkdf2+sha512\""
+                 "]}",
+                 relay_remote_network_get_handshake_request ());
 }
 
 /*

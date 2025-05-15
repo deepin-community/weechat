@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -40,6 +40,6 @@ enum t_irc_upgrade_type
 extern int irc_upgrading;
 
 extern int irc_upgrade_save (int force_disconnected_state);
-extern int irc_upgrade_load ();
+extern int irc_upgrade_load (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_UPGRADE_H */

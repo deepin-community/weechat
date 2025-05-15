@@ -1,7 +1,7 @@
 /*
  * relay-client.c - client functions for relay plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1302,17 +1302,12 @@ relay_client_send (struct t_relay_client *client,
  * Timer callback, called each second.
  */
 
-int
-relay_client_timer_cb (const void *pointer, void *data, int remaining_calls)
+void
+relay_client_timer (void)
 {
     struct t_relay_client *ptr_client, *ptr_next_client;
     int purge_delay, auth_timeout;
     time_t current_time;
-
-    /* make C compiler happy */
-    (void) pointer;
-    (void) data;
-    (void) remaining_calls;
 
     purge_delay = weechat_config_integer (relay_config_network_clients_purge_delay);
     auth_timeout = weechat_config_integer (relay_config_network_auth_timeout);
@@ -1352,8 +1347,6 @@ relay_client_timer_cb (const void *pointer, void *data, int remaining_calls)
 
         ptr_client = ptr_next_client;
     }
-
-    return WEECHAT_RC_OK;
 }
 
 /*
@@ -1454,13 +1447,8 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
                 if (relay_gnutls_dh_params)
                 {
                     gnutls_dh_params_init (relay_gnutls_dh_params);
-#if LIBGNUTLS_VERSION_NUMBER >= 0x020c00 /* 2.12.0 */
                     bits = gnutls_sec_param_to_pk_bits (GNUTLS_PK_DH,
                                                         GNUTLS_SEC_PARAM_LOW);
-#else
-                    /* default for old gnutls */
-                    bits = 1024;
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x020c00 */
                     gnutls_dh_params_generate2 (*relay_gnutls_dh_params, bits);
                     gnutls_certificate_set_dh_params (relay_gnutls_x509_cred,
                                                       *relay_gnutls_dh_params);
@@ -1601,7 +1589,8 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
     if (new_client)
     {
         new_client->id = weechat_infolist_integer (infolist, "id");
-        new_client->desc = NULL;
+        str = weechat_infolist_string (infolist, "desc");
+        new_client->desc = (str) ? strdup (str) : NULL;
         new_client->sock = weechat_infolist_integer (infolist, "sock");
         new_client->server_port = weechat_infolist_integer (infolist, "server_port");
         /* "tls" replaces "ssl" in WeeChat 4.0.0 */
@@ -1620,6 +1609,8 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
         new_client->ws_deflate->client_context_takeover = weechat_infolist_integer (infolist, "ws_deflate_client_context_takeover");
         new_client->ws_deflate->window_bits_deflate = weechat_infolist_integer (infolist, "ws_deflate_window_bits_deflate");
         new_client->ws_deflate->window_bits_inflate = weechat_infolist_integer (infolist, "ws_deflate_window_bits_inflate");
+        new_client->ws_deflate->server_max_window_bits_recv = weechat_infolist_integer (infolist, "ws_deflate_server_max_window_bits_recv");
+        new_client->ws_deflate->client_max_window_bits_recv = weechat_infolist_integer (infolist, "ws_deflate_client_max_window_bits_recv");
         new_client->ws_deflate->strm_deflate = NULL;
         new_client->ws_deflate->strm_inflate = NULL;
         if (weechat_infolist_search_var (infolist, "ws_deflate_strm_deflate_dict"))
@@ -1705,6 +1696,11 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
                 memcpy (new_client->partial_ws_frame, ptr_ws_frame, ws_frame_size);
                 new_client->partial_ws_frame_size = ws_frame_size;
             }
+        }
+        else
+        {
+            new_client->partial_ws_frame = NULL;
+            new_client->partial_ws_frame_size = 0;
         }
         str = weechat_infolist_string (infolist, "partial_message");
         new_client->partial_message = (str) ? strdup (str) : NULL;
@@ -1951,7 +1947,7 @@ relay_client_free (struct t_relay_client *client)
  */
 
 void
-relay_client_free_all ()
+relay_client_free_all (void)
 {
     while (relay_clients)
     {
@@ -1977,7 +1973,7 @@ relay_client_disconnect (struct t_relay_client *client)
  */
 
 void
-relay_client_disconnect_all ()
+relay_client_disconnect_all (void)
 {
     struct t_relay_client *ptr_client;
 
@@ -2072,6 +2068,10 @@ relay_client_add_to_infolist (struct t_infolist *infolist,
     if (!weechat_infolist_new_var_integer (ptr_item, "ws_deflate_window_bits_deflate", client->ws_deflate->window_bits_deflate))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "ws_deflate_window_bits_inflate", client->ws_deflate->window_bits_inflate))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "ws_deflate_server_max_window_bits_recv", client->ws_deflate->server_max_window_bits_recv))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "ws_deflate_client_max_window_bits_recv", client->ws_deflate->client_max_window_bits_recv))
         return 0;
     if (!weechat_infolist_new_var_pointer (ptr_item, "ws_deflate_strm_deflate", client->ws_deflate->strm_deflate))
         return 0;
@@ -2171,7 +2171,7 @@ relay_client_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-relay_client_print_log ()
+relay_client_print_log (void)
 {
     struct t_relay_client *ptr_client;
 

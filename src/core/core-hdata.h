@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -122,6 +122,7 @@ extern void *hdata_search (struct t_hdata *hdata, void *pointer,
                            const char *search, struct t_hashtable *pointers,
                            struct t_hashtable *extra_vars,
                            struct t_hashtable *options, int move);
+extern int hdata_count (struct t_hdata *hdata, void *pointer);
 extern void hdata_get_index_and_name (const char *name, int *index,
                                       const char **ptr_name);
 extern char hdata_char (struct t_hdata *hdata, void *pointer,
@@ -150,9 +151,9 @@ extern int hdata_update (struct t_hdata *hdata, void *pointer,
 extern const char *hdata_get_string (struct t_hdata *hdata,
                                      const char *property);
 extern void hdata_free_all_plugin (struct t_weechat_plugin *plugin);
-extern void hdata_free_all ();
-extern void hdata_print_log ();
-extern void hdata_init ();
-extern void hdata_end ();
+extern void hdata_free_all (void);
+extern void hdata_print_log (void);
+extern void hdata_init (void);
+extern void hdata_end (void);
 
 #endif /* WEECHAT_HDATA_H */

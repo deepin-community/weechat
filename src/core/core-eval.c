@@ -1,7 +1,7 @@
 /*
  * core-eval.c - evaluate expressions with references to internal vars
  *
- * Copyright (C) 2012-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2012-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -506,8 +506,8 @@ char *
 eval_string_split (const char *text)
 {
     char *pos, *pos2, *pos3, *str_number, *separators, **items, *value, *error;
-    char str_value[32], *str_flags, **list_flags, *strip_items;
-    int i, num_items, count_items, random_item, flags;
+    char str_value[32], *str_flags, **list_flags, *strip_items, **ptr_flag;
+    int num_items, count_items, random_item, flags;
     long number, max_items;
 
     str_number = NULL;
@@ -564,25 +564,25 @@ eval_string_split (const char *text)
     list_flags = string_split (str_flags, "+", NULL, 0, 0, NULL);
     if (list_flags)
     {
-        for (i = 0; list_flags[i]; i++)
+        for (ptr_flag = list_flags; *ptr_flag; ptr_flag++)
         {
-            if (strcmp (list_flags[i], "strip_left") == 0)
+            if (strcmp (*ptr_flag, "strip_left") == 0)
                 flags |= WEECHAT_STRING_SPLIT_STRIP_LEFT;
-            else if (strcmp (list_flags[i], "strip_right") == 0)
+            else if (strcmp (*ptr_flag, "strip_right") == 0)
                 flags |= WEECHAT_STRING_SPLIT_STRIP_RIGHT;
-            else if (strcmp (list_flags[i], "collapse_seps") == 0)
+            else if (strcmp (*ptr_flag, "collapse_seps") == 0)
                 flags |= WEECHAT_STRING_SPLIT_COLLAPSE_SEPS;
-            else if (strcmp (list_flags[i], "keep_eol") == 0)
+            else if (strcmp (*ptr_flag, "keep_eol") == 0)
                 flags |= WEECHAT_STRING_SPLIT_KEEP_EOL;
-            else if (strncmp (list_flags[i], "strip_items=", 12) == 0)
+            else if (strncmp (*ptr_flag, "strip_items=", 12) == 0)
             {
                 free (strip_items);
-                strip_items = strdup (list_flags[i] + 12);
+                strip_items = strdup (*ptr_flag + 12);
             }
-            else if (strncmp (list_flags[i], "max_items=", 10) == 0)
+            else if (strncmp (*ptr_flag, "max_items=", 10) == 0)
             {
                 error = NULL;
-                max_items = strtol (list_flags[i] + 10, &error, 10);
+                max_items = strtol (*ptr_flag + 10, &error, 10);
                 if (!error || error[0] || (max_items < 0))
                     goto end;
             }
@@ -1135,6 +1135,78 @@ eval_string_define (const char *text, struct t_eval_context *eval_context)
 }
 
 /*
+ * Returns count of items in a hdata, as a string.
+ *
+ * Note: result must be freed after use.
+ */
+
+char *
+eval_hdata_count (const char *text, struct t_eval_context *eval_context)
+{
+    struct t_hdata *hdata;
+    void *pointer;
+    char *pos1, *pos2, *value, *hdata_name, *pointer_name, str_count[64];
+    int rc, count;
+
+    value = NULL;
+    hdata_name = NULL;
+    pointer_name = NULL;
+    pointer = NULL;
+
+    pos1 = strchr (text, '[');
+    if (!pos1)
+        goto end;
+    pos2 = strchr (pos1 + 1, ']');
+    if (!pos2 || (pos2 == pos1 + 1))
+        goto end;
+
+    hdata_name = string_strndup (text, pos1 - text);
+    if (!hdata_name)
+        goto end;
+
+    hdata = hook_hdata_get (NULL, hdata_name);
+    if (!hdata)
+        goto end;
+
+    pointer_name = string_strndup (pos1 + 1, pos2 - pos1 - 1);
+    if (!pointer_name)
+        goto end;
+
+    if (strncmp (pointer_name, "0x", 2) == 0)
+    {
+        rc = sscanf (pointer_name, "%p", &pointer);
+        if ((rc != EOF) && (rc != 0))
+        {
+            if (!hdata_check_pointer (hdata, NULL, pointer))
+                goto end;
+        }
+        else
+            goto end;
+    }
+    else
+    {
+        pointer = hdata_get_list (hdata, pointer_name);
+        if (!pointer)
+        {
+            pointer = hashtable_get (eval_context->pointers, pointer_name);
+            if (!pointer)
+                goto end;
+            if (!hdata_check_pointer (hdata, NULL, pointer))
+                goto end;
+        }
+    }
+
+    count = hdata_count (hdata, pointer);
+    snprintf (str_count, sizeof (str_count), "%d", count);
+    value = strdup (str_count);
+
+end:
+    free (hdata_name);
+    free (pointer_name);
+    return (value) ? value : strdup ("0");
+}
+
+/*
  * Gets value of hdata using "path" to a variable.
  *
  * Note: result must be freed after use.
@@ -1149,9 +1221,9 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path,
     int type, debug_id;
     struct t_hashtable *hashtable;
 
-    EVAL_DEBUG_MSG(1, "eval_hdata_get_value(\"%s\", %p, \"%s\")",
+    EVAL_DEBUG_MSG(1, "eval_hdata_get_value(\"%s\", 0x%lx, \"%s\")",
                    (hdata) ? hdata->name : "(null)",
-                   pointer,
+                   (unsigned long)pointer,
                    path);
 
     value = NULL;
@@ -1167,7 +1239,7 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path,
     /* no path? just return current pointer as string */
     if (!path || !path[0])
     {
-        snprintf (str_value, sizeof (str_value), "%p", pointer);
+        snprintf (str_value, sizeof (str_value), "0x%lx", (unsigned long)pointer);
         value = strdup (str_value);
         goto end;
     }
@@ -1224,7 +1296,8 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path,
             break;
         case WEECHAT_HDATA_POINTER:
             pointer = hdata_pointer (hdata, pointer, var_name);
-            snprintf (str_value, sizeof (str_value), "%p", pointer);
+            snprintf (str_value, sizeof (str_value),
+                      "0x%lx", (unsigned long)pointer);
             value = strdup (str_value);
             break;
         case WEECHAT_HDATA_TIME:
@@ -1273,12 +1346,17 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path,
                         case HASHTABLE_POINTER:
                         case HASHTABLE_BUFFER:
                             snprintf (str_value, sizeof (str_value),
-                                      "%p", ptr_value);
+                                      "0x%lx", (unsigned long)ptr_value);
                             value = strdup (str_value);
                             break;
                         case HASHTABLE_TIME:
                             snprintf (str_value, sizeof (str_value),
                                       "%lld", (long long)(*((time_t *)ptr_value)));
+                            value = strdup (str_value);
+                            break;
+                        case HASHTABLE_LONGLONG:
+                            snprintf (str_value, sizeof (str_value),
+                                      "%lld", (long long)(*((long long *)ptr_value)));
                             value = strdup (str_value);
                             break;
                         case HASHTABLE_NUM_TYPES:
@@ -1288,7 +1366,8 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path,
             }
             else
             {
-                snprintf (str_value, sizeof (str_value), "%p", pointer);
+                snprintf (str_value, sizeof (str_value),
+                          "0x%lx", (unsigned long)pointer);
                 value = strdup (str_value);
             }
             break;
@@ -1334,7 +1413,6 @@ eval_string_hdata (const char *text, struct t_eval_context *eval_context)
     void *pointer;
     struct t_hdata *hdata;
     int rc;
-    unsigned long ptr;
 
     value = NULL;
     hdata_name = NULL;
@@ -1386,10 +1464,9 @@ eval_string_hdata (const char *text, struct t_eval_context *eval_context)
     {
         if (strncmp (pointer_name, "0x", 2) == 0)
         {
-            rc = sscanf (pointer_name, "%lx", &ptr);
+            rc = sscanf (pointer_name, "%p", &pointer);
             if ((rc != EOF) && (rc != 0))
             {
-                pointer = (void *)ptr;
                 if (!hdata_check_pointer (hdata, NULL, pointer))
                     goto end;
             }
@@ -1543,7 +1620,7 @@ eval_syntax_highlight (const char *text, struct t_eval_context *eval_context)
  *   - ${weechat_data_dir}: WeeChat data directory
  *   - ${weechat_state_dir}: WeeChat state directory
  *   - ${weechat_cache_dir}: WeeChat cache directory
- *   - ${weechat_runtmie_dir}: WeeChat runtime directory
+ *   - ${weechat_runtime_dir}: WeeChat runtime directory
  *   - ${eval:string}: the evaluated string
  *   - ${eval_cond:string}: the evaluated condition
  *   - ${esc:string} or ${\\string}: the string with escaped chars
@@ -1583,6 +1660,8 @@ eval_syntax_highlight (const char *text, struct t_eval_context *eval_context)
  *   - ${random:min,max}: a random integer number between "min" and "max" (inclusive)
  *   - ${translate:string}: the translated string
  *   - ${define:name,value}: declaration of a user variable (return an empty string)
+ *   - ${hdata_count:name[list]}: number of items in this hdata with list
+ *   - ${hdata_count:name[ptr]}: number of items in this hdata with pointer
  *   - ${sec.data.xxx}: the value of the secured data "xxx"
  *   - ${file.section.option}: the value of the config option
  *   - ${name}: the local variable in buffer
@@ -1922,6 +2001,13 @@ eval_replace_vars_cb (void *data,
     {
         eval_string_define (text + 7, eval_context);
         value = strdup ("");
+        goto end;
+    }
+
+    /* hdata count */
+    if (strncmp (text, "hdata_count:", 12) == 0)
+    {
+        value = eval_hdata_count (text + 12, eval_context);
         goto end;
     }
 
@@ -2432,17 +2518,15 @@ eval_replace_regex (const char *string, regex_t *regex, const char *replace,
 
     result = NULL;
 
-    EVAL_DEBUG_MSG(1, "eval_replace_regex(\"%s\", %p, \"%s\")",
-                   string, regex, replace);
+    EVAL_DEBUG_MSG(1, "eval_replace_regex(\"%s\", 0x%lx, \"%s\")",
+                   string, (unsigned long)regex, replace);
 
     if (!string || !regex || !replace)
         goto end;
 
-    length = strlen (string) + 1;
-    result = malloc (length);
+    result = strdup (string);
     if (!result)
         goto end;
-    snprintf (result, length, "%s", string);
 
     eval_context->regex = &eval_regex;
     eval_context->regex_replacement_index = 1;

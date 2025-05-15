@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,7 +39,7 @@ enum t_relay_client_http_status
 #define RELAY_HTTP_403_FORBIDDEN              403, "Forbidden"
 #define RELAY_HTTP_404_NOT_FOUND              404, "Not Found"
 #define RELAY_HTTP_500_INTERNAL_SERVER_ERROR  500, "Internal Server Error"
-#define RELAY_HTTP_503_SERVICE_UNAVAILABLE    503, "Service Unvavailable"
+#define RELAY_HTTP_503_SERVICE_UNAVAILABLE    503, "Service Unavailable"
 
 #define RELAY_HTTP_ERROR_MISSING_PASSWORD     "Missing password"
 #define RELAY_HTTP_ERROR_INVALID_PASSWORD     "Invalid password"
@@ -49,6 +49,8 @@ enum t_relay_client_http_status
     "(not found or not supported)"
 #define RELAY_HTTP_ERROR_INVALID_TIMESTAMP    "Invalid timestamp"
 #define RELAY_HTTP_ERROR_INVALID_ITERATIONS   "Invalid number of iterations"
+#define RELAY_HTTP_ERROR_BAD_REQUEST          "Bad request"
+#define RELAY_HTTP_ERROR_NOT_FOUND            "Resource not found"
 #define RELAY_HTTP_ERROR_OUT_OF_MEMORY        "Out of memory"
 
 struct t_relay_http_request
@@ -69,6 +71,7 @@ struct t_relay_http_request
     int content_length;                /* value of header "Content-Length"  */
     int body_size;                     /* size of HTTP body read so far     */
     char *body;                        /* HTTP body (can be NULL)           */
+    char *id;                          /* request id (sent in response)     */
 };
 
 struct t_relay_http_response
@@ -85,7 +88,7 @@ struct t_relay_http_response
 };
 
 extern void relay_http_request_reinit (struct t_relay_http_request *request);
-extern struct t_relay_http_request *relay_http_request_alloc ();
+extern struct t_relay_http_request *relay_http_request_alloc (void);
 extern int relay_http_get_param_boolean (struct t_relay_http_request *request,
                                          const char *name, int default_value);
 extern long relay_http_get_param_long (struct t_relay_http_request *request,
@@ -109,7 +112,7 @@ extern int relay_http_send_error_json (struct t_relay_client *client,
                                        const char *headers,
                                        const char *format, ...);
 extern void relay_http_request_free (struct t_relay_http_request *request);
-extern struct t_relay_http_response *relay_http_response_alloc ();
+extern struct t_relay_http_response *relay_http_response_alloc (void);
 extern struct t_relay_http_response *relay_http_parse_response (const char *data);
 extern void relay_http_response_free (struct t_relay_http_response *response);
 extern void relay_http_print_log_request (struct t_relay_http_request *request);

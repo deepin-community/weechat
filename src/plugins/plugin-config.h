@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -33,9 +33,9 @@ extern int plugin_config_set (const char *plugin_name, const char *option_name,
 extern void plugin_config_set_desc (const char *plugin_name,
                                     const char *option_name,
                                     const char *description);
-extern void plugin_config_init ();
-extern int plugin_config_read ();
-extern int plugin_config_write ();
-extern void plugin_config_end ();
+extern void plugin_config_init (void);
+extern int plugin_config_read (void);
+extern int plugin_config_write (void);
+extern void plugin_config_end (void);
 
 #endif /* WEECHAT_PLUGIN_PLUGIN_CONFIG_H */

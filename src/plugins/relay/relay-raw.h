@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -61,7 +61,7 @@ extern void relay_raw_print_client (struct t_relay_client *client,
 extern void relay_raw_print_remote (struct t_relay_remote *remote,
                                     enum t_relay_msg_type msg_type, int flags,
                                     const char *data, int data_size);
-extern void relay_raw_message_free_all ();
+extern void relay_raw_message_free_all (void);
 extern int relay_raw_add_to_infolist (struct t_infolist *infolist,
                                       struct t_relay_raw_message *raw_message);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,6 +37,8 @@
 #define WEBSOCKET_FRAME_OPCODE_PING         0x09
 #define WEBSOCKET_FRAME_OPCODE_PONG         0x0A
 
+#define WEBSOCKET_SUB_PROTOCOL_API_WEECHAT "api.weechat"
+
 struct t_relay_client;
 struct t_relay_http_request;
 
@@ -49,6 +51,8 @@ struct t_relay_websocket_deflate
                                        /* ("server_max_window_bits")        */
     int window_bits_inflate;           /* window bits for client (decomp.)  */
                                        /* ("client_max_window_bits")        */
+    int server_max_window_bits_recv;   /* "server_max_window_bits" received?*/
+    int client_max_window_bits_recv;   /* "client_max_window_bits" received?*/
     z_stream *strm_deflate;            /* stream for deflate (compression)  */
     z_stream *strm_inflate;            /* stream for inflate (decompression)*/
 };
@@ -60,7 +64,7 @@ struct t_relay_websocket_frame
     char *payload;                     /* payload                           */
 };
 
-extern struct t_relay_websocket_deflate *relay_websocket_deflate_alloc ();
+extern struct t_relay_websocket_deflate *relay_websocket_deflate_alloc (void);
 extern int relay_websocket_deflate_init_stream_deflate (struct t_relay_websocket_deflate *ws_deflate);
 extern int relay_websocket_deflate_init_stream_inflate (struct t_relay_websocket_deflate *ws_deflate);
 extern void relay_websocket_deflate_reinit (struct t_relay_websocket_deflate *ws_deflate);
@@ -69,7 +73,8 @@ extern int relay_websocket_is_valid_http_get (enum t_relay_protocol protocol,
                                               const char *message);
 extern int relay_websocket_client_handshake_valid (struct t_relay_http_request *request);
 extern void relay_websocket_parse_extensions (const char *extensions,
-                                              struct t_relay_websocket_deflate *ws_deflate);
+                                              struct t_relay_websocket_deflate *ws_deflate,
+                                              int ws_deflate_allowed);
 extern char *relay_websocket_build_handshake (struct t_relay_http_request *request);
 extern int relay_websocket_decode_frame (const unsigned char *buffer,
                                          unsigned long long length,

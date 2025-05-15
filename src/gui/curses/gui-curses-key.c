@@ -1,7 +1,7 @@
 /*
  * gui-curses-key.c - keyboard functions for Curses GUI
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -97,6 +97,7 @@ gui_key_default_bindings (int context, int create_option)
         BIND("meta-d",            "/input delete_next_word");
         BIND("ctrl-k",            "/input delete_end_of_line");
         BIND("meta-ctrl-k",       "/input delete_end_of_input");
+        BIND("meta-ctrl-l",       "/remote togglecmd");
         BIND("meta-r",            "/input delete_line");
         BIND("meta-R",            "/input delete_input");
         BIND("ctrl-t",            "/input transpose_chars");

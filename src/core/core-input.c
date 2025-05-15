@@ -1,7 +1,7 @@
 /*
  * core-input.c - default input callback for buffers
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -44,24 +44,28 @@ char **input_commands_allowed = NULL;
 
 /*
  * Sends data to buffer input callback.
+ *
+ * Returns the return code of buffer callback, or WEECHAT_RC_ERROR if the
+ * buffer has no input callback.
  */
 
-void
+int
 input_exec_data (struct t_gui_buffer *buffer, const char *data)
 {
     if (buffer->input_callback)
     {
-        (void)(buffer->input_callback) (buffer->input_callback_pointer,
-                                        buffer->input_callback_data,
-                                        buffer,
-                                        data);
+        return (buffer->input_callback) (buffer->input_callback_pointer,
+                                         buffer->input_callback_data,
+                                         buffer,
+                                         data);
     }
     else
     {
         gui_chat_printf (buffer,
-                         _("%sYou can not write text in this "
+                         _("%sYou cannot write text in this "
                            "buffer"),
                          gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+        return WEECHAT_RC_ERROR;
     }
 }
 
@@ -85,7 +89,7 @@ input_exec_command (struct t_gui_buffer *buffer,
     const char *ptr_command_name;
     int rc;
 
-    if ((!string) || (!string[0]))
+    if (!string || (!string[0]))
         return WEECHAT_RC_ERROR;
 
     rc = WEECHAT_RC_OK;
@@ -115,15 +119,6 @@ input_exec_command (struct t_gui_buffer *buffer,
             0,
             NULL);
         input_commands_allowed = new_commands_allowed;
-    }
-
-    /* ignore spaces at the end of command */
-    pos = &command[strlen (command) - 1];
-    if (pos[0] == ' ')
-    {
-        while ((pos > command) && (pos[0] == ' '))
-            pos--;
-        pos[1] = '\0';
     }
 
     /* extract command name */
@@ -175,7 +170,7 @@ input_exec_command (struct t_gui_buffer *buffer,
              */
             if (buffer->input_get_unknown_commands)
             {
-                input_exec_data (buffer, string);
+                rc = input_exec_data (buffer, string);
             }
             else
             {
@@ -245,9 +240,9 @@ int
 input_data (struct t_gui_buffer *buffer, const char *data,
             const char *commands_allowed, int split_newline, int user_data)
 {
-    char *pos, *buf, str_buffer[128], *new_data, *buffer_full_name;
+    char *pos, str_buffer[128], *new_data, *buffer_full_name;
     const char *ptr_data, *ptr_data_for_buffer;
-    int length, char_size, first_command, rc;
+    int first_command, rc;
 
     if (!buffer || !gui_buffer_valid (buffer) || !data)
         return WEECHAT_RC_ERROR;
@@ -265,7 +260,7 @@ input_data (struct t_gui_buffer *buffer, const char *data,
     }
 
     /* execute modifier "input_text_for_buffer" */
-    snprintf (str_buffer, sizeof (str_buffer), "%p", buffer);
+    snprintf (str_buffer, sizeof (str_buffer), "0x%lx", (unsigned long)buffer);
     new_data = hook_modifier_exec (NULL,
                                    "input_text_for_buffer",
                                    str_buffer,
@@ -280,7 +275,7 @@ input_data (struct t_gui_buffer *buffer, const char *data,
     while (ptr_data)
     {
         /*
-         * if the buffer pointer is not valid any more (or if it's another
+         * if the buffer pointer is not valid anymore (or if it's another
          * buffer), use the current buffer for the next command
          */
         if (!first_command
@@ -305,25 +300,10 @@ input_data (struct t_gui_buffer *buffer, const char *data,
         if (ptr_data_for_buffer)
         {
             /*
-             * input string is NOT a command, send it to buffer input
-             * callback
+             * input string is NOT a command, send it as-is to the buffer
+             * input callback
              */
-            if (string_is_command_char (ptr_data_for_buffer))
-            {
-                char_size = utf8_char_size (ptr_data_for_buffer);
-                length = strlen (ptr_data_for_buffer) + char_size + 1;
-                buf = malloc (length);
-                if (buf)
-                {
-                    memcpy (buf, ptr_data_for_buffer, char_size);
-                    snprintf (buf + char_size, length - char_size,
-                              "%s", ptr_data_for_buffer);
-                    input_exec_data (buffer, buf);
-                    free (buf);
-                }
-            }
-            else
-                input_exec_data (buffer, ptr_data_for_buffer);
+            rc = input_exec_data (buffer, ptr_data);
         }
         else
         {
@@ -334,13 +314,24 @@ input_data (struct t_gui_buffer *buffer, const char *data,
                  * if data is sent from user and buffer catches any user data:
                  * send it to callback
                  */
-                input_exec_data (buffer, ptr_data);
+                rc = input_exec_data (buffer, ptr_data);
             }
             else
             {
-                /* execute command on buffer */
-                rc = input_exec_command (buffer, 1, buffer->plugin, ptr_data,
-                                         commands_allowed);
+                /*
+                 * if commands_allowed has special value "-", send data as-is
+                 * to the buffer input callback, otherwise execute the command
+                 * on the buffer
+                 */
+                if (commands_allowed && (strcmp (commands_allowed, "-") == 0))
+                {
+                    rc = input_exec_data (buffer, ptr_data);
+                }
+                else
+                {
+                    rc = input_exec_command (buffer, 1, buffer->plugin,
+                                             ptr_data, commands_allowed);
+                }
             }
         }
 

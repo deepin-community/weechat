@@ -1,7 +1,7 @@
 /*
  * core-hashtable.c - implementation of hashtable
  *
- * Copyright (C) 2010-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,9 +39,12 @@
 
 
 char *hashtable_type_string[HASHTABLE_NUM_TYPES] =
-{ WEECHAT_HASHTABLE_INTEGER, WEECHAT_HASHTABLE_STRING,
-  WEECHAT_HASHTABLE_POINTER, WEECHAT_HASHTABLE_BUFFER,
-  WEECHAT_HASHTABLE_TIME };
+{ WEECHAT_HASHTABLE_INTEGER,
+  WEECHAT_HASHTABLE_STRING,
+  WEECHAT_HASHTABLE_POINTER,
+  WEECHAT_HASHTABLE_BUFFER,
+  WEECHAT_HASHTABLE_TIME,
+  WEECHAT_HASHTABLE_LONGLONG };
 
 
 /*
@@ -81,9 +84,12 @@ hashtable_hash_key_djb2 (const char *string)
     const char *ptr_string;
 
     hash = 5381;
-    for (ptr_string = string; ptr_string[0]; ptr_string++)
+    if (string)
     {
-        hash ^= (hash << 5) + (hash >> 2) + (int)(ptr_string[0]);
+        for (ptr_string = string; ptr_string[0]; ptr_string++)
+        {
+            hash ^= (hash << 5) + (hash >> 2) + (int)(ptr_string[0]);
+        }
     }
 
     return hash;
@@ -98,31 +104,32 @@ hashtable_hash_key_djb2 (const char *string)
 unsigned long long
 hashtable_hash_key_default_cb (struct t_hashtable *hashtable, const void *key)
 {
-    unsigned long long hash;
-
-    hash = 0;
-
     switch (hashtable->type_keys)
     {
         case HASHTABLE_INTEGER:
-            hash = (unsigned long long)(*((int *)key));
+            if (key)
+                return (unsigned long long)(*((int *)key));
             break;
         case HASHTABLE_STRING:
-            hash = hashtable_hash_key_djb2 ((const char *)key);
+            if (key)
+                return hashtable_hash_key_djb2 ((const char *)key);
             break;
         case HASHTABLE_POINTER:
-            hash = (unsigned long long)((unsigned long)((void *)key));
-            break;
+            return (unsigned long long)((unsigned long)((void *)key));
         case HASHTABLE_BUFFER:
             break;
         case HASHTABLE_TIME:
-            hash = (unsigned long long)(*((time_t *)key));
+            if (key)
+                return (unsigned long long)(*((time_t *)key));
+            break;
+        case HASHTABLE_LONGLONG:
+            if (key)
+                return (unsigned long long)(*((long long *)key));
             break;
         case HASHTABLE_NUM_TYPES:
             break;
     }
-
-    return hash;
+    return 0ULL;
 }
 
 /*
@@ -142,6 +149,13 @@ hashtable_keycmp_default_cb (struct t_hashtable *hashtable,
 
     /* make C compiler happy */
     (void) hashtable;
+
+    if (!key1 && !key2)
+        return 0;
+    if (!key1 && key2)
+        return -1;
+    if (key1 && !key2)
+        return 1;
 
     rc = 0;
 
@@ -168,6 +182,12 @@ hashtable_keycmp_default_cb (struct t_hashtable *hashtable,
             if (*((time_t *)key1) < *((time_t *)key2))
                 rc = -1;
             else if (*((time_t *)key1) > *((time_t *)key2))
+                rc = 1;
+            break;
+        case HASHTABLE_LONGLONG:
+            if (*((long long *)key1) < *((long long *)key2))
+                rc = -1;
+            else if (*((long long *)key1) > *((long long *)key2))
                 rc = 1;
             break;
         case HASHTABLE_NUM_TYPES:
@@ -295,6 +315,17 @@ hashtable_alloc_type (enum t_hashtable_type type,
                 *pointer = NULL;
             *size = (*pointer) ? sizeof (time_t) : 0;
             break;
+        case HASHTABLE_LONGLONG:
+            if (value)
+            {
+                *pointer = malloc (sizeof (long long));
+                if (*pointer)
+                    *((long long *)(*pointer)) = *((long long *)value);
+            }
+            else
+                *pointer = NULL;
+            *size = (*pointer) ? sizeof (long long) : 0;
+            break;
         case HASHTABLE_NUM_TYPES:
             break;
     }
@@ -321,6 +352,7 @@ hashtable_free_key (struct t_hashtable *hashtable,
             case HASHTABLE_STRING:
             case HASHTABLE_BUFFER:
             case HASHTABLE_TIME:
+            case HASHTABLE_LONGLONG:
                 free (item->key);
                 break;
             case HASHTABLE_POINTER:
@@ -353,6 +385,7 @@ hashtable_free_value (struct t_hashtable *hashtable,
             case HASHTABLE_STRING:
             case HASHTABLE_BUFFER:
             case HASHTABLE_TIME:
+            case HASHTABLE_LONGLONG:
                 free (item->value);
                 break;
             case HASHTABLE_POINTER:
@@ -379,7 +412,7 @@ hashtable_set_with_size (struct t_hashtable *hashtable,
     unsigned long long hash;
     struct t_hashtable_item *ptr_item, *pos_item, *new_item;
 
-    if (!hashtable || !key
+    if (!hashtable
         || ((hashtable->type_keys == HASHTABLE_BUFFER) && (key_size <= 0))
         || ((hashtable->type_values == HASHTABLE_BUFFER) && (value_size <= 0)))
     {
@@ -484,7 +517,7 @@ hashtable_get_item (struct t_hashtable *hashtable, const void *key,
     unsigned long long key_hash;
     struct t_hashtable_item *ptr_item;
 
-    if (!hashtable || !key)
+    if (!hashtable)
         return NULL;
 
     key_hash = hashtable->callback_hash_key (hashtable, key) % hashtable->size;
@@ -553,20 +586,21 @@ hashtable_to_string (enum t_hashtable_type type, const void *value)
         case HASHTABLE_INTEGER:
             snprintf (str_value, sizeof (str_value), "%d", *((int *)value));
             return str_value;
-            break;
         case HASHTABLE_STRING:
             return (const char *)value;
-            break;
         case HASHTABLE_POINTER:
         case HASHTABLE_BUFFER:
-            snprintf (str_value, sizeof (str_value), "%p", value);
+            snprintf (str_value, sizeof (str_value), "0x%lx",
+                      (unsigned long)value);
             return str_value;
-            break;
         case HASHTABLE_TIME:
             snprintf (str_value, sizeof (str_value),
                       "%lld", (long long)(*((time_t *)value)));
             return str_value;
-            break;
+        case HASHTABLE_LONGLONG:
+            snprintf (str_value, sizeof (str_value),
+                      "%lld", *((long long *)value));
+            return str_value;
         case HASHTABLE_NUM_TYPES:
             break;
     }
@@ -1051,7 +1085,7 @@ hashtable_add_to_infolist (struct t_hashtable *hashtable,
 {
     int item_number;
     struct t_hashtable_item *ptr_item;
-    char option_name[128];
+    char option_name[128], value[128];
 
     if (!hashtable || !infolist_item || !prefix)
         return 0;
@@ -1094,6 +1128,12 @@ hashtable_add_to_infolist (struct t_hashtable *hashtable,
             case HASHTABLE_TIME:
                 if (!infolist_new_var_time (infolist_item, option_name,
                                             *((time_t *)ptr_item->value)))
+                    return 0;
+                break;
+            case HASHTABLE_LONGLONG:
+                snprintf (value, sizeof (value),
+                          "%lld", *((long long *)ptr_item->value));
+                if (!infolist_new_var_string (infolist_item, option_name, value))
                     return 0;
                 break;
             case HASHTABLE_NUM_TYPES:
@@ -1165,6 +1205,10 @@ hashtable_add_from_infolist (struct t_hashtable *hashtable,
                         break;
                     case HASHTABLE_TIME:
                         if (ptr_value->type != INFOLIST_TIME)
+                            return 0;
+                        break;
+                    case HASHTABLE_LONGLONG:
+                        if (ptr_value->type != INFOLIST_STRING)
                             return 0;
                         break;
                     case HASHTABLE_NUM_TYPES:
@@ -1338,6 +1382,9 @@ hashtable_print_log (struct t_hashtable *hashtable, const char *name)
                 case HASHTABLE_TIME:
                     log_printf ("      key (time) . . . . : %lld", (long long)(*((time_t *)ptr_item->key)));
                     break;
+                case HASHTABLE_LONGLONG:
+                    log_printf ("      key (long long). . : %lld", *((long long *)ptr_item->key));
+                    break;
                 case HASHTABLE_NUM_TYPES:
                     break;
             }
@@ -1358,6 +1405,9 @@ hashtable_print_log (struct t_hashtable *hashtable, const char *name)
                     break;
                 case HASHTABLE_TIME:
                     log_printf ("      value (time) . . . : %lld", (long long)(*((time_t *)ptr_item->value)));
+                    break;
+                case HASHTABLE_LONGLONG:
+                    log_printf ("      value (long long). : %lld", *((long long *)ptr_item->value));
                     break;
                 case HASHTABLE_NUM_TYPES:
                     break;

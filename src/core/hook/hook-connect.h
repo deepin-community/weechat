@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -41,11 +41,7 @@ typedef int (gnutls_callback_t)(const void *pointer, void *data,
                                 const gnutls_datum_t *req_ca, int nreq,
                                 const gnutls_pk_algorithm_t *pk_algos,
                                 int pk_algos_len,
-#if LIBGNUTLS_VERSION_NUMBER >= 0x020b00 /* 2.11.0 */
                                 gnutls_retr2_st *answer,
-#else
-                                gnutls_retr_st *answer,
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x020b00 */
                                 int action);
 
 struct t_hook_connect
@@ -94,11 +90,7 @@ extern int hook_connect_gnutls_set_certificates (gnutls_session_t tls_session,
                                                  const gnutls_datum_t *req_ca, int nreq,
                                                  const gnutls_pk_algorithm_t *pk_algos,
                                                  int pk_algos_len,
-#if LIBGNUTLS_VERSION_NUMBER >= 0x020b00 /* 2.11.0 */
                                                  gnutls_retr2_st *answer);
-#else
-                                                 gnutls_retr_st *answer);
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x020b00 */
 extern void hook_connect_free_data (struct t_hook *hook);
 extern int hook_connect_add_to_infolist (struct t_infolist_item *item,
                                          struct t_hook *hook);

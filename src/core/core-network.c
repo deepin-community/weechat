@@ -1,7 +1,7 @@
 /*
  * core-network.c - network functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2010 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2010 Gu1ll4um3r0m41n <aeroxteam@gmail.com>
  * Copyright (C) 2012 Simon Arlott
@@ -81,7 +81,7 @@ gnutls_certificate_credentials_t gnutls_xcred; /* GnuTLS client credentials */
  */
 
 void
-network_init_gcrypt ()
+network_init_gcrypt (void)
 {
     if (weechat_no_gcrypt)
         return;
@@ -96,20 +96,13 @@ network_init_gcrypt ()
  */
 
 void
-network_allocate_credentials ()
+network_allocate_credentials (void)
 {
     gnutls_certificate_allocate_credentials (&gnutls_xcred);
-#if LIBGNUTLS_VERSION_NUMBER >= 0x02090a /* 2.9.10 */
     gnutls_certificate_set_verify_function (gnutls_xcred,
                                             &hook_connect_gnutls_verify_certificates);
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x02090a */
-#if LIBGNUTLS_VERSION_NUMBER >= 0x020b00 /* 2.11.0 */
     gnutls_certificate_set_retrieve_function (gnutls_xcred,
                                               &hook_connect_gnutls_set_certificates);
-#else
-    gnutls_certificate_client_set_retrieve_function (gnutls_xcred,
-                                                     &hook_connect_gnutls_set_certificates);
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x020b00 */
 }
 
 /*
@@ -286,7 +279,7 @@ network_reload_ca_files (int force_display)
  */
 
 void
-network_init_gnutls ()
+network_init_gnutls (void)
 {
     if (!weechat_no_gnutls)
     {
@@ -303,7 +296,7 @@ network_init_gnutls ()
  */
 
 void
-network_end ()
+network_end (void)
 {
     if (network_init_gnutls_ok)
     {
@@ -937,7 +930,7 @@ network_connect_child (struct t_hook *hook_connect)
     char remote_address[NI_MAXHOST + 1];
     char status_without_string[1 + 5 + 1];
     const char *error;
-    int rc, length, num_written;
+    int rc, num_written;
     int sock, set, flags, j;
     struct msghdr msg;
     struct cmsghdr *cmsg;
@@ -994,15 +987,50 @@ network_connect_child (struct t_hook *hook_connect)
     res_init ();
     if (ptr_proxy)
     {
-        hints.ai_family = (CONFIG_BOOLEAN(ptr_proxy->options[PROXY_OPTION_IPV6])) ?
-            AF_UNSPEC : AF_INET;
+        switch (CONFIG_ENUM(ptr_proxy->options[PROXY_OPTION_IPV6]))
+        {
+            case PROXY_IPV6_DISABLE:
+                /* force IPv4 */
+                hints.ai_family = AF_INET;
+                break;
+            case PROXY_IPV6_AUTO:
+                /* auto: IPv6 / IPv4 */
+                hints.ai_family = AF_UNSPEC;
+                break;
+            case PROXY_IPV6_FORCE:
+                /* force IPv6 */
+                hints.ai_family = AF_INET6;
+                break;
+            default:
+                /* auto by default */
+                hints.ai_family = AF_UNSPEC;
+                break;
+        }
         snprintf (port, sizeof (port), "%d", CONFIG_INTEGER(ptr_proxy->options[PROXY_OPTION_PORT]));
         rc = getaddrinfo (CONFIG_STRING(ptr_proxy->options[PROXY_OPTION_ADDRESS]),
                           port, &hints, &res_remote);
     }
     else
     {
-        hints.ai_family = HOOK_CONNECT(hook_connect, ipv6) ? AF_UNSPEC : AF_INET;
+        switch (HOOK_CONNECT(hook_connect, ipv6))
+        {
+            case WEECHAT_HOOK_CONNECT_IPV6_DISABLE:
+                /* force IPv4 */
+                hints.ai_family = AF_INET;
+                break;
+            case WEECHAT_HOOK_CONNECT_IPV6_AUTO:
+                /* auto: IPv6 / IPv4 */
+                hints.ai_family = AF_UNSPEC;
+                break;
+            case WEECHAT_HOOK_CONNECT_IPV6_FORCE:
+                /* force IPv6 */
+                hints.ai_family = AF_INET6;
+                break;
+            default:
+                /* auto by default */
+                hints.ai_family = AF_UNSPEC;
+                break;
+        }
         snprintf (port, sizeof (port), "%d", HOOK_CONNECT(hook_connect, port));
         rc = getaddrinfo (HOOK_CONNECT(hook_connect, address), port, &hints, &res_remote);
     }
@@ -1014,14 +1042,11 @@ network_connect_child (struct t_hook *hook_connect)
         error = gai_strerror (rc);
         if (error)
         {
-            length = 1 + 5 + strlen (error) + 1;
-            status_with_string = malloc (length);
-            if (status_with_string)
-            {
-                snprintf (status_with_string, length, "%c%05d%s",
-                          '0' + WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND,
-                          (int)strlen (error), error);
-            }
+            string_asprintf (&status_with_string,
+                             "%c%05d%s",
+                             '0' + WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND,
+                             (int)strlen (error),
+                             error);
         }
         if (status_with_string)
         {
@@ -1069,14 +1094,11 @@ network_connect_child (struct t_hook *hook_connect)
             error = gai_strerror (rc);
             if (error)
             {
-                length = 1 + 5 + strlen (error) + 1;
-                status_with_string = malloc (length);
-                if (status_with_string)
-                {
-                    snprintf (status_with_string, length, "%c%05d%s",
-                              '0' + WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR,
-                              (int)strlen (error), error);
-                }
+                string_asprintf (&status_with_string,
+                                 "%c%05d%s",
+                                 '0' + WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR,
+                                 (int)strlen (error),
+                                 error);
             }
             if (status_with_string)
             {
@@ -1347,13 +1369,11 @@ network_connect_child (struct t_hook *hook_connect)
         status_with_string = NULL;
         if (ptr_address)
         {
-            length = strlen (status_str) + 5 + strlen (ptr_address) + 1;
-            status_with_string = malloc (length);
-            if (status_with_string)
-            {
-                snprintf (status_with_string, length, "%s%05d%s",
-                          status_str, (int)strlen (ptr_address), ptr_address);
-            }
+            string_asprintf (&status_with_string,
+                             "%s%05d%s",
+                             status_str,
+                             (int)strlen (ptr_address),
+                             ptr_address);
         }
 
         if (status_with_string)
@@ -1500,26 +1520,6 @@ network_connect_gnutls_handshake_fd_cb (const void *pointer, void *data,
     {
         fcntl (HOOK_CONNECT(hook_connect, sock), F_SETFL,
                HOOK_CONNECT(hook_connect, handshake_fd_flags));
-#if LIBGNUTLS_VERSION_NUMBER < 0x02090a /* 2.9.10 */
-        /*
-         * gnutls only has the gnutls_certificate_set_verify_function()
-         * function since version 2.9.10. We need to call our verify
-         * function manually after the handshake for old gnutls versions
-         */
-        if (hook_connect_gnutls_verify_certificates (*HOOK_CONNECT(hook_connect, gnutls_sess)) != 0)
-        {
-            unhook (HOOK_CONNECT(hook_connect, handshake_hook_fd));
-            (void) (HOOK_CONNECT(hook_connect, callback))
-                (hook_connect->callback_pointer,
-                 hook_connect->callback_data,
-                 WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR, rc,
-                 HOOK_CONNECT(hook_connect, sock),
-                 "Error in the certificate.",
-                 HOOK_CONNECT(hook_connect, handshake_ip_address));
-            unhook (hook_connect);
-            return WEECHAT_RC_OK;
-        }
-#endif /* LIBGNUTLS_VERSION_NUMBER < 0x02090a */
         unhook (HOOK_CONNECT(hook_connect, handshake_hook_fd));
         (void) (HOOK_CONNECT(hook_connect, callback))
             (hook_connect->callback_pointer,
@@ -1734,26 +1734,6 @@ network_connect_child_read_cb (const void *pointer, void *data, int fd)
                 }
                 fcntl (HOOK_CONNECT(hook_connect, sock), F_SETFL,
                        HOOK_CONNECT(hook_connect, handshake_fd_flags));
-#if LIBGNUTLS_VERSION_NUMBER < 0x02090a /* 2.9.10 */
-                /*
-                 * gnutls only has the gnutls_certificate_set_verify_function()
-                 * function since version 2.9.10. We need to call our verify
-                 * function manually after the handshake for old gnutls versions
-                 */
-                if (hook_connect_gnutls_verify_certificates (*HOOK_CONNECT(hook_connect, gnutls_sess)) != 0)
-                {
-                    (void) (HOOK_CONNECT(hook_connect, callback))
-                        (hook_connect->callback_pointer,
-                         hook_connect->callback_data,
-                         WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR,
-                         rc, sock,
-                         "Error in the certificate.",
-                         cb_ip_address);
-                    unhook (hook_connect);
-                    free (cb_ip_address);
-                    return WEECHAT_RC_OK;
-                }
-#endif /* LIBGNUTLS_VERSION_NUMBER < 0x02090a */
             }
         }
         else

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007-2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2008-2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -19,7 +19,7 @@
 # along with WeeChat.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.18)
 
 project(weechat C)
 
@@ -166,6 +166,16 @@ if(ENABLE_TESTS AND NOT ENABLE_HEADLESS)
   message(FATAL_ERROR "Headless mode is required for tests.")
 endif()
 
+# Set this to override aspell's dictionaries directory
+if(ASPELL_DICT_DIR)
+  add_definitions(-DASPELL_DICT_DIR="${ASPELL_DICT_DIR}")
+endif()
+
+# Set this to override the myspell dictionaries directory when using enchant
+if(ENCHANT_MYSPELL_DICT_DIR)
+  add_definitions(-DENCHANT_MYSPELL_DICT_DIR="${ENCHANT_MYSPELL_DICT_DIR}")
+endif()
+
 # option WEECHAT_HOME
 set(WEECHAT_HOME "${WEECHAT_HOME}" CACHE
   STRING "Force a single WeeChat home directory for config, logs, scripts, etc."
@@ -207,16 +217,13 @@ endif()
 
 # Check for libgcrypt
 pkg_check_modules(LIBGCRYPT REQUIRED libgcrypt)
-add_definitions(-DHAVE_GCRYPT)
 include_directories(${LIBGCRYPT_INCLUDE_DIRS})
 list(APPEND EXTRA_LIBS ${LIBGCRYPT_LDFLAGS})
 
 # Check for GnuTLS
-find_package(GnuTLS REQUIRED)
-string(REGEX REPLACE "/[^/]*$" "" GNUTLS_LIBRARY_PATH "${GNUTLS_LIBRARY}")
-include_directories(${GNUTLS_INCLUDE_PATH})
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -L${GNUTLS_LIBRARY_PATH}")
-list(APPEND EXTRA_LIBS gnutls)
+pkg_check_modules(GNUTLS REQUIRED gnutls>=3.3.0)
+include_directories(${GNUTLS_INCLUDE_DIRS})
+list(APPEND EXTRA_LIBS ${GNUTLS_LDFLAGS})
 
 # Check for zlib
 find_package(ZLIB REQUIRED)
@@ -240,28 +247,25 @@ if(ICONV_FOUND)
 endif()
 
 # Check for CURL
-find_package(CURL REQUIRED)
-
-# weechat_gui_common MUST be the first lib in the list
-set(STATIC_LIBS weechat_gui_common)
+# NOTE: keep version in sync with tools/check_curl_symbols.py
+pkg_check_modules(LIBCURL REQUIRED libcurl>=7.47.0)
+include_directories(${LIBCURL_INCLUDE_DIRS})
+list(APPEND EXTRA_LIBS ${LIBCURL_LDFLAGS})
 
 find_library(DL_LIBRARY
   NAMES dl
   PATHS /lib /usr/lib /usr/libexec /usr/local/lib /usr/local/libexec
 )
-list(APPEND STATIC_LIBS weechat_plugins)
 if(DL_LIBRARY)
-  string(REGEX REPLACE "/[^/]*$" "" DL_LIBRARY_PATH "${DL_LIBRARY}")
-  set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -L${DL_LIBRARY_PATH}")
-  list(APPEND EXTRA_LIBS dl)
+  list(APPEND EXTRA_LIBS ${DL_LIBRARY})
 endif()
 
 add_subdirectory(icons)
 
 if(ENABLE_NLS)
   find_package(Gettext REQUIRED)
-  add_definitions(-DENABLE_NLS)
   find_package(Intl REQUIRED)
+  include_directories(${Intl_INCLUDE_DIRS})
   list(APPEND EXTRA_LIBS "${Intl_LIBRARIES}")
   add_subdirectory(po)
 else()
@@ -322,11 +326,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/weechat.cygport.in" "${CMAKE_CURRENT
 # install some files (only on Cygwin)
 if(CYGWIN)
   install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/AUTHORS.adoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ChangeLog.adoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Contributing.adoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/README.adoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ReleaseNotes.adoc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/AUTHORS.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/CONTRIBUTING.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/UPGRADING.md"
     DESTINATION "${DATAROOTDIR}/doc/${PROJECT_NAME}"
   )
 endif()

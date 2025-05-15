@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -85,6 +85,8 @@ struct t_gui_buffer;
 #define CMD_ARGS_DESC(args...)                                          \
     STR_CONCAT("\n", WEECHAT_HOOK_COMMAND_STR_FORMATTED, ##args)
 
+#define COMMAND_KEEP_SPACES hook_set (ptr_hook, "keep_spaces_right", "1")
+
 struct t_command_repeat
 {
     char *buffer_name;                 /* full buffer name                  */
@@ -94,12 +96,13 @@ struct t_command_repeat
     int index;                         /* current index (starts at 1)       */
 };
 
-extern const char *command_help_option_color_values ();
+extern const char *command_help_option_color_values (void);
 extern void command_version_display (struct t_gui_buffer *buffer,
                                      int send_to_buffer_as_input,
                                      int translated_string,
-                                     int display_git_version);
-extern void command_init ();
+                                     int display_git_version,
+                                     int display_upgrades);
+extern void command_init (void);
 extern void command_startup (int plugins_loaded);
 
 #endif /* WEECHAT_COMMAND_H */

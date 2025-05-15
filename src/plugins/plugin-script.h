@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -122,7 +122,8 @@ struct t_plugin_script_data
     void (*callback_load_file) (void *data, const char *filename);
 
     /* functions */
-    void (*unload_all) ();
+    void (*init_before_autoload) (void);
+    void (*unload_all) (void);
 };
 
 extern struct t_weechat_script_constant weechat_script_constants[];

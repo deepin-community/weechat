@@ -1,7 +1,7 @@
 /*
  * exec-command.c - exec command
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,7 +36,7 @@
  */
 
 void
-exec_command_list ()
+exec_command_list (void)
 {
     struct t_exec_cmd *ptr_exec_cmd;
     char str_elapsed[32], str_time1[256], str_time2[256];
@@ -138,7 +138,7 @@ exec_command_list ()
 
 /*
  * Searches a running command by id, and displays an error if command is not
- * found or not running any more.
+ * found or not running anymore.
  *
  * Returns the command found, or NULL if not found or not running.
  */
@@ -162,8 +162,7 @@ exec_command_search_running_id (const char *id)
     if (!ptr_exec_cmd->hook)
     {
         weechat_printf (NULL,
-                        _("%s%s: command with id \"%s\" is not running any "
-                          "more"),
+                        _("%s%s: command with id \"%s\" is not running anymore"),
                         weechat_prefix ("error"), EXEC_PLUGIN_NAME, id);
         return NULL;
     }
@@ -657,7 +656,7 @@ exec_command_exec (const void *pointer, void *data,
                    struct t_gui_buffer *buffer, int argc,
                    char **argv, char **argv_eol)
 {
-    int i, length, count;
+    int i, count;
     char *text;
     struct t_exec_cmd *ptr_exec_cmd, *ptr_next_exec_cmd;
 
@@ -677,15 +676,12 @@ exec_command_exec (const void *pointer, void *data,
     /* send text to a running process */
     if (weechat_strcmp (argv[1], "-in") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(4, "-in");
+        WEECHAT_COMMAND_MIN_ARGS(4, argv[1]);
         ptr_exec_cmd = exec_command_search_running_id (argv[2]);
         if (ptr_exec_cmd && ptr_exec_cmd->hook)
         {
-            length = strlen (argv_eol[3]) + 1 + 1;
-            text = malloc (length);
-            if (text)
+            if (weechat_asprintf (&text, "%s\n", argv_eol[3]) >= 0)
             {
-                snprintf (text, length, "%s\n", argv_eol[3]);
                 weechat_hook_set (ptr_exec_cmd->hook, "stdin", text);
                 free (text);
             }
@@ -696,17 +692,14 @@ exec_command_exec (const void *pointer, void *data,
     /* send text to a running process (if given), then close stdin */
     if (weechat_strcmp (argv[1], "-inclose") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(3, "-inclose");
+        WEECHAT_COMMAND_MIN_ARGS(3, argv[1]);
         ptr_exec_cmd = exec_command_search_running_id (argv[2]);
         if (ptr_exec_cmd && ptr_exec_cmd->hook)
         {
             if (argc > 3)
             {
-                length = strlen (argv_eol[3]) + 1 + 1;
-                text = malloc (length);
-                if (text)
+                if (weechat_asprintf (&text, "%s\n", argv_eol[3]) >= 0)
                 {
-                    snprintf (text, length, "%s\n", argv_eol[3]);
                     weechat_hook_set (ptr_exec_cmd->hook, "stdin", text);
                     free (text);
                 }
@@ -719,7 +712,7 @@ exec_command_exec (const void *pointer, void *data,
     /* send a signal to a running process */
     if (weechat_strcmp (argv[1], "-signal") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(4, "-signal");
+        WEECHAT_COMMAND_MIN_ARGS(4, argv[1]);
         ptr_exec_cmd = exec_command_search_running_id (argv[2]);
         if (ptr_exec_cmd)
             weechat_hook_set (ptr_exec_cmd->hook, "signal", argv[3]);
@@ -729,7 +722,7 @@ exec_command_exec (const void *pointer, void *data,
     /* send a KILL signal to a running process */
     if (weechat_strcmp (argv[1], "-kill") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(3, "-kill");
+        WEECHAT_COMMAND_MIN_ARGS(3, argv[1]);
         ptr_exec_cmd = exec_command_search_running_id (argv[2]);
         if (ptr_exec_cmd)
             weechat_hook_set (ptr_exec_cmd->hook, "signal", "kill");
@@ -753,7 +746,7 @@ exec_command_exec (const void *pointer, void *data,
     /* set a hook property */
     if (weechat_strcmp (argv[1], "-set") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(5, "-set");
+        WEECHAT_COMMAND_MIN_ARGS(5, argv[1]);
         ptr_exec_cmd = exec_command_search_running_id (argv[2]);
         if (ptr_exec_cmd)
             weechat_hook_set (ptr_exec_cmd->hook, argv[3], argv_eol[4]);
@@ -763,7 +756,7 @@ exec_command_exec (const void *pointer, void *data,
     /* delete terminated command(s) */
     if (weechat_strcmp (argv[1], "-del") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(3, "-del");
+        WEECHAT_COMMAND_MIN_ARGS(3, argv[1]);
         if (weechat_strcmp (argv[2], "-all") == 0)
         {
             count = 0;
@@ -822,12 +815,12 @@ exec_command_exec (const void *pointer, void *data,
  */
 
 void
-exec_command_init ()
+exec_command_init (void)
 {
     weechat_hook_command (
         "exec",
         N_("execute external commands"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("-list"
            " || [-sh|-nosh] [-bg|-nobg] [-stdin|-nostdin] [-buffer <name>] "
            "[-l|-o|-oc|-n|-nf] [-oerr] [-cl|-nocl] [-sw|-nosw] [-ln|-noln] "

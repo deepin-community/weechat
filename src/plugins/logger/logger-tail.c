@@ -1,7 +1,7 @@
 /*
  * logger-tail.c - return last lines of a file
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -167,12 +167,8 @@ logger_tail_file (const char *filename, int lines)
                 pos_eol++;
                 if (part_of_line)
                 {
-                    line = malloc ((strlen (pos_eol) +
-                                    strlen (part_of_line) + 1));
-                    if (!line)
+                    if (weechat_asprintf (&line, "%s%s", pos_eol, part_of_line) < 0)
                         goto error;
-                    strcpy (line, pos_eol);
-                    strcat (line, part_of_line);
                     free (part_of_line);
                     part_of_line = NULL;
                     weechat_arraylist_insert (list_lines, 0, line);
@@ -193,20 +189,19 @@ logger_tail_file (const char *filename, int lines)
                  */
                 if (part_of_line)
                 {
-                    new_part_of_line = malloc (strlen (buf) + strlen (part_of_line) + 1);
-                    if (!new_part_of_line)
+                    if (weechat_asprintf (&new_part_of_line,
+                                          "%s%s", buf, part_of_line) < 0)
+                    {
                         goto error;
-                    strcpy (new_part_of_line, buf);
-                    strcat (new_part_of_line, part_of_line);
+                    }
                     free (part_of_line);
                     part_of_line = new_part_of_line;
                 }
                 else
                 {
-                    part_of_line = malloc (strlen (buf) + 1);
+                    part_of_line = strdup (buf);
                     if (!part_of_line)
                         goto error;
-                    strcpy (part_of_line, buf);
                 }
                 ptr_buf = NULL;
             }

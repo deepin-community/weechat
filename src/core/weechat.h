@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -32,7 +32,7 @@
 
 #include <locale.h>
 
-#if defined(ENABLE_NLS) && !defined(_)
+#if ENABLE_NLS == 1 && !defined(_)
     #include <libintl.h>
     #define _(string) gettext(string)
     #define NG_(single,plural,number) ngettext(single,plural,number)
@@ -41,7 +41,7 @@
     #else
         #define N_(string) (string)
     #endif /* gettext_noop */
-#endif /* defined(ENABLE_NLS) && !defined(_) */
+#endif /* ENABLE_NLS == 1 && !defined(_) */
 #if !defined(_)
     #define _(string) (string)
     #define NG_(single,plural,number) ((number == 1) ? single : plural)
@@ -51,7 +51,7 @@
 #define AI(string) (string)
 
 
-#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2024"
+#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2025"
 #define WEECHAT_WEBSITE          "https://weechat.org/"
 #define WEECHAT_WEBSITE_DOWNLOAD "https://weechat.org/download/"
 
@@ -118,6 +118,7 @@ extern char *weechat_data_dir;
 extern char *weechat_state_dir;
 extern char *weechat_cache_dir;
 extern char *weechat_runtime_dir;
+extern int weechat_locale_ok;
 extern char *weechat_local_charset;
 extern int weechat_plugin_no_dlclose;
 extern int weechat_no_gnutls;
@@ -126,10 +127,10 @@ extern struct t_weelist *weechat_startup_commands;
 extern int weechat_auto_connect;
 extern int weechat_auto_load_scripts;
 
-extern void weechat_term_check ();
+extern void weechat_term_check (void);
 extern void weechat_shutdown (int return_code, int crash);
-extern void weechat_init_gettext ();
-extern void weechat_init (int argc, char *argv[], void (*gui_init_cb)());
+extern void weechat_init_gettext (void);
+extern void weechat_init (int argc, char *argv[], void (*gui_init_cb)(void));
 extern void weechat_end (void (*gui_end_cb)(int clean_exit));
 
 #endif /* WEECHAT_H */

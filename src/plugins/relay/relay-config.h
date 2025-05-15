@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,6 +34,7 @@ extern struct t_config_section *relay_config_section_path;
 
 extern struct t_config_option *relay_config_look_auto_open_buffer;
 extern struct t_config_option *relay_config_look_raw_messages;
+extern struct t_config_option *relay_config_look_raw_messages_max_length;
 
 extern struct t_config_option *relay_config_color_client;
 extern struct t_config_option *relay_config_color_status[];
@@ -60,6 +61,7 @@ extern struct t_config_option *relay_config_network_tls_priorities;
 extern struct t_config_option *relay_config_network_totp_secret;
 extern struct t_config_option *relay_config_network_totp_window;
 extern struct t_config_option *relay_config_network_websocket_allowed_origins;
+extern struct t_config_option *relay_config_network_websocket_permessage_deflate;
 
 extern struct t_config_option *relay_config_irc_backlog_max_minutes;
 extern struct t_config_option *relay_config_irc_backlog_max_number;
@@ -68,7 +70,11 @@ extern struct t_config_option *relay_config_irc_backlog_since_last_message;
 extern struct t_config_option *relay_config_irc_backlog_tags;
 extern struct t_config_option *relay_config_irc_backlog_time_format;
 
+extern struct t_config_option *relay_config_api_remote_autoreconnect_delay_growing;
+extern struct t_config_option *relay_config_api_remote_autoreconnect_delay_max;
 extern struct t_config_option *relay_config_api_remote_get_lines;
+extern struct t_config_option *relay_config_api_remote_input_cmd_local;
+extern struct t_config_option *relay_config_api_remote_input_cmd_remote;
 
 extern int relay_config_auto_open_buffer[];
 extern int relay_config_display_clients[];
@@ -91,9 +97,9 @@ extern int relay_config_check_path_available (const char *path);
 extern struct t_config_option *relay_config_create_remote_option (const char *remote_name,
                                                                   int index_option,
                                                                   const char *value);
-extern int relay_config_init ();
-extern int relay_config_read ();
-extern int relay_config_write ();
-extern void relay_config_free ();
+extern int relay_config_init (void);
+extern int relay_config_read (void);
+extern int relay_config_write (void);
+extern void relay_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_RELAY_CONFIG_H */

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -58,14 +58,21 @@ add_dependencies(${EXECUTABLE} weechat_gui_curses_normal)
 
 list(APPEND EXTRA_LIBS ${NCURSES_LIBRARY})
 
-# Due to circular references, we must link two times with libweechat_core.a and libweechat_gui_common.a
-target_link_libraries(${EXECUTABLE} ${STATIC_LIBS} weechat_gui_curses_normal ${EXTRA_LIBS} ${STATIC_LIBS} coverage_config)
+target_link_libraries(${EXECUTABLE}
+  weechat_core
+  weechat_plugins
+  weechat_gui_common
+  weechat_gui_curses_normal
+  ${EXTRA_LIBS}
+  coverage_config
+)
 
 # Create a symbolic link weechat-curses -> weechat
 # This link is created for compatibility with old versions on /upgrade.
 # It may be removed in future.
 add_custom_command(
   TARGET ${EXECUTABLE}
+  POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E remove -f "weechat-curses${CMAKE_EXECUTABLE_SUFFIX}"
   COMMAND ${CMAKE_COMMAND} -E create_symlink "weechat${CMAKE_EXECUTABLE_SUFFIX}" "weechat-curses${CMAKE_EXECUTABLE_SUFFIX}"
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,8 @@
 #ifndef WEECHAT_PLUGIN_XFER_COMMAND_H
 #define WEECHAT_PLUGIN_XFER_COMMAND_H
 
-extern void xfer_command_init ();
+#define XFER_COMMAND_KEEP_SPACES weechat_hook_set (ptr_hook, "keep_spaces_right", "1")
+
+extern void xfer_command_init (void);
 
 #endif /* WEECHAT_PLUGIN_XFER_COMMAND_H */

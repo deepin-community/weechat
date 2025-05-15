@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -19,6 +19,10 @@
 
 #ifndef WEECHAT_PLUGIN_RELAY_REMOTE_EVENT_H
 #define WEECHAT_PLUGIN_RELAY_REMOTE_EVENT_H
+
+#include <cjson/cJSON.h>
+
+#define RELAY_REMOTE_EVENT_ID_INITIAL_SYNC "initial_sync"
 
 #define RELAY_REMOTE_EVENT_CALLBACK(__body_type)                        \
     int                                                                 \
@@ -41,6 +45,8 @@ struct t_relay_remote_event_cb
     t_relay_remote_event_func *func;    /* callback (can be NULL)           */
 };
 
+extern void relay_remote_event_buffer_input (struct t_gui_buffer *buffer,
+                                             const char *input_data);
 extern void relay_remote_event_recv (struct t_relay_remote *remote,
                                      const char *data);
 

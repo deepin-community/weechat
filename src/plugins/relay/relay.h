@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,8 +36,6 @@ extern struct t_hdata *relay_hdata_nick;
 extern struct t_hdata *relay_hdata_completion;
 extern struct t_hdata *relay_hdata_completion_word;
 extern struct t_hdata *relay_hdata_hotlist;
-
-extern int relay_signal_upgrade_received;
 
 /* relay protocol */
 

@@ -1,7 +1,7 @@
 /*
  * core-dir.c - directory/file functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -64,7 +64,7 @@
  */
 
 char *
-dir_get_temp_dir ()
+dir_get_temp_dir (void)
 {
     char *tmpdir;
     struct stat buf;
@@ -109,7 +109,7 @@ int
 dir_mkdir_home (const char *directory, int mode)
 {
     char *dir, *dir1, *dir2, *dir3, *dir4, *dir5;
-    int rc, dir_length;
+    int rc;
 
     rc = 0;
     dir = NULL;
@@ -129,11 +129,8 @@ dir_mkdir_home (const char *directory, int mode)
     else
     {
         /* build directory in data dir by default */
-        dir_length = strlen (weechat_data_dir) + strlen (directory) + 2;
-        dir = malloc (dir_length);
-        if (!dir)
+        if (string_asprintf (&dir, "%s/%s", weechat_data_dir, directory) < 0)
             goto end;
-        snprintf (dir, dir_length, "%s/%s", weechat_data_dir, directory);
     }
 
     dir1 = string_replace (dir, "${weechat_config_dir}", weechat_config_dir);
@@ -358,7 +355,7 @@ dir_set_home_path (char *path)
     {
         /*
          * value of 4 is not mentioned in the message because it's kept only
-         * for compatibility with old releases, it should not be used any more
+         * for compatibility with old releases, it should not be used anymore
          */
         string_fprintf (stderr,
                         _("Error: wrong number of paths for home directories "
@@ -383,10 +380,10 @@ end:
  */
 
 int
-dir_create_home_temp_dir ()
+dir_create_home_temp_dir (void)
 {
     char *temp_dir, *temp_home_template, *ptr_weechat_home;
-    int rc, length, add_separator;
+    int rc, add_separator;
 
     rc = 0;
     temp_dir = NULL;
@@ -396,16 +393,15 @@ dir_create_home_temp_dir ()
     if (!temp_dir || !temp_dir[0])
         goto memory_error;
 
-    length = strlen (temp_dir) + 32 + 1;
-    temp_home_template = malloc (length);
-    if (!temp_home_template)
-        goto memory_error;
-
     add_separator = (temp_dir[strlen (temp_dir) - 1] != DIR_SEPARATOR_CHAR);
-    snprintf (temp_home_template, length,
-              "%s%sweechat_temp_XXXXXX",
-              temp_dir,
-              add_separator ? DIR_SEPARATOR : "");
+
+    if (string_asprintf (&temp_home_template,
+                         "%s%sweechat_temp_XXXXXX",
+                         temp_dir,
+                         (add_separator) ? DIR_SEPARATOR : "") < 0)
+    {
+        goto memory_error;
+    }
     ptr_weechat_home = mkdtemp (temp_home_template);
     if (!ptr_weechat_home)
     {
@@ -603,7 +599,7 @@ error:
  */
 
 int
-dir_find_home_dirs ()
+dir_find_home_dirs (void)
 {
     char *ptr_home, *ptr_weechat_home, *config_weechat_home;
     char *config_dir, *data_dir, *state_dir, *cache_dir, *runtime_dir;
@@ -738,11 +734,11 @@ dir_create_home_dir (char *path)
  * Creates WeeChat home directories.
  *
  * Any error in this function (or a sub function called) is fatal: WeeChat
- * can not run at all without the home directories.
+ * cannot run at all without the home directories.
  */
 
 void
-dir_create_home_dirs ()
+dir_create_home_dirs (void)
 {
     int rc;
 
@@ -776,7 +772,7 @@ error:
  */
 
 void
-dir_remove_home_dirs ()
+dir_remove_home_dirs (void)
 {
     dir_rmtree (weechat_config_dir);
     if (strcmp (weechat_config_dir, weechat_data_dir) != 0)
@@ -802,7 +798,7 @@ dir_remove_home_dirs ()
  */
 
 char *
-dir_get_string_home_dirs ()
+dir_get_string_home_dirs (void)
 {
     char *dirs[6];
 

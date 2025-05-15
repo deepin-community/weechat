@@ -1,7 +1,7 @@
 /*
  * gui-chat.c - chat functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,6 +37,7 @@
 #include "../core/core-eval.h"
 #include "../core/core-hashtable.h"
 #include "../core/core-hook.h"
+#include "../core/core-input.h"
 #include "../core/core-string.h"
 #include "../core/core-utf8.h"
 #include "../core/core-util.h"
@@ -59,6 +60,24 @@ struct t_gui_buffer *gui_chat_mute_buffer = NULL; /* mute buffer            */
 int gui_chat_display_tags = 0;                  /* display tags?            */
 char **gui_chat_lines_waiting_buffer = NULL;    /* lines waiting for core   */
                                                 /* buffer                   */
+int gui_chat_whitespace_mode = 0;               /* make whitespaces visible */
+
+/* command /pipe */
+int gui_chat_pipe = 0;                          /* pipe enabled             */
+char *gui_chat_pipe_command = NULL;             /* piped command            */
+struct t_gui_buffer *gui_chat_pipe_buffer = NULL;  /* pipe msgs to a buffer */
+int gui_chat_pipe_send_to_buffer = 0;           /* send as input to buffer  */
+FILE *gui_chat_pipe_file = NULL;                /* pipe msgs to a file      */
+char *gui_chat_pipe_hsignal = NULL;             /* pipe msgs to a hsignal   */
+char *gui_chat_pipe_concat_sep = NULL;          /* separator to concat lines*/
+char **gui_chat_pipe_concat_lines = NULL;       /* concatenated lines       */
+char **gui_chat_pipe_concat_tags = NULL;        /* concatenated tags        */
+char *gui_chat_pipe_strip_chars = NULL;         /* chars to strip on lines  */
+int gui_chat_pipe_skip_empty_lines = 0;         /* skip empty lines         */
+                                                /* colors in pipe output    */
+enum t_gui_chat_pipe_color gui_chat_pipe_color = GUI_CHAT_PIPE_COLOR_STRIP;
+char *gui_chat_pipe_color_string[GUI_CHAT_PIPE_NUM_COLORS] =
+{ "strip", "keep", "ansi" };
 
 
 /*
@@ -67,7 +86,7 @@ char **gui_chat_lines_waiting_buffer = NULL;    /* lines waiting for core   */
  */
 
 void
-gui_chat_init ()
+gui_chat_init (void)
 {
     char *default_prefix[GUI_CHAT_NUM_PREFIXES] =
         { GUI_CHAT_PREFIX_ERROR_DEFAULT, GUI_CHAT_PREFIX_NETWORK_DEFAULT,
@@ -95,7 +114,7 @@ gui_chat_init ()
  */
 
 void
-gui_chat_prefix_build ()
+gui_chat_prefix_build (void)
 {
     const char *ptr_prefix;
     char prefix[512], *pos_color;
@@ -506,7 +525,7 @@ gui_chat_get_time_string (time_t date, int date_usec, int highlight)
  */
 
 int
-gui_chat_get_time_length ()
+gui_chat_get_time_length (void)
 {
     struct timeval tv_now;
     char *text_time;
@@ -534,7 +553,7 @@ gui_chat_get_time_length ()
  */
 
 void
-gui_chat_change_time_format ()
+gui_chat_change_time_format (void)
 {
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_line *ptr_line;
@@ -591,6 +610,280 @@ gui_chat_buffer_valid (struct t_gui_buffer *buffer,
 }
 
 /*
+ * Searches for a pipe color name.
+ *
+ * Returns index of color in enum t_gui_chat_pipe_color, -1 if not found.
+ */
+
+int
+gui_chat_pipe_search_color (const char *color)
+{
+    int i;
+
+    if (!color)
+        return -1;
+
+    for (i = 0; i < GUI_CHAT_PIPE_NUM_COLORS; i++)
+    {
+        if (strcmp (gui_chat_pipe_color_string[i], color) == 0)
+            return i;
+    }
+
+    /* color not found */
+    return -1;
+}
+
+/*
+ * Converts color in a message, according to variable gui_chat_pipe_color.
+ *
+ * Note: result must be freed after use.
+ */
+
+char *
+gui_chat_pipe_convert_color (const char *data)
+{
+    if (!data)
+        return NULL;
+
+    switch (gui_chat_pipe_color)
+    {
+        case GUI_CHAT_PIPE_COLOR_STRIP:
+            return gui_color_decode (data, NULL);
+        case GUI_CHAT_PIPE_COLOR_KEEP:
+            return strdup (data);
+        case GUI_CHAT_PIPE_COLOR_ANSI:
+            return gui_color_encode_ansi (data);
+        case GUI_CHAT_PIPE_NUM_COLORS:
+            break;
+    }
+
+    return strdup (data);
+}
+
+/*
+ * Builds a message with a line: "<prefix> <message>" or "<message>" if there
+ * is no prefix.
+ *
+ * Note: result must be freed after use.
+ */
+
+char *
+gui_chat_pipe_build_message (struct t_gui_line *line)
+{
+    char *prefix, *message, *data;
+
+    if (!line)
+        return NULL;
+
+    prefix = gui_chat_pipe_convert_color (line->data->prefix);
+    message = gui_chat_pipe_convert_color (line->data->message);
+
+    string_asprintf (&data,
+                     "%s%s%s",
+                     (prefix) ? prefix : "",
+                     (prefix && prefix[0] && message && message[0]) ? " " : "",
+                     (message) ? message : "");
+
+    free (prefix);
+    free (message);
+
+    return data;
+}
+
+/*
+ * Sends data to a buffer (command `/pipe -o`).
+ */
+
+void
+gui_chat_pipe_send_buffer_input (struct t_gui_buffer *buffer, const char *data)
+{
+    struct t_gui_buffer *buffer_saved;
+    int send_to_buffer_saved;
+    char *data_color;
+
+    if (!buffer || !data)
+        return;
+
+    data_color = gui_chat_pipe_convert_color (data);
+    if (!data_color)
+        return;
+
+    buffer_saved = gui_chat_pipe_buffer;
+    send_to_buffer_saved = gui_chat_pipe_send_to_buffer;
+
+    /* temporarily disable the pipe redirection, to prevent infinite loop */
+    gui_chat_pipe_buffer = NULL;
+    gui_chat_pipe_send_to_buffer = 0;
+
+    input_data (
+        buffer,
+        (data_color[0]) ? data_color : " ",
+        "-",  /* commands_allowed */
+        0,  /* split_newline */
+        0);  /* user_data */
+
+    /* restore pipe redirection */
+    gui_chat_pipe_buffer = buffer_saved;
+    gui_chat_pipe_send_to_buffer = send_to_buffer_saved;
+
+    free (data_color);
+}
+
+/*
+ * Handles a redirection with /pipe command.
+ *
+ * Returns:
+ *   1: line has been handled and must NOT be displayed
+ *   0: line has NOT been handled and must be displayed
+ */
+
+int
+gui_chat_pipe_handle_line (struct t_gui_line *line)
+{
+    char *data, *data2, *tags;
+    int rc;
+
+    if (!line || !gui_chat_pipe)
+        return 0;
+
+    rc = 0;
+
+    data = gui_chat_pipe_build_message (line);
+    if (!data)
+        return 1;
+
+    if (gui_chat_pipe_concat_lines)
+    {
+        /*
+         * concatenate line with previous ones, it will be displayed, sent to
+         * buffer input or written to a file later
+         */
+        data2 = (gui_chat_pipe_strip_chars) ?
+            string_strip (data, 1, 1, gui_chat_pipe_strip_chars) : strdup (data);
+        if (data2 && (data2[0] || !gui_chat_pipe_skip_empty_lines))
+        {
+            if ((*gui_chat_pipe_concat_lines)[0])
+            {
+                string_dyn_concat (gui_chat_pipe_concat_lines,
+                                   gui_chat_pipe_concat_sep,
+                                   -1);
+            }
+            string_dyn_concat (gui_chat_pipe_concat_lines, data2, -1);
+        }
+        free (data2);
+        /* concatenate tags */
+        if (gui_chat_pipe_concat_tags)
+        {
+            tags = string_rebuild_split_string (
+                (const char **)line->data->tags_array,
+                ",", 0, -1);
+            if ((*gui_chat_pipe_concat_tags)[0])
+                string_dyn_concat (gui_chat_pipe_concat_tags, "\n", -1);
+            string_dyn_concat (gui_chat_pipe_concat_tags, (tags) ? tags : "", -1);
+            free (tags);
+        }
+        rc = 1;
+    }
+    else if (gui_chat_pipe_file)
+    {
+        /* pipe to a file */
+        fprintf (gui_chat_pipe_file, "%s\n", data);
+        rc = 1;
+    }
+    else if (gui_chat_pipe_buffer && gui_chat_pipe_send_to_buffer)
+    {
+        /* pipe to a buffer as input */
+        gui_chat_pipe_send_buffer_input (gui_chat_pipe_buffer, data);
+        rc = 1;
+    }
+
+    free (data);
+
+    return rc;
+}
+
+/*
+ * Ends pipe and flushes concatenated lines to a buffer or a file
+ * (if command `/pipe -g` was used).
+ */
+
+void
+gui_chat_pipe_end (void)
+{
+    struct t_gui_buffer *pipe_buffer;
+    struct t_hashtable *hashtable;
+    int pipe_send_to_buffer;
+    FILE *pipe_file;
+
+    pipe_buffer = gui_chat_pipe_buffer;
+    pipe_send_to_buffer = gui_chat_pipe_send_to_buffer;
+    pipe_file = gui_chat_pipe_file;
+
+    gui_chat_pipe = 0;
+    gui_chat_pipe_buffer = NULL;
+    gui_chat_pipe_send_to_buffer = 0;
+    gui_chat_pipe_file = NULL;
+    free (gui_chat_pipe_concat_sep);
+    gui_chat_pipe_concat_sep = NULL;
+    free (gui_chat_pipe_strip_chars);
+    gui_chat_pipe_strip_chars = NULL;
+    gui_chat_pipe_skip_empty_lines = 0;
+
+    if (gui_chat_pipe_concat_lines)
+    {
+        if (pipe_file)
+        {
+            fprintf (pipe_file, "%s\n", *gui_chat_pipe_concat_lines);
+        }
+        else if (pipe_buffer)
+        {
+            if (pipe_send_to_buffer)
+            {
+                gui_chat_pipe_send_buffer_input (
+                    pipe_buffer,
+                    *gui_chat_pipe_concat_lines);
+            }
+            else
+            {
+                gui_chat_printf (pipe_buffer,
+                                 "%s", *gui_chat_pipe_concat_lines);
+            }
+        }
+        else if (gui_chat_pipe_hsignal)
+        {
+            hashtable = hashtable_new (32,
+                                       WEECHAT_HASHTABLE_STRING,
+                                       WEECHAT_HASHTABLE_STRING,
+                                       NULL, NULL);
+            if (hashtable)
+            {
+                hashtable_set (hashtable, "command", gui_chat_pipe_command);
+                hashtable_set (hashtable, "output", *gui_chat_pipe_concat_lines);
+                if (gui_chat_pipe_concat_tags)
+                    hashtable_set (hashtable, "tags", *gui_chat_pipe_concat_tags);
+                hook_hsignal_send (gui_chat_pipe_hsignal, hashtable);
+                hashtable_free (hashtable);
+            }
+        }
+        string_dyn_free (gui_chat_pipe_concat_lines, 1);
+        gui_chat_pipe_concat_lines = NULL;
+    }
+
+    if (pipe_file)
+        fclose (pipe_file);
+    free (gui_chat_pipe_command);
+    gui_chat_pipe_command = NULL;
+    free (gui_chat_pipe_hsignal);
+    gui_chat_pipe_hsignal = NULL;
+    if (gui_chat_pipe_concat_tags)
+    {
+        string_dyn_free (gui_chat_pipe_concat_tags, 1);
+        gui_chat_pipe_concat_tags = NULL;
+    }
+    gui_chat_pipe_color = GUI_CHAT_PIPE_COLOR_STRIP;
+}
+
+/*
  * Displays a message in a buffer with optional date and tags.
  * This function is called internally by the function
  * gui_chat_printf_date_tags.
@@ -605,9 +898,10 @@ gui_chat_printf_datetime_tags_internal (struct t_gui_buffer *buffer,
                                         const char *tags,
                                         char *message)
 {
-    int display_time, length_data, length_str;
+    int display_time;
     char *ptr_msg, *pos_prefix, *pos_tab;
     char *modifier_data, *string, *new_string, *pos_newline;
+    char *prefix_color, *message_color;
     struct t_gui_line *new_line;
 
     if (!buffer)
@@ -667,108 +961,119 @@ gui_chat_printf_datetime_tags_internal (struct t_gui_buffer *buffer,
         goto no_print;
 
     /* call modifier for message printed ("weechat_print") */
-    length_data = 64 + 1 + ((tags) ? strlen (tags) : 0) + 1;
-    modifier_data = malloc (length_data);
-    length_str = ((new_line->data->prefix && new_line->data->prefix[0]) ? strlen (new_line->data->prefix) : 1) +
-        1 +
-        (new_line->data->message ? strlen (new_line->data->message) : 0) +
-        1;
-    string = malloc (length_str);
-    if (modifier_data && string)
+    string_asprintf (&modifier_data,
+                     "0x%lx;%s",
+                     (unsigned long)buffer,
+                     (tags) ? tags : "");
+    if (display_time)
     {
-        snprintf (modifier_data, length_data,
-                  "%p;%s",
-                  buffer,
-                  (tags) ? tags : "");
-        if (display_time)
+        string_asprintf (
+            &string,
+            "%s\t%s",
+            (new_line->data->prefix && new_line->data->prefix[0]) ?
+            new_line->data->prefix : " ",
+            (new_line->data->message) ? new_line->data->message : "");
+    }
+    else
+    {
+        string_asprintf (
+            &string,
+            "\t\t%s",
+            (new_line->data->message) ? new_line->data->message : "");
+    }
+    new_string = hook_modifier_exec (NULL,
+                                     "weechat_print",
+                                     modifier_data,
+                                     string);
+    if (new_string)
+    {
+        if (!new_string[0] && string[0])
         {
-            snprintf (string, length_str,
-                      "%s\t%s",
-                      (new_line->data->prefix && new_line->data->prefix[0]) ?
-                      new_line->data->prefix : " ",
-                      (new_line->data->message) ? new_line->data->message : "");
+            /*
+             * modifier returned empty message, then we'll not
+             * print anything
+             */
+            goto no_print;
         }
-        else
+        else if (strcmp (string, new_string) != 0)
         {
-            snprintf (string, length_str,
-                      "\t\t%s",
-                      (new_line->data->message) ? new_line->data->message : "");
-        }
-        new_string = hook_modifier_exec (NULL,
-                                         "weechat_print",
-                                         modifier_data,
-                                         string);
-        if (new_string)
-        {
-            if (!new_string[0] && string[0])
+            if (!buffer->input_multiline)
             {
-                /*
-                 * modifier returned empty message, then we'll not
-                 * print anything
-                 */
-                goto no_print;
+                /* if input_multiline is not set, keep only first line */
+                pos_newline = strchr (new_string, '\n');
+                if (pos_newline)
+                    pos_newline[0] = '\0';
             }
-            else if (strcmp (string, new_string) != 0)
-            {
-                if (!buffer->input_multiline)
-                {
-                    /* if input_multiline is not set, keep only first line */
-                    pos_newline = strchr (new_string, '\n');
-                    if (pos_newline)
-                        pos_newline[0] = '\0';
-                }
 
-                /* use new message if there are changes */
-                display_time = 1;
-                pos_prefix = NULL;
-                ptr_msg = new_string;
-                /* space followed by tab => prefix ignored */
-                if ((ptr_msg[0] == ' ') && (ptr_msg[1] == '\t'))
+            /* use new message if there are changes */
+            display_time = 1;
+            pos_prefix = NULL;
+            ptr_msg = new_string;
+            /* space followed by tab => prefix ignored */
+            if ((ptr_msg[0] == ' ') && (ptr_msg[1] == '\t'))
+            {
+                ptr_msg += 2;
+            }
+            else
+            {
+                /* if two first chars are tab, then do not display time */
+                if ((ptr_msg[0] == '\t') && (ptr_msg[1] == '\t'))
                 {
+                    display_time = 0;
+                    new_line->data->date = 0;
                     ptr_msg += 2;
                 }
                 else
                 {
-                    /* if two first chars are tab, then do not display time */
-                    if ((ptr_msg[0] == '\t') && (ptr_msg[1] == '\t'))
+                    /* if tab found, use prefix (before tab) */
+                    pos_tab = strchr (ptr_msg, '\t');
+                    if (pos_tab)
                     {
-                        display_time = 0;
-                        new_line->data->date = 0;
-                        ptr_msg += 2;
-                    }
-                    else
-                    {
-                        /* if tab found, use prefix (before tab) */
-                        pos_tab = strchr (ptr_msg, '\t');
-                        if (pos_tab)
-                        {
-                            pos_tab[0] = '\0';
-                            pos_prefix = ptr_msg;
-                            ptr_msg = pos_tab + 1;
-                        }
+                        pos_tab[0] = '\0';
+                        pos_prefix = ptr_msg;
+                        ptr_msg = pos_tab + 1;
                     }
                 }
-                if ((new_line->data->date == 0) && display_time)
-                {
-                    new_line->data->date = new_line->data->date_printed;
-                    new_line->data->date_usec = new_line->data->date_usec_printed;
-                }
-                string_shared_free (new_line->data->prefix);
-                if (pos_prefix)
-                {
-                    new_line->data->prefix = (char *)string_shared_get (pos_prefix);
-                }
-                else
-                {
-                    new_line->data->prefix = (new_line->data->date != 0) ?
-                        (char *)string_shared_get ("") : NULL;
-                }
-                new_line->data->prefix_length = gui_chat_strlen_screen (
-                    new_line->data->prefix);
-                free (new_line->data->message);
-                new_line->data->message = strdup (ptr_msg);
             }
+            if ((new_line->data->date == 0) && display_time)
+            {
+                new_line->data->date = new_line->data->date_printed;
+                new_line->data->date_usec = new_line->data->date_usec_printed;
+            }
+            string_shared_free (new_line->data->prefix);
+            if (pos_prefix)
+            {
+                new_line->data->prefix = (char *)string_shared_get (pos_prefix);
+            }
+            else
+            {
+                new_line->data->prefix = (new_line->data->date != 0) ?
+                    (char *)string_shared_get ("") : NULL;
+            }
+            new_line->data->prefix_length = gui_chat_strlen_screen (
+                new_line->data->prefix);
+            free (new_line->data->message);
+            new_line->data->message = strdup (ptr_msg);
         }
+    }
+
+    if (gui_chat_pipe_handle_line (new_line))
+    {
+        /* line was handled with /pipe command, do NOT display it */
+        goto no_print;
+    }
+    else if (gui_chat_pipe_buffer)
+    {
+        prefix_color = gui_chat_pipe_convert_color (new_line->data->prefix);
+        string_shared_free (new_line->data->prefix);
+        new_line->data->prefix = (prefix_color) ?
+            (char *)string_shared_get (prefix_color) : NULL;
+        new_line->data->prefix_length = (prefix_color) ?
+            gui_chat_strlen_screen (prefix_color) : 0;
+
+        message_color = gui_chat_pipe_convert_color (new_line->data->message);
+        free (new_line->data->message);
+        new_line->data->message = message_color;
     }
 
     /* add line in the buffer */
@@ -814,7 +1119,7 @@ gui_chat_add_line_waiting_buffer (const char *message)
             return;
     }
 
-    if (*gui_chat_lines_waiting_buffer[0])
+    if ((*gui_chat_lines_waiting_buffer)[0])
         string_dyn_concat (gui_chat_lines_waiting_buffer, "\n", -1);
 
     string_dyn_concat (gui_chat_lines_waiting_buffer, message, -1);
@@ -883,6 +1188,8 @@ gui_chat_printf_datetime_tags (struct t_gui_buffer *buffer,
 
     if (gui_init_ok)
     {
+        if (gui_chat_pipe_buffer)
+            buffer = gui_chat_pipe_buffer;
         if (!buffer)
             buffer = gui_buffer_search_main ();
         if (!gui_chat_buffer_valid (buffer, GUI_BUFFER_TYPE_FORMATTED))
@@ -1088,12 +1395,10 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
                                 struct t_hashtable *hashtable)
 {
     const char *ptr_date, *ptr_date_usec, *line, *prefix, *ptr_prefix, *message;
-    unsigned long value;
-    long number;
+    long long number;
     struct timeval tv;
     struct t_gui_line *ptr_line;
-    int is_nick, length_time, length_nick_prefix, length_prefix;
-    int length_nick_suffix, length_message, length, rc;
+    int is_nick, rc;
     char str_time[128], *str, *error;
 
     /* make C compiler happy */
@@ -1110,7 +1415,7 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
     if (ptr_date)
     {
         error = NULL;
-        number = strtol (ptr_date, &error, 10);
+        number = strtoll (ptr_date, &error, 10);
         if (error && !error[0])
         {
             tv.tv_sec = (time_t)number;
@@ -1120,9 +1425,9 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
             if (ptr_date_usec)
             {
                 error = NULL;
-                number = strtol (ptr_date_usec, &error, 10);
+                number = strtoll (ptr_date_usec, &error, 10);
                 if (error && !error[0])
-                    tv.tv_usec = (int)number;
+                    tv.tv_usec = (long)number;
             }
             util_strftimeval (str_time, sizeof (str_time),
                               CONFIG_STRING(config_look_quote_time_format),
@@ -1135,10 +1440,9 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
     line = hashtable_get (hashtable, "_chat_line");
     if (line && line[0])
     {
-        rc = sscanf (line, "%lx", &value);
+        rc = sscanf (line, "%p", &ptr_line);
         if ((rc != EOF) && (rc != 0))
         {
-            ptr_line = (struct t_gui_line *)value;
             if (gui_line_search_tag_starting_with (ptr_line, "prefix_nick"))
                 is_nick = 1;
         }
@@ -1162,26 +1466,17 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
     if (!message)
         return WEECHAT_RC_OK;
 
-    length_time = strlen (str_time);
-    length_nick_prefix = strlen (CONFIG_STRING(config_look_quote_nick_prefix));
-    length_prefix = (ptr_prefix) ? strlen (ptr_prefix) : 0;
-    length_nick_suffix = strlen (CONFIG_STRING(config_look_quote_nick_suffix));
-    length_message = strlen (message);
-
-    length = length_time + 1 +
-        length_nick_prefix + length_prefix + length_nick_suffix + 1 +
-        length_message + 1 + 1;
-    str = malloc (length);
-    if (str)
+    if (string_asprintf (
+            &str,
+            "%s%s%s%s%s%s%s ",
+            str_time,
+            (str_time[0]) ? " " : "",
+            (ptr_prefix && ptr_prefix[0] && is_nick) ? CONFIG_STRING(config_look_quote_nick_prefix) : "",
+            (ptr_prefix) ? ptr_prefix : "",
+            (ptr_prefix && ptr_prefix[0] && is_nick) ? CONFIG_STRING(config_look_quote_nick_suffix) : "",
+            (ptr_prefix && ptr_prefix[0]) ? " " : "",
+            message) >= 0)
     {
-        snprintf (str, length, "%s%s%s%s%s%s%s ",
-                  str_time,
-                  (str_time[0]) ? " " : "",
-                  (ptr_prefix && ptr_prefix[0] && is_nick) ? CONFIG_STRING(config_look_quote_nick_prefix) : "",
-                  (ptr_prefix) ? ptr_prefix : "",
-                  (ptr_prefix && ptr_prefix[0] && is_nick) ? CONFIG_STRING(config_look_quote_nick_suffix) : "",
-                  (ptr_prefix && ptr_prefix[0]) ? " " : "",
-                  message);
         gui_input_insert_string (gui_current_window->buffer, str);
         gui_input_text_changed_modifier_and_signal (gui_current_window->buffer,
                                                     1, /* save undo */
@@ -1197,7 +1492,7 @@ gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
  */
 
 void
-gui_chat_end ()
+gui_chat_end (void)
 {
     int i;
 

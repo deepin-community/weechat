@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,8 @@
 #ifndef WEECHAT_PLUGIN_ALIAS_COMMAND_H
 #define WEECHAT_PLUGIN_ALIAS_COMMAND_H
 
-extern void alias_command_init ();
+#define ALIAS_COMMAND_KEEP_SPACES weechat_hook_set (ptr_hook, "keep_spaces_right", "1")
+
+extern void alias_command_init (void);
 
 #endif /* WEECHAT_PLUGIN_ALIAS_COMMAND_H */

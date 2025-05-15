@@ -1,7 +1,7 @@
 /*
  * irc-notify.c - notify lists for IRC plugin
  *
- * Copyright (C) 2010-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -274,42 +274,28 @@ irc_notify_build_message_with_nicks (struct t_irc_server *server,
                                      const char *separator,
                                      int *num_nicks)
 {
-    char *message, *message2;
-    int length, total_length, length_separator;
     struct t_irc_notify *ptr_notify;
+    char **message;
 
     *num_nicks = 0;
 
-    length = strlen (irc_message) + 1;
-    total_length = length;
-    length_separator = strlen (separator);
-
-    message = malloc (length);
+    message = weechat_string_dyn_alloc (256);
     if (!message)
         return NULL;
-    snprintf (message, length, "%s", irc_message);
+
+    weechat_string_dyn_concat (message, irc_message, -1);
 
     for (ptr_notify = server->notify_list; ptr_notify;
          ptr_notify = ptr_notify->next_notify)
     {
-        length = strlen (ptr_notify->nick);
-        total_length += length + length_separator;
-        message2 = realloc (message, total_length);
-        if (!message2)
-        {
-            free (message);
-            message = NULL;
-            break;
-        }
-        message = message2;
         if (*num_nicks > 0)
-            strcat (message, separator);
-        strcat (message, ptr_notify->nick);
+            weechat_string_dyn_concat (message, separator, -1);
+        weechat_string_dyn_concat (message, ptr_notify->nick, -1);
 
         (*num_nicks)++;
     }
 
-    return message;
+    return weechat_string_dyn_free (message, 0);
 }
 
 /*
@@ -423,7 +409,7 @@ irc_notify_new_for_server (struct t_irc_server *server)
  */
 
 void
-irc_notify_new_for_all_servers ()
+irc_notify_new_for_all_servers (void)
 {
     struct t_irc_server *ptr_server;
 
@@ -452,7 +438,8 @@ irc_notify_free (struct t_irc_server *server, struct t_irc_notify *notify,
     if (notify->nick)
     {
         if ((server->monitor > 0) && remove_monitor
-            && (server->is_connected) && !irc_signal_upgrade_received)
+            && (server->is_connected)
+            && !weechat_irc_plugin->unload_with_upgrade)
         {
             /* remove one monitored nick */
             irc_server_sendf (notify->server,
@@ -491,7 +478,7 @@ irc_notify_free_all (struct t_irc_server *server)
 {
     /* remove all monitored nicks */
     if ((server->monitor > 0) && (server->is_connected)
-        && !irc_signal_upgrade_received)
+        && !weechat_irc_plugin->unload_with_upgrade)
     {
         irc_server_sendf (server, IRC_SERVER_SEND_OUTQ_PRIO_LOW, NULL,
                           "MONITOR C");
@@ -645,21 +632,15 @@ irc_notify_send_signal (struct t_irc_notify *notify,
                         const char *away_message)
 {
     char signal[128], *data;
-    int length;
 
     snprintf (signal, sizeof (signal), "irc_notify_%s", type);
 
-    length = strlen (notify->server->name) + 1 + strlen (notify->nick) + 1
-        + ((away_message) ? strlen (away_message) : 0) + 1;
-    data = malloc (length);
-    if (data)
-    {
-        snprintf (data, length, "%s,%s%s%s",
-                  notify->server->name,
-                  notify->nick,
-                  (away_message && away_message[0]) ? "," : "",
-                  (away_message && away_message[0]) ? away_message : "");
-    }
+    weechat_asprintf (&data,
+                      "%s,%s%s%s",
+                      notify->server->name,
+                      notify->nick,
+                      (away_message && away_message[0]) ? "," : "",
+                      (away_message && away_message[0]) ? away_message : "");
 
     (void) weechat_hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_STRING, data);
 
@@ -1250,7 +1231,7 @@ irc_notify_print_log (struct t_irc_server *server)
  */
 
 void
-irc_notify_hook_timer_ison ()
+irc_notify_hook_timer_ison (void)
 {
     weechat_unhook (irc_notify_timer_ison);
     irc_notify_timer_ison = weechat_hook_timer (
@@ -1263,7 +1244,7 @@ irc_notify_hook_timer_ison ()
  */
 
 void
-irc_notify_hook_timer_whois ()
+irc_notify_hook_timer_whois (void)
 {
     weechat_unhook (irc_notify_timer_whois);
     irc_notify_timer_whois = weechat_hook_timer (
@@ -1276,7 +1257,7 @@ irc_notify_hook_timer_whois ()
  */
 
 void
-irc_notify_init ()
+irc_notify_init (void)
 {
     irc_notify_hook_timer_ison ();
     irc_notify_hook_timer_whois ();
@@ -1291,7 +1272,7 @@ irc_notify_init ()
  */
 
 void
-irc_notify_end ()
+irc_notify_end (void)
 {
     if (irc_notify_timer_ison)
     {

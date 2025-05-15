@@ -1,7 +1,7 @@
 /*
  * test-gui-input.cpp - test input functions
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -170,13 +170,13 @@ TEST(GuiInput, ClipboardCopy)
     }
 
     gui_input_clipboard_copy (NULL, 1);
-    POINTERS_EQUAL(NULL, gui_input_clipboard);
+    STRCMP_EQUAL(NULL, gui_input_clipboard);
 
     gui_input_clipboard_copy ("abc", -1);
-    POINTERS_EQUAL(NULL, gui_input_clipboard);
+    STRCMP_EQUAL(NULL, gui_input_clipboard);
 
     gui_input_clipboard_copy ("abc", 0);
-    POINTERS_EQUAL(NULL, gui_input_clipboard);
+    STRCMP_EQUAL(NULL, gui_input_clipboard);
 
     gui_input_clipboard_copy ("abc", 1);
     STRCMP_EQUAL("a", gui_input_clipboard);

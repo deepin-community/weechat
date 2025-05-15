@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,7 +29,7 @@ enum t_xfer_upgrade_type
     XFER_UPGRADE_TYPE_XFER = 0,
 };
 
-extern int xfer_upgrade_save ();
-extern int xfer_upgrade_load ();
+extern int xfer_upgrade_save (void);
+extern int xfer_upgrade_load (void);
 
 #endif /* WEECHAT_PLUGIN_XFER_UPGRADE_H */

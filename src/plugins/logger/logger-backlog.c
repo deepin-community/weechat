@@ -1,7 +1,7 @@
 /*
  * logger-backlog.c - display backlog of messages
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -191,21 +191,16 @@ logger_backlog_group_messages (struct t_arraylist *lines)
 
         if (message)
         {
-            new_message = malloc (strlen (ptr_line) + 1 + strlen (message) + 1);
-            if (!new_message)
+            if (weechat_asprintf (&new_message, "%s\n%s", ptr_line, message) < 0)
                 goto error;
-            strcpy (new_message, ptr_line);
-            strcat (new_message, "\n");
-            strcat (new_message, message);
             free (message);
             message = new_message;
         }
         else
         {
-            message = malloc (strlen (ptr_line) + 1);
+            message = strdup (ptr_line);
             if (!message)
                 goto error;
-            strcpy (message, ptr_line);
         }
 
         time_found = 0;

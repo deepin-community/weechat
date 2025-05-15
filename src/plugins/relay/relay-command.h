@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,6 @@
 #ifndef WEECHAT_PLUGIN_RELAY_COMMAND_H
 #define WEECHAT_PLUGIN_RELAY_COMMAND_H
 
-extern void relay_command_init ();
+extern void relay_command_init (void);
 
 #endif /* WEECHAT_PLUGIN_RELAY_COMMAND_H */

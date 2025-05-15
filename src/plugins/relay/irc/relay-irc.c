@@ -1,7 +1,7 @@
 /*
  * relay-irc.c - IRC protocol for relay to client: IRC proxy/bouncer
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -198,7 +198,7 @@ end:
 void
 relay_irc_sendf (struct t_relay_client *client, const char *format, ...)
 {
-    int length, number;
+    int number;
     char *pos, hash_key[32], *message, *new_msg1, *new_msg2;
     char modifier_data[128];
     const char *str_message, *ptr_msg1, *ptr_msg2;
@@ -215,7 +215,8 @@ relay_irc_sendf (struct t_relay_client *client, const char *format, ...)
     hashtable_in = NULL;
     hashtable_out = NULL;
 
-    snprintf (modifier_data, sizeof (modifier_data), "%p", client);
+    snprintf (modifier_data, sizeof (modifier_data),
+              "0x%lx", (unsigned long)client);
     new_msg1 = weechat_hook_modifier_exec ("relay_client_irc_out1",
                                            modifier_data, vbuffer);
 
@@ -272,11 +273,8 @@ relay_irc_sendf (struct t_relay_client *client, const char *format, ...)
         if (!new_msg2 || new_msg2[0])
         {
             ptr_msg2 = (new_msg2) ? new_msg2 : str_message;
-            length = strlen (ptr_msg2) + 16 + 1;
-            message = malloc (length);
-            if (message)
+            if (weechat_asprintf (&message, "%s\r\n", ptr_msg2) >= 0)
             {
-                snprintf (message, length, "%s\r\n", ptr_msg2);
                 relay_client_send (client, RELAY_MSG_STANDARD,
                                    message, strlen (message), NULL);
                 free (message);
@@ -705,7 +703,7 @@ relay_irc_get_line_info (struct t_relay_client *client,
                          const char **nick2, const char **host,
                          char **tags, char **message)
 {
-    int i, num_tags, command, action, all_tags, length;
+    int i, num_tags, command, action, all_tags;
     char str_tag[512], *pos, *message_no_color, str_time[256];
     const char *ptr_tag, *ptr_message, *ptr_nick, *ptr_nick1, *ptr_nick2;
     const char *ptr_host, *localvar_nick, *time_format;
@@ -835,13 +833,12 @@ relay_irc_get_line_info (struct t_relay_client *client,
             tm = localtime (&msg_date);
             if (strftime (str_time, sizeof (str_time), time_format, tm) == 0)
                 str_time[0] = '\0';
-            length = strlen (str_time) + strlen (pos) + 1;
-            *message = malloc (length);
-            if (*message)
-                snprintf (*message, length, "%s%s", str_time, pos);
+            weechat_asprintf (message, "%s%s", str_time, pos);
         }
         else
+        {
             *message = strdup (pos);
+        }
     }
 
     /* if server capability "server-time" is enabled, add an irc tag with time */
@@ -1038,9 +1035,9 @@ relay_irc_send_channel_backlog (struct t_relay_client *client,
                                          (ptr_host) ? "!" : "",
                                          (ptr_host) ? ptr_host : "",
                                          channel,
-                                         (irc_action) ? "\01ACTION " : "",
+                                         (irc_action) ? "\001ACTION " : "",
                                          message,
-                                         (irc_action) ? "\01": "");
+                                         (irc_action) ? "\001": "");
                     }
                     break;
                 case RELAY_IRC_NUM_CMD:
@@ -1062,122 +1059,99 @@ void
 relay_irc_send_join (struct t_relay_client *client,
                      const char *channel)
 {
-    char *infolist_name, *nicks, *nicks2;
+    char infolist_name[4096], **nicks, *host;
     const char *nick, *prefix, *topic;
-    char *host;
-    int length, length_nicks;
     struct t_infolist *infolist_nick, *infolist_channel, *infolist_nicks;
     struct t_gui_buffer *buffer;
 
-    length = strlen (client->protocol_args) + 1 + strlen (channel) + 1
-        + strlen (RELAY_IRC_DATA(client, nick)) + 1;
-    infolist_name = malloc (length);
-    if (infolist_name)
+    snprintf (infolist_name, sizeof (infolist_name),
+              "%s,%s,%s",
+              client->protocol_args,
+              channel,
+              RELAY_IRC_DATA(client, nick));
+
+    /* get nick host */
+    host = NULL;
+    infolist_nick = weechat_infolist_get ("irc_nick", NULL, infolist_name);
+    if (infolist_nick)
     {
-        /* get nick host */
-        host = NULL;
-        snprintf (infolist_name, length, "%s,%s,%s",
-                  client->protocol_args,
-                  channel,
-                  RELAY_IRC_DATA(client, nick));
-        infolist_nick = weechat_infolist_get ("irc_nick", NULL, infolist_name);
-        if (infolist_nick)
+        if (weechat_infolist_next (infolist_nick))
         {
-            if (weechat_infolist_next (infolist_nick))
-            {
-                host = (char *)weechat_infolist_string (infolist_nick, "host");
-                if (host)
-                    host = strdup (host);
-            }
-            weechat_infolist_free (infolist_nick);
+            host = (char *)weechat_infolist_string (infolist_nick, "host");
+            if (host)
+                host = strdup (host);
         }
+        weechat_infolist_free (infolist_nick);
+    }
 
-        relay_irc_sendf (client,
-                         ":%s!%s JOIN %s",
-                         RELAY_IRC_DATA(client, nick),
-                         (host && host[0]) ? host : "weechat@proxy",
-                         channel);
-        free (host);
-        snprintf (infolist_name, length, "%s,%s",
-                  client->protocol_args,
-                  channel);
+    relay_irc_sendf (client,
+                     ":%s!%s JOIN %s",
+                     RELAY_IRC_DATA(client, nick),
+                     (host && host[0]) ? host : "weechat@proxy",
+                     channel);
+    free (host);
 
-        buffer = NULL;
-        infolist_channel = weechat_infolist_get ("irc_channel", NULL,
-                                                 infolist_name);
-        if (infolist_channel)
+    snprintf (infolist_name, sizeof (infolist_name),
+              "%s,%s", client->protocol_args, channel);
+
+    buffer = NULL;
+    infolist_channel = weechat_infolist_get ("irc_channel", NULL,
+                                             infolist_name);
+    if (infolist_channel)
+    {
+        if (weechat_infolist_next (infolist_channel))
         {
-            if (weechat_infolist_next (infolist_channel))
+            buffer = weechat_infolist_pointer (infolist_channel, "buffer");
+            topic = weechat_infolist_string (infolist_channel, "topic");
+            if (topic && topic[0])
             {
-                buffer = weechat_infolist_pointer (infolist_channel, "buffer");
-                topic = weechat_infolist_string (infolist_channel, "topic");
-                if (topic && topic[0])
-                {
-                    relay_irc_sendf (client,
-                                     ":%s 332 %s %s :%s",
-                                     RELAY_IRC_DATA(client, address),
-                                     RELAY_IRC_DATA(client, nick),
-                                     channel, topic);
-                }
+                relay_irc_sendf (client,
+                                 ":%s 332 %s %s :%s",
+                                 RELAY_IRC_DATA(client, address),
+                                 RELAY_IRC_DATA(client, nick),
+                                 channel, topic);
             }
-            weechat_infolist_free (infolist_channel);
         }
-        infolist_nicks = weechat_infolist_get ("irc_nick", NULL,
-                                               infolist_name);
-        if (infolist_nicks)
+        weechat_infolist_free (infolist_channel);
+    }
+    infolist_nicks = weechat_infolist_get ("irc_nick", NULL,
+                                           infolist_name);
+    if (infolist_nicks)
+    {
+        nicks = weechat_string_dyn_alloc (256);
+        if (nicks)
         {
-            length_nicks = 0;
-            nicks = NULL;
             while (weechat_infolist_next (infolist_nicks))
             {
                 nick = weechat_infolist_string (infolist_nicks, "name");
                 prefix = weechat_infolist_string (infolist_nicks, "prefix");
                 if (nick && nick[0])
                 {
-                    length_nicks += strlen (nick) + 1 + 1;
-                    if (nicks)
-                    {
-                        nicks2 = realloc (nicks, length_nicks);
-                        if (!nicks2)
-                        {
-                            free (nicks);
-                            return;
-                        }
-                        nicks = nicks2;
-                        strcat (nicks, " ");
-                    }
-                    else
-                    {
-                        nicks = malloc (length_nicks);
-                        nicks[0] = '\0';
-                    }
+                    if ((*nicks)[0])
+                        weechat_string_dyn_concat (nicks, " ", -1);
                     if (prefix && (prefix[0] != ' '))
-                        strcat (nicks, prefix);
-                    strcat (nicks, nick);
+                        weechat_string_dyn_concat (nicks, prefix, -1);
+                    weechat_string_dyn_concat (nicks, nick, -1);
                 }
             }
-            if (nicks)
-            {
-                relay_irc_sendf (client,
-                                 ":%s 353 %s = %s :%s",
-                                 RELAY_IRC_DATA(client, address),
-                                 RELAY_IRC_DATA(client, nick),
-                                 channel, nicks);
-                free (nicks);
-            }
-            weechat_infolist_free (infolist_nicks);
+            relay_irc_sendf (client,
+                             ":%s 353 %s = %s :%s",
+                             RELAY_IRC_DATA(client, address),
+                             RELAY_IRC_DATA(client, nick),
+                             channel, *nicks);
+            weechat_string_dyn_free (nicks, 1l);
         }
-        relay_irc_sendf (client,
-                         ":%s 366 %s %s :End of /NAMES list.",
-                         RELAY_IRC_DATA(client, address),
-                         RELAY_IRC_DATA(client, nick),
-                         channel);
-        free (infolist_name);
-
-        /* send backlog to client */
-        if (buffer)
-            relay_irc_send_channel_backlog (client, channel, buffer);
+        weechat_infolist_free (infolist_nicks);
     }
+    relay_irc_sendf (client,
+                     ":%s 366 %s %s :End of /NAMES list.",
+                     RELAY_IRC_DATA(client, address),
+                     RELAY_IRC_DATA(client, nick),
+                     channel);
+
+    /* send backlog to client */
+    if (buffer)
+        relay_irc_send_channel_backlog (client, channel, buffer);
 }
 
 /*
@@ -1418,7 +1392,7 @@ relay_irc_get_supported_caps (struct t_relay_client *client)
  */
 
 struct t_arraylist *
-relay_irc_get_list_caps ()
+relay_irc_get_list_caps (void)
 {
     struct t_arraylist *list_capab;
     int i;
@@ -1567,12 +1541,12 @@ relay_irc_recv_command_capab (struct t_relay_client *client,
  *
  * Examples:
  *
- *   message                   | type      | params
- *   --------------------------|-----------|-----------
- *   "\01ACTION is testing\01" | "ACTION"  | "is testing"
- *   "\01VERSION\01"           | "VERSION" | NULL
- *   "\01VERSION"              | NULL      | NULL
- *   "test"                    | NULL      | NULL
+ *   message                     | type      | params
+ *   ----------------------------|-----------|-------------
+ *   "\001ACTION is testing\001" | "ACTION"  | "is testing"
+ *   "\001VERSION\001"           | "VERSION" | NULL
+ *   "\001VERSION"               | NULL      | NULL
+ *   "test"                      | NULL      | NULL
  */
 
 void
@@ -1589,10 +1563,10 @@ relay_irc_parse_ctcp (const char *message, char **ctcp_type, char **ctcp_params)
     if (!message)
         return;
 
-    if (message[0] != '\01')
+    if (message[0] != '\001')
         return;
 
-    pos_end = strrchr (message + 1, '\01');
+    pos_end = strrchr (message + 1, '\001');
     if (!pos_end)
         return;
 
@@ -1641,7 +1615,8 @@ relay_irc_recv (struct t_relay_client *client, const char *data)
                         data);
     }
 
-    snprintf (modifier_data, sizeof (modifier_data), "%p", client);
+    snprintf (modifier_data, sizeof (modifier_data),
+              "0x%lx", (unsigned long)client);
     new_data = weechat_hook_modifier_exec ("relay_client_irc_in",
                                            modifier_data, data);
 

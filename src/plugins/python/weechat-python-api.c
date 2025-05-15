@@ -1,7 +1,7 @@
 /*
  * weechat-python-api.c - python API functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -3990,6 +3990,23 @@ API_FUNC(buffer_match_list)
     API_RETURN_INT(value);
 }
 
+API_FUNC(line_search_by_id)
+{
+    char *buffer;
+    int id;
+    const char *result;
+
+    API_INIT_FUNC(1, "line_search_by_id", API_RETURN_EMPTY);
+    buffer = NULL;
+    id = 0;
+    if (!PyArg_ParseTuple (args, "si", &buffer, &id))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = API_PTR2STR(weechat_line_search_by_id (API_STR2PTR(buffer), id));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(current_window)
 {
     const char *result;
@@ -4699,6 +4716,24 @@ API_FUNC(completion_get_string)
                                             property);
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(completion_set)
+{
+    char *completion, *property, *value;
+
+    API_INIT_FUNC(1, "completion_set", API_RETURN_ERROR);
+    completion = NULL;
+    property = NULL;
+    value = NULL;
+    if (!PyArg_ParseTuple (args, "sss", &completion, &property, &value))
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    weechat_completion_set (API_STR2PTR(completion),
+                            property,
+                            value);
+
+    API_RETURN_OK;
 }
 
 API_FUNC(completion_list_add)
@@ -5745,6 +5780,7 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(buffer_set),
     API_DEF_FUNC(buffer_string_replace_local_var),
     API_DEF_FUNC(buffer_match_list),
+    API_DEF_FUNC(line_search_by_id),
     API_DEF_FUNC(current_window),
     API_DEF_FUNC(window_search_with_buffer),
     API_DEF_FUNC(window_get_integer),
@@ -5780,6 +5816,7 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(completion_new),
     API_DEF_FUNC(completion_search),
     API_DEF_FUNC(completion_get_string),
+    API_DEF_FUNC(completion_set),
     API_DEF_FUNC(completion_list_add),
     API_DEF_FUNC(completion_free),
     API_DEF_FUNC(info_get),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -28,9 +28,9 @@ struct t_rlimit_resource
 };
 #endif /* HAVE_SYS_RESOURCE_H */
 
-extern void sys_setrlimit ();
-extern void sys_display_rlimit ();
-extern void sys_display_rusage ();
+extern void sys_setrlimit (void);
+extern void sys_display_rlimit (void);
+extern void sys_display_rusage (void);
 extern void sys_waitpid (int number_processes);
 
 #endif /* WEECHAT_SYS_H */

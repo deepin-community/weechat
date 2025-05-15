@@ -1,7 +1,7 @@
 /*
  * gui-nick.c - nick functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -243,7 +243,7 @@ gui_nick_strdup_for_color (const char *nickname)
 /*
  * Finds a color name for a nick (according to nick letters).
  *
- * If case_range < 0, nick is case sensitive.
+ * If case_range < 0, nick is case-sensitive.
  * If case_range == 0, nick is converted to lower case (with string_tolower).
  * If case_range > 0, nick is converted to lower case (with string_tolower_range).
  *
@@ -333,7 +333,7 @@ end:
 /*
  * Finds a color code for a nick (according to nick letters).
  *
- * If case_range < 0, nick is case sensitive.
+ * If case_range < 0, nick is case-sensitive.
  * If case_range == 0, nick is converted to lower case (with string_tolower).
  * If case_range > 0, nick is converted to lower case (with string_tolower_range).
  *

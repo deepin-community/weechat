@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,6 @@
 #ifndef WEECHAT_PLUGIN_EXEC_COMPLETION_H
 #define WEECHAT_PLUGIN_EXEC_COMPLETION_H
 
-extern void exec_completion_init ();
+extern void exec_completion_init (void);
 
 #endif /* WEECHAT_PLUGIN_EXEC_COMPLETION_H */

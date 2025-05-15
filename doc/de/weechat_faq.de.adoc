@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: de
-:toc-title: Inhaltsverzeichnis
+include::includes/attributes-de.adoc[]
 
 Übersetzer:
 
@@ -54,12 +54,14 @@ Wenn Sie weiterhin Probleme haben, melden Sie diese bitte den Entwicklern.
 Wir empfehlen, dass zur Installation https://brew.sh/[Homebrew ^↗^^] genutzt wird.
 Hilfe erhält man mittels:
 
+[source,shell]
 ----
 brew info weechat
 ----
 
 WeeChat kann durch folgenden Befehl installiert werden:
 
+[source,shell]
 ----
 brew install weechat
 ----
@@ -331,11 +333,14 @@ unterstützt (rxvt-unicode, konsole, gnome-terminal, ... um nur einige zu nennen
 Im Normalfall erfolgt die Markierung des Textes mittels der Tasten kbd:[Ctrl+Alt]
 in Verbindung mit der Auswahl durch die Maus.
 
+Die Nickliste kann umgeschaltet und nur bei Bedarf sichtbar gemacht werden, mit der Taste kbd:[Alt+Shift+N].
+
 Eine weitere Möglichkeit besteht darin,
 die Benutzerliste am oberen oder unteren Rand des WeeChat-Bildschirmes zu positionieren:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 [[urls]]
@@ -345,10 +350,13 @@ Dazu kann man den vereinfachten Anzeigemodus nutzen (Standardtaste: kbd:[Alt+l] 
 
 Um URLs einfacher zu öffnen, können alternativ folgende Optionen gesetzt werden:
 
+* Nickliste umschalten und nur bei Bedarf darstellen, mit dem Tastenkurzbefehl kbd:[Alt+Shift+N]
+
 * Die Benutzerliste am oberen Bildschirmbereich positionieren.
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 * Die Ausrichtung bei einem Zeilenumbruch innerhalb eines Wortes deaktivieren.
@@ -399,6 +407,7 @@ Umgebungsvariable `TZ` muss auf einen entsprechenden Wert eingestellt werden.
 Am Besten machen Sie dies in Ihrer Shell-Initialisierungsdatei oder in der
 Befehlszeile, bevor Sie WeeChat starten:
 
+[source,shell]
 ----
 export TZ=Europe/Berlin
 ----
@@ -713,8 +722,9 @@ Entsprechend der ausgegebenen Information, wird ggf. eine Maus nicht unterstütz
 Um zu testen ob eine Mausunterstützung vom Terminal bereitgestellt wird, sollte
 man folgende Zeile im Terminal eingeben:
 
+[source,shell]
 ----
-$ printf '\033[?1002h'
+printf '\033[?1002h'
 ----
 
 Jetzt klickt man mit der Maus auf das erste Zeichen im Terminal (linke obere
@@ -722,8 +732,9 @@ Ecke). Als Ergebnis sollte man folgende Zeichenkette erhalten: " !!#!!".
 
 Um die Mausunterstützung im Terminal zu beenden:
 
+[source,shell]
 ----
-$ printf '\033[?1002l'
+printf '\033[?1002l'
 ----
 
 [[mouse_coords]]
@@ -790,7 +801,7 @@ Man sollte versuchen, eine andere Priorität zu nutzen; Im folgenden Beispiel
 muss "xxx" durch den betroffenen Servernamen ersetzt werden:
 
 ----
-/set irc.server.xxx.tls_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
+/set irc.server.xxx.tls_priorities "NORMAL:%COMPAT"
 ----
 
 [[irc_tls_libera]]
@@ -1067,8 +1078,9 @@ Als erstes sollte das Kapitel über TLS Verbindungen in dieser FAQ gelesen werde
 Wenn das nicht hilft, sollte die Skriptliste von Hand gelöscht werden. Dazu
 folgenden Befehl in der Shell ausführen:
 
+[source,shell]
 ----
-$ rm ~/.cache/weechat/script/plugins.xml.gz
+rm ~/.cache/weechat/script/plugins.xml.gz
 ----
 
 [NOTE]
@@ -1092,15 +1104,17 @@ Das bedeutet aber auch, dass die Skripten von Hand aktuell gehalten werden müss
 
 * und in der Shell, mit installiertem curl:
 
+[source,shell]
 ----
-$ cd ~/.cache/weechat/script
-$ curl -O https://weechat.org/files/plugins.xml.gz
+cd ~/.cache/weechat/script
+curl -O https://weechat.org/files/plugins.xml.gz
 ----
 
 Wenn Sie macOS ausführen und die heruntergeladene Datei eine Größe von 0 Byte hat,
 versuchen Sie, diese Variable in Ihrer Shell-Initialisierungsdatei oder auf der
 Befehlszeile zu setzen. Bevor Sie WeeChat starten:
 
+[source,shell]
 ----
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ----
@@ -1272,6 +1286,7 @@ siehe https://weechat.org/about/support/[this page ^↗^^].
 
 Falls man WeeChat in gdb ausführt, kann folgende Fehlermeldung erscheinen:
 
+[source,shell]
 ----
 $ gdb /Pfad/zu/weechat
 (gdb) run
@@ -1282,6 +1297,7 @@ Cannot find new threads: generic error
 Um diesen Fehler zu beheben, sollte man gdb wie folgt aufrufen (der Pfad zu
 libpthread und WeeChat muss natürlich an das eigene System angepasst werden):
 
+[source,shell]
 ----
 $ LD_PRELOAD=/lib/libpthread.so.0 gdb /Pfad/zu/weechat
 (gdb) run
@@ -1290,7 +1306,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /Pfad/zu/weechat
 [[supported_os]]
 === Auf welchen Plattformen läuft WeeChat und wird es noch auf andere Betriebssysteme portiert?
 
-WeeChat läuft auf den meisten Linux/BSD-Distributionen, GNU/Hurd, Mac OS und
+WeeChat läuft auf den meisten Linux/BSD-Distributionen, GNU/Hurd, macOS und
 Windows (Cygwin und Windows Subsystem für Linux) einwandfrei.
 
 Wir geben unser Bestes, WeeChat auf möglichst viele Plattformen zu portieren.

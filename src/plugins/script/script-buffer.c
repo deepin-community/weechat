@@ -1,7 +1,7 @@
 /*
  * script-buffer.c - display scripts on script buffer
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -818,14 +818,17 @@ void
 script_buffer_set_current_line (int line)
 {
     int old_line;
+    struct t_script_repo *old_script;
 
     if ((line >= 0) && (line < script_repo_count_displayed))
     {
         old_line = script_buffer_selected_line;
         script_buffer_selected_line = line;
 
-        script_buffer_display_line_script (old_line,
-                                           script_repo_search_displayed_by_number (old_line));
+        old_script = script_repo_search_displayed_by_number (old_line);
+        if (old_script)
+            script_buffer_display_line_script (old_line, old_script);
+
         script_buffer_display_line_script (script_buffer_selected_line,
                                            script_repo_search_displayed_by_number (script_buffer_selected_line));
     }
@@ -898,7 +901,7 @@ script_buffer_get_window_info (struct t_gui_window *window,
  */
 
 void
-script_buffer_check_line_outside_window ()
+script_buffer_check_line_outside_window (void)
 {
     struct t_gui_window *window;
     int start_line_y, chat_height;
@@ -1070,7 +1073,7 @@ script_buffer_close_cb (const void *pointer, void *data,
  */
 
 void
-script_buffer_set_callbacks ()
+script_buffer_set_callbacks (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -1139,7 +1142,7 @@ script_buffer_set_keys (struct t_hashtable *hashtable)
  */
 
 void
-script_buffer_set_localvar_filter ()
+script_buffer_set_localvar_filter (void)
 {
     if (!script_buffer)
         return;
@@ -1153,7 +1156,7 @@ script_buffer_set_localvar_filter ()
  */
 
 void
-script_buffer_open ()
+script_buffer_open (void)
 {
     struct t_hashtable *buffer_props;
 

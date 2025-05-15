@@ -1,7 +1,7 @@
 /*
  * irc-config.c - IRC configuration options (file irc.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -95,6 +95,7 @@ struct t_config_option *irc_config_look_item_nick_modes = NULL;
 struct t_config_option *irc_config_look_item_nick_prefix = NULL;
 struct t_config_option *irc_config_look_join_auto_add_chantype = NULL;
 struct t_config_option *irc_config_look_list_buffer = NULL;
+struct t_config_option *irc_config_look_list_buffer_format_export = NULL;
 struct t_config_option *irc_config_look_list_buffer_scroll_horizontal = NULL;
 struct t_config_option *irc_config_look_list_buffer_sort = NULL;
 struct t_config_option *irc_config_look_list_buffer_topic_strip_colors = NULL;
@@ -109,6 +110,7 @@ struct t_config_option *irc_config_look_nicks_hide_password = NULL;
 struct t_config_option *irc_config_look_notice_as_pv = NULL;
 struct t_config_option *irc_config_look_notice_welcome_redirect = NULL;
 struct t_config_option *irc_config_look_notice_welcome_tags = NULL;
+struct t_config_option *irc_config_look_notice_nicks_disable_notify = NULL;
 struct t_config_option *irc_config_look_notify_tags_ison = NULL;
 struct t_config_option *irc_config_look_notify_tags_whois = NULL;
 struct t_config_option *irc_config_look_open_pv_buffer_echo_msg = NULL;
@@ -226,7 +228,7 @@ irc_config_get_server_from_option_name (const char *name)
  */
 
 void
-irc_config_compute_nick_colors ()
+irc_config_compute_nick_colors (void)
 {
     struct t_irc_server *ptr_server;
     struct t_irc_channel *ptr_channel;
@@ -641,6 +643,56 @@ irc_config_change_look_nicks_hide_password (const void *pointer, void *data,
             0,
             &irc_config_num_nicks_hide_password);
     }
+}
+
+/*
+ * Checks if we must notify for the notice message, according to the nick
+ * who sent it.
+ *
+ * Returns:
+ *   1: notification
+ *   0: no notification
+ */
+
+int
+irc_config_notice_nick_notify (const char *nick)
+{
+    const char *ptr_nicks;
+    char **nicks;
+    int rc, i, num_nicks;
+
+    if (!nick)
+        return 0;
+
+    ptr_nicks = weechat_config_string (irc_config_look_notice_nicks_disable_notify);
+    if (!ptr_nicks || !ptr_nicks[0])
+        return 1;
+
+    rc = 1;
+
+    nicks = weechat_string_split (
+        ptr_nicks,
+        ",",
+        NULL,
+        WEECHAT_STRING_SPLIT_STRIP_LEFT
+        | WEECHAT_STRING_SPLIT_STRIP_RIGHT
+        | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
+        0,
+        &num_nicks);
+    if (nicks)
+    {
+        for (i = 0; i < num_nicks; i++)
+        {
+            if (weechat_strcasecmp (nicks[i], nick) == 0)
+            {
+                rc = 0;
+                break;
+            }
+        }
+        weechat_string_free_split (nicks);
+    }
+
+    return rc;
 }
 
 /*
@@ -1885,10 +1937,9 @@ irc_config_server_new_option (struct t_config_file *config_file,
         case IRC_SERVER_OPTION_IPV6:
             new_option = weechat_config_new_option (
                 config_file, section,
-                option_name, "boolean",
-                N_("use IPv6 protocol for server communication (try IPv6 then "
-                   "fallback to IPv4); if disabled, only IPv4 is used"),
-                NULL, 0, 0,
+                option_name, "enum",
+                N_("use IPv6 protocol for server communication"),
+                "disable|auto|force", 0, 0,
                 default_value, value,
                 null_value_allowed,
                 callback_check_value,
@@ -2888,7 +2939,7 @@ irc_config_update_cb (const void *pointer, void *data,
                       int version_read,
                       struct t_hashtable *data_read)
 {
-    const char *ptr_section, *ptr_option, *ptr_value;
+    const char *ptr_config, *ptr_section, *ptr_option, *ptr_value;
     const char *option_autojoin_delay = "autojoin_delay";
     char *new_option, *pos_option, *new_value;
     int changes, length;
@@ -3047,6 +3098,70 @@ irc_config_update_cb (const void *pointer, void *data,
         }
     }
 
+    if (version_read < 5)
+    {
+        /*
+         * changes in v5 (WeeChat 4.4.0):
+         *   - server option "ipv6" is converted from boolean to enum:
+         *       - "on"  -> "auto"
+         *       - "off" -> "disable"
+         *     (new possible value "force" is not set by this function)
+         */
+        ptr_config = weechat_hashtable_get (data_read, "config");
+        ptr_section = weechat_hashtable_get (data_read, "section");
+        ptr_option = weechat_hashtable_get (data_read, "option");
+        ptr_value = weechat_hashtable_get (data_read, "value");
+        if (ptr_section
+            && ptr_option
+            && (strcmp (ptr_section, "server_default") == 0)
+            && (strcmp (ptr_option, "ipv6") == 0)
+            && ptr_value)
+        {
+            new_value = (strcmp (ptr_value, "off") == 0) ?
+                strdup ("disable") : strdup ("auto");
+            if (new_value)
+            {
+                weechat_printf (
+                    NULL,
+                    _("Value of option \"%s.%s.%s\" has been converted: \"%s\" => \"%s\""),
+                    ptr_config,
+                    ptr_section,
+                    ptr_option,
+                    ptr_value,
+                    new_value);
+                weechat_hashtable_set (data_read, "value", new_value);
+                changes++;
+                free (new_value);
+            }
+        }
+        else if (ptr_section
+                 && ptr_option
+                 && (strcmp (ptr_section, "server") == 0)
+                 && ptr_value)
+        {
+            pos_option = strrchr (ptr_option, '.');
+            if (pos_option && (strcmp (pos_option + 1, "ipv6") == 0))
+            {
+                new_value = (strcmp (ptr_value, "off") == 0) ?
+                    strdup ("disable") : strdup ("auto");
+                if (new_value)
+                {
+                    weechat_printf (
+                        NULL,
+                        _("Value of option \"%s.%s.%s\" has been converted: \"%s\" => \"%s\""),
+                        ptr_config,
+                        ptr_section,
+                        ptr_option,
+                        ptr_value,
+                        new_value);
+                    weechat_hashtable_set (data_read, "value", new_value);
+                    changes++;
+                    free (new_value);
+                }
+            }
+        }
+    }
+
     return (changes) ? data_read : NULL;
 }
 
@@ -3059,7 +3174,7 @@ irc_config_update_cb (const void *pointer, void *data,
  */
 
 int
-irc_config_init ()
+irc_config_init (void)
 {
     int i;
 
@@ -3300,8 +3415,8 @@ irc_config_init ()
             irc_config_file, irc_config_section_look,
             "highlight_channel", "string",
             N_("comma separated list of words to highlight in channel buffers "
-               "(case insensitive, use \"(?-i)\" at beginning of words to "
-               "make them case sensitive; special variables $nick, $channel and "
+               "(case-insensitive, use \"(?-i)\" at beginning of words to "
+               "make them case-sensitive; special variables $nick, $channel and "
                "$server are replaced by their values), these words are added to "
                "buffer property \"highlight_words\" only when buffer is created "
                "(it does not affect current buffers), an empty string disables "
@@ -3312,8 +3427,8 @@ irc_config_init ()
             irc_config_file, irc_config_section_look,
             "highlight_pv", "string",
             N_("comma separated list of words to highlight in private buffers "
-               "(case insensitive, use \"(?-i)\" at beginning of words to "
-               "make them case sensitive; special variables $nick, $channel and "
+               "(case-insensitive, use \"(?-i)\" at beginning of words to "
+               "make them case-sensitive; special variables $nick, $channel and "
                "$server are replaced by their values), these words are added to "
                "buffer property \"highlight_words\" only when buffer is created "
                "(it does not affect current buffers), an empty string disables "
@@ -3324,8 +3439,8 @@ irc_config_init ()
             irc_config_file, irc_config_section_look,
             "highlight_server", "string",
             N_("comma separated list of words to highlight in server buffers "
-               "(case insensitive, use \"(?-i)\" at beginning of words to "
-               "make them case sensitive; special variables $nick, $channel and "
+               "(case-insensitive, use \"(?-i)\" at beginning of words to "
+               "make them case-sensitive; special variables $nick, $channel and "
                "$server are replaced by their values), these words are added to "
                "buffer property \"highlight_words\" only when buffer is created "
                "(it does not affect current buffers), an empty string disables "
@@ -3406,6 +3521,15 @@ irc_config_init ()
             NULL, NULL, NULL,
             NULL, NULL, NULL,
             NULL, NULL, NULL);
+        irc_config_look_list_buffer_format_export = weechat_config_new_option (
+            irc_config_file, irc_config_section_look,
+            "list_buffer_format_export", "string",
+            N_("format of each channel exported in a file "
+               "(note: content is evaluated, see /help list)"),
+            NULL, 0, 0, "${name} (${users}): \"${topic}\"", NULL, 0,
+            NULL, NULL, NULL,
+            NULL, NULL, NULL,
+            NULL, NULL, NULL);
         irc_config_look_list_buffer_scroll_horizontal = weechat_config_new_option (
             irc_config_file, irc_config_section_look,
             "list_buffer_scroll_horizontal", "integer",
@@ -3419,9 +3543,9 @@ irc_config_init ()
             "list_buffer_sort", "string",
             N_("comma-separated list of fields to sort channels (see /help list "
                "for a list of fields); char \"-\" can be used before field to "
-               "reverse order, char \"~\" can be used to do a case insensitive "
+               "reverse order, char \"~\" can be used to do a case-insensitive "
                "comparison; example: \"-count,~name\" for biggest channels "
-               "first then case insensitive sort on name"),
+               "first then case-insensitive sort on name"),
             NULL, 0, 0, "~name2", NULL, 0,
             NULL, NULL, NULL,
             NULL, NULL, NULL,
@@ -3511,6 +3635,15 @@ irc_config_init ()
                "buffer if found)"),
             "auto|never|always", 0, 0, "auto", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        irc_config_look_notice_nicks_disable_notify = weechat_config_new_option (
+            irc_config_file, irc_config_section_look,
+            "notice_nicks_disable_notify", "string",
+            N_("comma separated list of nicks for which notifications are "
+               "disabled in notice messages (comparison is case-insensitive)"),
+            NULL, 0, 0, "chanserv,nickserv", NULL, 0,
+            NULL, NULL, NULL,
+            NULL, NULL, NULL,
+            NULL, NULL, NULL);
         irc_config_look_notice_welcome_redirect = weechat_config_new_option (
             irc_config_file, irc_config_section_look,
             "notice_welcome_redirect", "boolean",
@@ -4116,7 +4249,7 @@ irc_config_init ()
  */
 
 int
-irc_config_read ()
+irc_config_read (void)
 {
     int rc;
 
@@ -4156,7 +4289,7 @@ irc_config_write (int write_temp_servers)
  */
 
 void
-irc_config_free ()
+irc_config_free (void)
 {
     weechat_config_free (irc_config_file);
     irc_config_file = NULL;

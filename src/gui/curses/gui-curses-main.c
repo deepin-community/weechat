@@ -1,7 +1,7 @@
 /*
  * gui-curses-main.c - main loop for Curses GUI
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -150,8 +150,11 @@ gui_main_get_password (const char **prompt, char *password, int size)
  */
 
 void
-gui_main_signal_sigint ()
+gui_main_signal_sigint (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     weechat_quit = 1;
 }
 
@@ -160,7 +163,7 @@ gui_main_signal_sigint ()
  */
 
 void
-gui_main_init ()
+gui_main_init (void)
 {
     struct t_gui_buffer *ptr_buffer;
     char title[256];
@@ -253,8 +256,11 @@ gui_main_init ()
  */
 
 void
-gui_main_signal_sigwinch ()
+gui_main_signal_sigwinch (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     gui_signal_sigwinch_received = 1;
 }
 
@@ -263,7 +269,7 @@ gui_main_signal_sigwinch ()
  */
 
 void
-gui_main_debug_libs ()
+gui_main_debug_libs (void)
 {
 #if defined(NCURSES_VERSION) && defined(NCURSES_VERSION_PATCH)
     gui_chat_printf (NULL, "    ncurses: %s (patch %d)",
@@ -278,7 +284,7 @@ gui_main_debug_libs ()
  */
 
 void
-gui_main_refreshes ()
+gui_main_refreshes (void)
 {
     struct t_gui_window *ptr_win;
     struct t_gui_buffer *ptr_buffer;
@@ -385,7 +391,7 @@ gui_main_refreshes ()
  */
 
 void
-gui_main_loop ()
+gui_main_loop (void)
 {
     struct t_hook *hook_fd_keyboard;
     int send_signal_sigwinch;

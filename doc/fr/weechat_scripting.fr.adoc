@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: fr
-:toc-title: Table des matières
+include::includes/attributes-fr.adoc[]
 
 Ce manuel documente le client de messagerie instantanée WeeChat, il fait
 partie de WeeChat.
@@ -73,7 +73,7 @@ link:weechat_plugin_api.fr.html#_hook_process[Référence API extension WeeChat�
 
 WeeChat définit un module `weechat` qui doit être importé avec `import weechat`. +
 Un "stub" Python pour l'API WeeChat est disponible dans le dépôt :
-https://raw.githubusercontent.com/weechat/weechat/master/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
+https://raw.githubusercontent.com/weechat/weechat/main/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
 
 [[python_functions]]
 ===== Fonctions
@@ -376,9 +376,10 @@ automatiquement le script quand WeeChat démarre.
 
 Par exemple en Python :
 
+[source,shell]
 ----
-$ cd ~/.local/share/weechat/python/autoload
-$ ln -s ../script.py
+cd ~/.local/share/weechat/python/autoload
+ln -s ../script.py
 ----
 
 [NOTE]

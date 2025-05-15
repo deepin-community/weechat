@@ -1,7 +1,7 @@
 /*
  * core-util.c - some useful functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -123,9 +123,9 @@ util_timeval_add (struct timeval *tv, long long interval)
  */
 
 char *
-util_get_microseconds_string (long long microseconds)
+util_get_microseconds_string (unsigned long long microseconds)
 {
-    long long hour, min, sec, usec;
+    unsigned long long hour, min, sec, usec;
     char result[128];
 
     usec = microseconds % 1000000;
@@ -134,7 +134,7 @@ util_get_microseconds_string (long long microseconds)
     hour = (microseconds / 1000000) / 3600;
 
     snprintf (result, sizeof (result),
-              "%lld:%02lld:%02lld.%06lld",
+              "%llu:%02llu:%02llu.%06llu",
               hour, min, sec, usec);
 
     return strdup (result);
@@ -178,6 +178,7 @@ util_strftimeval (char *string, int max, const char *format, struct timeval *tv)
     const char *ptr_format;
     struct tm *local_time;
     int length, bytes;
+    long usec;
 
     if (!string || (max <= 0) || !format || !tv)
         return 0;
@@ -191,6 +192,12 @@ util_strftimeval (char *string, int max, const char *format, struct timeval *tv)
     if (!format2)
         return 0;
 
+    usec = (long)(tv->tv_usec);
+    if (usec < 0)
+        usec = 0;
+    else if (usec > 999999)
+        usec = 999999;
+
     ptr_format = format;
     while (ptr_format && ptr_format[0])
     {
@@ -203,8 +210,7 @@ util_strftimeval (char *string, int max, const char *format, struct timeval *tv)
         {
             if ((ptr_format[2] >= '1') && (ptr_format[2] <= '6'))
             {
-                snprintf (str_temp, sizeof (str_temp),
-                          "%06ld", (long)(tv->tv_usec));
+                snprintf (str_temp, sizeof (str_temp), "%06ld", usec);
                 length = ptr_format[2] - '1' + 1;
                 str_temp[length] = '\0';
                 string_dyn_concat (format2, str_temp, -1);
@@ -219,13 +225,13 @@ util_strftimeval (char *string, int max, const char *format, struct timeval *tv)
         }
         else if ((ptr_format[0] == '%') && (ptr_format[1] == 'f'))
         {
-            snprintf (str_temp, sizeof (str_temp), "%06ld", (long)(tv->tv_usec));
+            snprintf (str_temp, sizeof (str_temp), "%06ld", usec);
             string_dyn_concat (format2, str_temp, -1);
             ptr_format += 2;
         }
         else if ((ptr_format[0] == '%') && (ptr_format[1] == '!'))
         {
-            snprintf (str_temp, sizeof (str_temp), "%ld", (long)(tv->tv_sec));
+            snprintf (str_temp, sizeof (str_temp), "%lld", (long long)(tv->tv_sec));
             string_dyn_concat (format2, str_temp, -1);
             ptr_format += 2;
         }
@@ -282,7 +288,7 @@ util_parse_time (const char *datetime, struct timeval *tv)
     char *string, *pos, *pos2, str_usec[16], *error, str_date[128];
     struct tm tm_date, tm_date_gm, tm_date_local, *local_time;
     time_t time_now, time_gm, time_local;
-    long value;
+    long long value;
     int rc, length, use_local_time, timezone_offset, offset_factor, hour, min;
 
     if (!datetime || !datetime[0] || !tv)
@@ -324,14 +330,14 @@ util_parse_time (const char *datetime, struct timeval *tv)
                 strcat (str_usec, "0");
             }
             error = NULL;
-            value = strtol (str_usec, &error, 10);
+            value = strtoll (str_usec, &error, 10);
             if (error && !error[0])
             {
                 if (value < 0)
                     value = 0;
                 else if (value > 999999)
                     value = 999999;
-                tv->tv_usec = (int)value;
+                tv->tv_usec = (long)value;
             }
         }
         memmove (pos, pos2, strlen (pos2) + 1);
@@ -468,7 +474,7 @@ util_parse_time (const char *datetime, struct timeval *tv)
     {
         /* timestamp format: "1704402062" */
         error = NULL;
-        value = strtol (string, &error, 10);
+        value = strtoll (string, &error, 10);
         if (error && !error[0] && (value >= 0))
         {
             tv->tv_sec = (time_t)value;
@@ -534,18 +540,26 @@ util_get_time_diff (time_t time1, time_t time2,
  *   - 60000000: minutes
  *   - 3600000000: hours
  *
- * Returns the delay in microseconds, -1 if error.
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
-long long
-util_parse_delay (const char *string_delay, long long default_factor)
+int
+util_parse_delay (const char *string_delay, unsigned long long default_factor,
+                  unsigned long long *delay)
 {
     const char *pos;
     char *str_number, *error;
-    long long factor, delay;
+    unsigned long long factor;
+
+    if (!delay)
+        return 0;
+
+    *delay = 0;
 
     if (!string_delay || !string_delay[0] || (default_factor < 1))
-        return -1LL;
+        return 0;
 
     factor = default_factor;
 
@@ -559,37 +573,42 @@ util_parse_delay (const char *string_delay, long long default_factor)
     {
         str_number = string_strndup (string_delay, pos - string_delay);
         if (strcmp (pos, "us") == 0)
-            factor = 1LL;
+            factor = 1ULL;
         else if (strcmp (pos, "ms") == 0)
-            factor = 1000LL;
+            factor = 1000ULL;
         else if (strcmp (pos, "s") == 0)
-            factor = 1000LL * 1000LL;
+            factor = 1000ULL * 1000ULL;
         else if (strcmp (pos, "m") == 0)
-            factor = 1000LL * 1000LL * 60LL;
+            factor = 1000ULL * 1000ULL * 60ULL;
         else if (strcmp (pos, "h") == 0)
-            factor = 1000LL * 1000LL * 60LL * 60LL;
+            factor = 1000ULL * 1000ULL * 60ULL * 60ULL;
         else
-            return -1LL;
+            return 0;
     }
     else
     {
+        if (string_delay[0] == '-')
+            return 0;
         str_number = strdup (string_delay);
     }
 
     if (!str_number)
-        return -1LL;
+        return 0;
 
     error = NULL;
-    delay = strtoll (str_number, &error, 10);
-    if (!error || error[0] || (delay < 0))
+    *delay = strtoull (str_number, &error, 10);
+    if (!error || error[0])
     {
         free (str_number);
-        return -1LL;
+        *delay = 0;
+        return 0;
     }
+
+    *delay *= factor;
 
     free (str_number);
 
-    return delay * factor;
+    return 1;
 }
 
 /*
@@ -615,6 +634,9 @@ util_version_number (const char *version)
     const char *ptr_item;
     int num_items, i, version_int[4], index_buf;
     long number;
+
+    if (!version || !version[0])
+        return 0;
 
     items = string_split (version, ".", NULL,
                           WEECHAT_STRING_SPLIT_STRIP_LEFT

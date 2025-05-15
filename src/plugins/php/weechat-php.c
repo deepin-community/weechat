@@ -2,7 +2,7 @@
  * weechat-php.c - PHP plugin for WeeChat
  *
  * Copyright (C) 2006-2017 Adam Saponara <as@php.net>
- * Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2017-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -241,6 +241,7 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_buffer_set, arginfo_weechat_buffer_set)
     PHP_FE(weechat_buffer_string_replace_local_var, arginfo_weechat_buffer_string_replace_local_var)
     PHP_FE(weechat_buffer_match_list, arginfo_weechat_buffer_match_list)
+    PHP_FE(weechat_line_search_by_id, arginfo_weechat_line_search_by_id)
     PHP_FE(weechat_current_window, arginfo_weechat_current_window)
     PHP_FE(weechat_window_search_with_buffer, arginfo_weechat_window_search_with_buffer)
     PHP_FE(weechat_window_get_integer, arginfo_weechat_window_get_integer)
@@ -276,6 +277,7 @@ const zend_function_entry weechat_functions[] = {
     PHP_FE(weechat_completion_new, arginfo_weechat_completion_new)
     PHP_FE(weechat_completion_search, arginfo_weechat_completion_search)
     PHP_FE(weechat_completion_get_string, arginfo_weechat_completion_get_string)
+    PHP_FE(weechat_completion_set, arginfo_weechat_completion_set)
     PHP_FE(weechat_completion_list_add, arginfo_weechat_completion_list_add)
     PHP_FE(weechat_completion_free, arginfo_weechat_completion_free)
     PHP_FE(weechat_info_get, arginfo_weechat_info_get)
@@ -796,7 +798,7 @@ weechat_php_unload_name (const char *name)
  */
 
 void
-weechat_php_unload_all ()
+weechat_php_unload_all (void)
 {
     while (php_scripts)
     {
@@ -870,7 +872,7 @@ weechat_php_command_cb (const void *pointer, void *data,
                         int argc, char **argv, char **argv_eol)
 {
     char *ptr_name, *ptr_code, *path_script;
-    int i, send_to_buffer_as_input, exec_commands;
+    int i, send_to_buffer_as_input, exec_commands, old_php_quiet;
 
     /* make C compiler happy */
     (void) pointer;
@@ -929,6 +931,7 @@ weechat_php_command_cb (const void *pointer, void *data,
                  || (weechat_strcmp (argv[1], "reload") == 0)
                  || (weechat_strcmp (argv[1], "unload") == 0))
         {
+            old_php_quiet = php_quiet;
             ptr_name = argv_eol[2];
             if (strncmp (ptr_name, "-q ", 3) == 0)
             {
@@ -958,7 +961,7 @@ weechat_php_command_cb (const void *pointer, void *data,
                 /* unload PHP script */
                 weechat_php_unload_name (ptr_name);
             }
-            php_quiet = 0;
+            php_quiet = old_php_quiet;
         }
         else if (weechat_strcmp (argv[1], "eval") == 0)
         {
@@ -1267,6 +1270,8 @@ php_weechat_log_message (char *message)
 int
 weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
+    int old_php_quiet;
+
     /* make C compiler happy */
     (void) argc;
     (void) argv;
@@ -1302,6 +1307,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     php_data.callback_signal_debug_dump = &weechat_php_signal_debug_dump_cb;
     php_data.callback_signal_script_action = &weechat_php_signal_script_action_cb;
     php_data.callback_load_file = &weechat_php_load_cb;
+    php_data.init_before_autoload = NULL;
     php_data.unload_all = &weechat_php_unload_all;
 
     php_embed_module.startup = php_weechat_startup;
@@ -1314,9 +1320,10 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     PG(report_zend_debug) = 0;  /* Turn off --enable-debug output */
 
+    old_php_quiet = php_quiet;
     php_quiet = 1;
     plugin_script_init (weechat_php_plugin, &php_data);
-    php_quiet = 0;
+    php_quiet = old_php_quiet;
 
     plugin_script_display_short_list (weechat_php_plugin,
                                       php_scripts);
@@ -1332,7 +1339,10 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 int
 weechat_plugin_end (struct t_weechat_plugin *plugin)
 {
+    int old_php_quiet;
+
     /* unload all scripts */
+    old_php_quiet = php_quiet;
     php_quiet = 1;
     if (php_script_eval)
     {
@@ -1340,7 +1350,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
         php_script_eval = NULL;
     }
     plugin_script_end (plugin, &php_data);
-    php_quiet = 0;
+    php_quiet = old_php_quiet;
 
     if (weechat_php_func_map)
     {

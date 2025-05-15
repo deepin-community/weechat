@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,8 +37,8 @@ enum t_upgrade_weechat_type
     UPGRADE_WEECHAT_TYPE_LAYOUT_WINDOW,
 };
 
-int upgrade_weechat_save ();
-int upgrade_weechat_load ();
-void upgrade_weechat_end ();
+int upgrade_weechat_save (void);
+int upgrade_weechat_load (void);
+void upgrade_weechat_end (void);
 
 #endif /* WEECHAT_UPGRADE_H */

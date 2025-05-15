@@ -13,7 +13,7 @@ info:
   license:
     name: CC BY-NC-SA 4.0
     url: https://creativecommons.org/licenses/by-nc-sa/4.0/
-  version: 0.1.0
+  version: 0.4.0
 
 externalDocs:
   url: https://weechat.org/doc/
@@ -29,6 +29,7 @@ tags:
   - name: buffers
   - name: hotlist
   - name: input
+  - name: completion
   - name: ping
   - name: sync
 
@@ -55,6 +56,10 @@ paths:
                 $ref: '#/components/schemas/Handshake'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /version:
     get:
       tags:
@@ -72,8 +77,16 @@ paths:
                 $ref: '#/components/schemas/Version'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers:
@@ -100,8 +113,16 @@ paths:
                   $ref: '#/components/schemas/Buffer'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_id}:
@@ -126,10 +147,22 @@ paths:
                 $ref: '#/components/schemas/Buffer'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_name}:
@@ -154,10 +187,22 @@ paths:
                 $ref: '#/components/schemas/Buffer'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_id}/lines:
@@ -183,10 +228,22 @@ paths:
                   $ref: '#/components/schemas/Line'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_id}/lines/{line_id}:
@@ -211,10 +268,22 @@ paths:
                 $ref: '#/components/schemas/Line'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer or line not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_name}/lines:
@@ -240,10 +309,22 @@ paths:
                   $ref: '#/components/schemas/Line'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_name}/lines/{line_id}:
@@ -268,10 +349,22 @@ paths:
                 $ref: '#/components/schemas/Line'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer or line not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_id}/nicks:
@@ -293,10 +386,22 @@ paths:
                 $ref: '#/components/schemas/NickGroup'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /buffers/{buffer_name}/nicks:
@@ -318,10 +423,22 @@ paths:
                 $ref: '#/components/schemas/NickGroup'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /hotlist:
@@ -343,10 +460,22 @@ paths:
                   $ref: '#/components/schemas/Hotlist'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /input:
@@ -365,10 +494,48 @@ paths:
           description: Successful operation
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
-        '404':
-          description: Buffer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - password: []
+  /completion:
+    post:
+      tags:
+        - completion
+      description: |
+        Complete user command or text.
+      operationId: input
+      parameters:
+        - $ref: '#/components/parameters/totp'
+      requestBody:
+        $ref: '#/components/requestBodies/CompletionBody'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Completion'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /ping:
@@ -393,8 +560,16 @@ paths:
           description: Successful operation
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: Out of memory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
   /sync:
@@ -416,8 +591,16 @@ paths:
           description: Successful operation
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - password: []
 
@@ -516,6 +699,11 @@ components:
         * `strip`: strip colors
 
   schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
     Handshake:
       type: object
       properties:
@@ -545,21 +733,21 @@ components:
       properties:
         weechat_version:
           type: string
-          example: 4.3.0-dev
+          example: 4.4.0-dev
         weechat_version_git:
           type: string
-          example: v4.2.0-360-gccf23ae51
+          example: v4.3.0-147-g0256ee945
         weechat_version_number:
           type: integer
           format: int32
-          example: 67305472
+          example: 67371008
         relay_api_version:
           type: string
-          example: "0.0.1"
+          example: "0.2.0"
         relay_api_version_number:
           type: integer
           format: int32
-          example: 1
+          example: 512
       required:
         - weechat_version
         - weechat_version_git
@@ -592,6 +780,10 @@ components:
             - free
           description: the buffer type
           example: formatted
+        hidden:
+          type: boolean
+          description: buffer is hidden
+          example: false
         title:
           type: string
           description: the buffer title (can contain colors)
@@ -623,12 +815,16 @@ components:
           example: true
         nicklist_case_sensitive:
           type: boolean
-          description: groups and nicks are case sensitive
+          description: groups and nicks are case-sensitive
           example: false
         nicklist_display_groups:
           type: boolean
           description: groups are displayed in nicklist
           example: false
+        time_displayed:
+          type: boolean
+          description: time is displayed on each line
+          example: true
         local_variables:
           type: object
           description: the buffer local variables
@@ -656,6 +852,7 @@ components:
         - short_name
         - number
         - type
+        - hidden
         - title
         - modes
         - input_prompt
@@ -665,6 +862,7 @@ components:
         - nicklist
         - nicklist_case_sensitive
         - nicklist_display_groups
+        - time_displayed
         - local_variables
         - keys
     Key:
@@ -934,6 +1132,42 @@ components:
         - date
         - buffer_id
         - count
+    Completion:
+      type: object
+      properties:
+        context:
+          type: string
+          enum:
+            - 'null'
+            - 'command'
+            - 'command_arg'
+            - 'auto'
+          example: 'command_arg'
+        base_word:
+          type: string
+          example: 'qu'
+        position_replace:
+          type: integer
+          format: int32
+          example: 1
+        add_space:
+          type: boolean
+          example: true
+        list:
+          type: array
+          items:
+            type: string
+            example:
+              - 'query'
+              - 'quiet'
+              - 'quit'
+              - 'quote'
+      required:
+        - context
+        - base_word
+        - position_replace
+        - add_space
+        - list
     Ping:
       type: object
       properties:
@@ -981,7 +1215,7 @@ components:
                 format: int64
                 description: Buffer identifier (≥ 0)
                 example: 1709932823238637
-              buffer:
+              buffer_name:
                 type: string
                 description: >-
                   Buffer full name
@@ -992,6 +1226,41 @@ components:
                 example: 'hello, world!'
             required:
               - command
+          example:
+            buffer_id: 1709932823238637
+            command: 'hello, world!'
+    CompletionBody:
+      description: Buffer and user text/command to complete
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              buffer_id:
+                type: integer
+                format: int64
+                description: Buffer identifier (≥ 0)
+                example: 1709932823238637
+              buffer_name:
+                type: string
+                description: >-
+                  Buffer full name
+                example: 'irc.libera.#weechat'
+              command:
+                type: string
+                description: user command or text to complete
+                example: '/qu'
+              position:
+                type: integer
+                format: int32
+                description: Position in data (≥ 0)
+                example: 3
+            required:
+              - data
+          example:
+            buffer_id: 1709932823238637
+            command: '/qu'
     PingBody:
       description: Custom data that will be returned in the response
       required: false

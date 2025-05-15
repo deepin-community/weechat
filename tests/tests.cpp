@@ -1,7 +1,7 @@
 /*
  * tests.cpp - run WeeChat tests
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -69,6 +69,7 @@ IMPORT_TEST_GROUP(CoreHashtable);
 IMPORT_TEST_GROUP(CoreHdata);
 IMPORT_TEST_GROUP(CoreHook);
 IMPORT_TEST_GROUP(CoreInfolist);
+IMPORT_TEST_GROUP(CoreInput);
 IMPORT_TEST_GROUP(CoreList);
 IMPORT_TEST_GROUP(CoreNetwork);
 IMPORT_TEST_GROUP(CoreSecure);

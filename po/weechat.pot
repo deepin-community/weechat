@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2024-05-22 00:15+0200\n"
+"POT-Creation-Date: 2025-03-16 14:47+0100\n"
 "PO-Revision-Date: 2014-08-16 10:27+0200\n"
 "Last-Translator: Sébastien Helleu <flashcode@flashtux.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
@@ -29,158 +29,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#, c-format
-msgid "%sAnother command \"%s\" already exists for plugin \"%s\""
-msgstr ""
-
-#, c-format
-msgid ""
-"%sUnknown command \"%s\" (commands are case sensitive, type /help for help), "
-"commands with similar name: %s"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sUnknown command \"%s\" (type /help for help), commands with similar name: "
-"%s"
-msgstr ""
-
-#, c-format
-msgid "%sBad file descriptor (%d) used in hook_fd"
-msgstr ""
-
-#, c-format
-msgid "End of command '%s', timeout reached (%.3fs)"
-msgstr ""
-
-#, c-format
-msgid "System clock skew detected (%+ld seconds), reinitializing all timers"
-msgstr ""
-
-#, c-format
-msgid "%sURL transfer error: %s (URL: \"%s\")"
-msgstr ""
-
-#, c-format
-msgid "End of URL transfer '%s', timeout reached (%.3fs)"
-msgstr ""
-
-#, c-format
-msgid "%sError running thread in hook_url: %s (URL: \"%s\")"
-msgstr ""
-
-#. TRANSLATORS: "%s %s" after "compiled on" is date and time
-#, c-format
-msgid ""
-"WeeChat %s Copyright %s, compiled on %s %s\n"
-"Developed by Sébastien Helleu <flashcode@flashtux.org> - %s"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [option...] [plugin:option...]\n"
-msgstr ""
-
-msgid ""
-"  -a, --no-connect         disable auto-connect to servers at startup\n"
-"  -c, --colors             display default colors in terminal and exit\n"
-"  -d, --dir <path>         force a single WeeChat home directory\n"
-"                           or 5 different directories separated by colons "
-"(in this order: config, data, state, cache, runtime)\n"
-"                           (environment variable WEECHAT_HOME is read if "
-"this option is not given)\n"
-"  -t, --temp-dir           create a temporary WeeChat home directory and "
-"delete it on exit\n"
-"                           (incompatible with option \"-d\")\n"
-"  -h, --help               display this help and exit\n"
-"  -l, --license            display WeeChat license and exit\n"
-"  -p, --no-plugin          don't load any plugin at startup\n"
-"  -P, --plugins <plugins>  load only these plugins at startup\n"
-"                           (see /help weechat.plugin.autoload)\n"
-"  -r, --run-command <cmd>  run command(s) after startup;\n"
-"                           many commands can be separated by semicolons and "
-"are evaluated,\n"
-"                           this option can be given multiple times\n"
-"  -s, --no-script          don't load any script at startup\n"
-"      --upgrade            upgrade WeeChat using session files (see /help "
-"upgrade in WeeChat)\n"
-"  -v, --version            display WeeChat version and exit\n"
-"  plugin:option            option for plugin (see man weechat)\n"
-msgstr ""
-
-msgid "Extra options in headless mode:\n"
-msgstr ""
-
-msgid ""
-"      --doc-gen <path>     generate files to build documentation and exit\n"
-msgstr ""
-
-msgid ""
-"      --daemon             run WeeChat as a daemon (fork, new process group, "
-"file descriptors closed);\n"
-msgstr ""
-
-msgid ""
-"                           (by default in headless mode WeeChat is blocking "
-"and does not run in background)\n"
-msgstr ""
-
-msgid ""
-"      --stdout             display log messages on standard output instead "
-"of writing them in log file\n"
-msgstr ""
-
-msgid ""
-"                           (option ignored if option \"--daemon\" is given)\n"
-msgstr ""
-
-msgid ""
-"Debug options (for tools like valgrind, DO NOT USE IN PRODUCTION):\n"
-"      --no-dlclose         do not call function dlclose after plugins are "
-"unloaded\n"
-"      --no-gnutls          disable init/deinit of gnutls\n"
-"      --no-gcrypt          disable init/deinit of gcrypt\n"
-msgstr ""
-
-#, c-format
-msgid "Error: missing argument for \"%s\" option\n"
-msgstr ""
-
-msgid "WeeChat is running in headless mode (ctrl-c to quit)."
-msgstr ""
-
-msgid ""
-"Welcome to WeeChat!\n"
-"\n"
-"If you are discovering WeeChat, it is recommended to read at least the "
-"quickstart guide, and the user's guide if you have some time; they explain "
-"main WeeChat concepts.\n"
-"All WeeChat docs are available at: https://weechat.org/doc/\n"
-"\n"
-"Moreover, there is inline help with /help on all commands and options (use "
-"Tab key to complete the name).\n"
-"The command /fset can help to customize WeeChat.\n"
-"\n"
-"You can add and connect to an IRC server with /server and /connect commands "
-"(see /help server)."
-msgstr ""
-
-#. TRANSLATORS: the "under %s" can be "under screen" or "under tmux"
-#, c-format
-msgid ""
-"%sWarning: WeeChat is running under %s and $TERM is \"%s\", which can cause "
-"display bugs; $TERM should be set to one of these values: %s"
-msgstr ""
-
-#, c-format
-msgid "%sYou should add this line in the file %s:  %s"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sWarning: cannot set the locale; make sure $LANG and $LC_* variables are "
-"correct"
-msgstr ""
 
 msgid "List of bars:"
 msgstr ""
@@ -226,10 +74,6 @@ msgid "No bar item defined"
 msgstr ""
 
 #, c-format
-msgid "%sBar \"%s\" already exists"
-msgstr ""
-
-#, c-format
 msgid "%sNot enough memory (%s)"
 msgstr ""
 
@@ -242,15 +86,23 @@ msgid "%sInvalid position \"%s\" for bar \"%s\""
 msgstr ""
 
 #, c-format
+msgid "%sInvalid size \"%s\" for bar \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sBar \"%s\" already exists"
+msgstr ""
+
+#, c-format
+msgid "Bar \"%s\" updated"
+msgstr ""
+
+#, c-format
 msgid "Bar \"%s\" created"
 msgstr ""
 
 #, c-format
 msgid "%sFailed to create bar \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%sInvalid size \"%s\" for bar \"%s\""
 msgstr ""
 
 #, c-format
@@ -666,6 +518,18 @@ msgstr ""
 msgid "Mouse disabled"
 msgstr ""
 
+#, c-format
+msgid "%sInvalid color: \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sUnable to open file \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sCommand /pipe can only use buffers with formatted content"
+msgstr ""
+
 msgid "Plugins loaded:"
 msgstr ""
 
@@ -685,6 +549,15 @@ msgstr ""
 msgid "List of proxies:"
 msgstr ""
 
+msgid "IPv6: disabled"
+msgstr ""
+
+msgid "IPv6: automatic"
+msgstr ""
+
+msgid "IPv6: forced"
+msgstr ""
+
 #, c-format
 msgid "  %s%s%s: %s, %s/%d (%s), username: %s, password: %s"
 msgstr ""
@@ -696,7 +569,15 @@ msgid "No proxy defined"
 msgstr ""
 
 #, c-format
+msgid "%sProxy \"%s\" already exists"
+msgstr ""
+
+#, c-format
 msgid "%sInvalid type \"%s\" for proxy \"%s\""
+msgstr ""
+
+#, c-format
+msgid "Proxy \"%s\" updated"
 msgstr ""
 
 #, c-format
@@ -775,13 +656,13 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%sFailed to decrypt data: hash algorithm \"%s\" is not available (ligbcrypt "
+"%sFailed to decrypt data: hash algorithm \"%s\" is not available (libgcrypt "
 "version is too old?)"
 msgstr ""
 
 #, c-format
 msgid ""
-"%sFailed to decrypt data: cipher \"%s\" is not available (ligbcrypt version "
+"%sFailed to decrypt data: cipher \"%s\" is not available (libgcrypt version "
 "is too old?)"
 msgstr ""
 
@@ -936,6 +817,10 @@ msgid "WeeChat upgrades: none, started on %s"
 msgstr ""
 
 #, c-format
+msgid "%sUnable to save some plugin sessions (files *.upgrade)"
+msgstr ""
+
+#, c-format
 msgid "%sUnable to save WeeChat session (files *.upgrade)"
 msgstr ""
 
@@ -946,6 +831,10 @@ msgstr ""
 msgid ""
 "%sCan't upgrade: there is one or more background process/thread running "
 "(hook type: process, connect or url)"
+msgstr ""
+
+#, c-format
+msgid "Check running hooks with command: %s"
 msgstr ""
 
 #, c-format
@@ -963,6 +852,10 @@ msgstr ""
 
 #, c-format
 msgid "Upgrading WeeChat with binary file: \"%s\"..."
+msgstr ""
+
+#, c-format
+msgid "%sUpgrade aborted"
 msgstr ""
 
 #, c-format
@@ -996,20 +889,20 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%sCan not merge windows, there's no other window with same size near current "
+"%sCannot merge windows, there's no other window with same size near current "
 "one"
 msgstr ""
 
 #, c-format
 msgid ""
-"%sCan not close window, there's no other window with same size near current "
+"%sCannot close window, there's no other window with same size near current "
 "one"
 msgstr ""
 
 msgid "execute a command on all buffers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<command>"
 msgstr ""
 
@@ -1027,7 +920,7 @@ msgstr ""
 msgid "set or remove away status"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-all] [<message>]"
 msgstr ""
 
@@ -1041,13 +934,13 @@ msgstr ""
 msgid "manage bars"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list|listfull|listitems || add <name> <type>[,<conditions>] <position> "
-"<size> <separator> <item1>[,<item2>...] || default [input|title|status|"
-"nicklist] || rename <name> <new_name> || del <name>|<mask> [<name>|"
-"<mask>...] || set <name> <option> <value> || hide|show|toggle <name> || "
-"scroll <name> <window> <scroll_value>"
+"list|listfull|listitems || add|addreplace <name> <type>[,<conditions>] "
+"<position> <size> <separator> <item1>[,<item2>...] || default [input|title|"
+"status|nicklist] || rename <name> <new_name> || del <name>|<mask>... || set "
+"<name> <option> <value> || hide|show|toggle <name> || scroll <name> <window> "
+"<scroll_value>"
 msgstr ""
 
 msgid "raw[list]: list all bars"
@@ -1060,6 +953,9 @@ msgid "raw[listitems]: list all bar items"
 msgstr ""
 
 msgid "raw[add]: add a new bar"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace an existing bar"
 msgstr ""
 
 msgid "name: name of bar (must be unique)"
@@ -1076,7 +972,7 @@ msgstr ""
 
 msgid ""
 "conditions: the conditions to display the bar (without conditions, the bar "
-"is always displayed:"
+"is always displayed):"
 msgstr ""
 
 msgid "> raw[active]: on active window"
@@ -1166,18 +1062,19 @@ msgstr ""
 msgid "manage buffers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list || add [-free] [-switch] <name> || clear [<number>|<name>|-merged|-all "
-"[<number>|<name>...]] || move <number>|-|+ || swap <number1>|<name1> "
-"[<number2>|<name2>] || cycle <number>|<name> [<number>|<name>...] || merge "
-"<number>|<name> || unmerge [<number>|-all] || hide [<number>|<name>|-all "
-"[<number>|<name>...]] || unhide [<number>|<name>|-all [<number>|<name>...]] "
-"|| switch [-previous] || zoom || renumber [<number1> [<number2> [<start>]]] "
-"|| close [<n1>[-<n2>]|<name>...] || notify [<level>] || listvar [<number>|"
-"<name>] || setvar <name> [<value>] || delvar <name> || set <property> "
-"[<value>] || setauto <property> [<value>] || get <property> || jump smart|"
-"last_displayed|prev_visited|next_visited || <number>|-|+|<name>"
+"list || add [-free] [-switch] <name> || clear [<id>|<number>|<name>|-merged|-"
+"all [<id>|<number>|<name>...]] || move <number>|-|+ || swap <id1>|<number1>|"
+"<name1> [<id2>|<number2>|<name2>] || cycle <id>|<number>|<name>... || merge "
+"<id>|<number>|<name> || unmerge [<number>|-all] || hide [<id>|<number>|"
+"<name>|-all [<id>|<number>|<name>...]] || unhide [<id>|<number>|<name>|-all "
+"[<id>|<number>|<name>...]] || switch [-previous] || zoom || renumber "
+"[<number1> [<number2> [<start>]]] || close [<n1>[-<n2>]|<name>...] || notify "
+"[<level>] || listvar [<id>|<number>|<name>] || setvar <name> [<value>] || "
+"delvar <name> || set <property> [<value>] || setauto <property> [<value>] || "
+"get <property> || jump smart|last_displayed|prev_visited|next_visited || "
+"<id>|<number>|-|+|<name>"
 msgstr ""
 
 msgid "raw[list]: list buffers (without argument, this list is displayed)"
@@ -1229,8 +1126,8 @@ msgid "raw[zoom]: zoom on merged buffer"
 msgstr ""
 
 msgid ""
-"raw[renumber]: renumber buffers (works only if option weechat.look."
-"buffer_auto_renumber is off)"
+"raw[renumber]: renumber buffers (works only if option "
+"weechat.look.buffer_auto_renumber is off)"
 msgstr ""
 
 msgid "raw[close]: close buffer (number/range or name is optional)"
@@ -1293,6 +1190,9 @@ msgstr ""
 msgid "> raw[next_visited]: jump to next visited buffer"
 msgstr ""
 
+msgid "id: jump to buffer by id"
+msgstr ""
+
 msgid "number: jump to buffer by number, possible prefix:"
 msgstr ""
 
@@ -1303,8 +1203,8 @@ msgid "> \"-\": relative jump, sub number to current"
 msgstr ""
 
 msgid ""
-"> \"*\": jump to number, using option \"weechat.look."
-"jump_current_to_previous_buffer\""
+"> \"*\": jump to number, using option "
+"\"weechat.look.jump_current_to_previous_buffer\""
 msgstr ""
 
 msgid "raw[-]: jump to first buffer number"
@@ -1315,14 +1215,14 @@ msgstr ""
 
 msgid ""
 "name: jump to buffer by (partial) name; if the name starts with \"(?i)\", "
-"the search is case insensitive (for example \"(?i)upper\" will find buffer "
+"the search is case-insensitive (for example \"(?i)upper\" will find buffer "
 "\"irc.libera.#UPPERCASE\")"
 msgstr ""
 
 msgid "define color aliases and display palette of colors"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "alias <color> <name> || unalias <color> || reset || term2rgb <color> || "
 "rgb2term <rgb> [<limit>] || -o"
@@ -1344,8 +1244,8 @@ msgstr ""
 
 msgid ""
 "raw[reset]: reset all color pairs (required when no more color pairs are "
-"available if automatic reset is disabled, see option \"weechat.look."
-"color_pairs_auto_reset\")"
+"available if automatic reset is disabled, see option "
+"\"weechat.look.color_pairs_auto_reset\")"
 msgstr ""
 
 msgid "raw[term2rgb]: convert a terminal color (0-255) to RGB color"
@@ -1368,7 +1268,7 @@ msgstr ""
 msgid "launch explicit WeeChat or plugin command"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-buffer <name>] <plugin> <command> || -s <command>[;<command>...]"
 msgstr ""
 
@@ -1396,7 +1296,7 @@ msgid ""
 "screen"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "go chat|<bar> [top_left|top_right|bottom_left|bottom_right] || go <x>,<y> || "
 "move up|down|left|right|top_left|top_right|bottom_left|bottom_right|edge_top|"
@@ -1405,8 +1305,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"raw[go]: move cursor to chat area, a bar (using bar name) or coordinates \"x,"
-"y\""
+"raw[go]: move cursor to chat area, a bar (using bar name) or coordinates "
+"\"x,y\""
 msgstr ""
 
 msgid "raw[move]: move cursor with direction"
@@ -1431,12 +1331,12 @@ msgstr ""
 msgid "debug functions"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list || set <plugin> <level> || dump|hooks [<plugin>] || buffer|certs|color|"
-"dirs|infolists|key|libs|memory|tags|term|url|windows || callbacks "
-"<duration>[<unit>] || mouse|cursor [verbose] || hdata [free] || time "
-"<command> || unicode <string>"
+"list || set <plugin> <level> || dump [<plugin>] || hooks [<plugin_mask> "
+"[<hook_type>...]] || buffer|certs|color|dirs|infolists|key|libs|memory|tags|"
+"term|url|windows || callbacks <duration>[<unit>] || mouse|cursor [verbose] "
+"|| hdata [free] || time <command> || unicode <string> || whitespace"
 msgstr ""
 
 msgid "raw[list]: list plugins with debug levels"
@@ -1459,6 +1359,12 @@ msgstr ""
 msgid ""
 "raw[hooks]: display infos about hooks (with a plugin: display detailed info "
 "about hooks created by the plugin)"
+msgstr ""
+
+msgid "plugin_mask: plugin mask, \"*\" for all plugins"
+msgstr ""
+
+msgid "hook_type: hook type"
 msgstr ""
 
 msgid ""
@@ -1541,10 +1447,16 @@ msgid ""
 "see /help eval)"
 msgstr ""
 
+msgid ""
+"raw[whitespace]: toggle whitespace mode: make spaces and tabulations visible "
+"in buffers and bars (see options weechat.look.whitespace_char and "
+"weechat.look.tab_whitespace_char)"
+msgstr ""
+
 msgid "evaluate expression"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[-n|-s] [-d] <expression> || [-n] [-d [-d]] -c <expression1> <operator> "
 "<expression2>"
@@ -1767,6 +1679,13 @@ msgid ""
 "string)"
 msgstr ""
 
+msgid "  - ${hdata_count:name[list]}: number of items in this hdata with list"
+msgstr ""
+
+msgid ""
+"  - ${hdata_count:name[ptr]}: number of items in this hdata with pointer"
+msgstr ""
+
 msgid "  - ${sec.data.xxx}: the value of the secured data \"xxx\""
 msgstr ""
 
@@ -1848,29 +1767,29 @@ msgstr ""
 msgid "  !~   is NOT matching POSIX extended regex"
 msgstr ""
 
-msgid "  ==*  is matching mask, case sensitive (wildcard \"*\" is allowed)"
+msgid "  ==*  is matching mask, case-sensitive (wildcard \"*\" is allowed)"
 msgstr ""
 
-msgid "  !!*  is NOT matching mask, case sensitive (wildcard \"*\" is allowed)"
+msgid "  !!*  is NOT matching mask, case-sensitive (wildcard \"*\" is allowed)"
 msgstr ""
 
-msgid "  =*   is matching mask, case insensitive (wildcard \"*\" is allowed)"
+msgid "  =*   is matching mask, case-insensitive (wildcard \"*\" is allowed)"
 msgstr ""
 
 msgid ""
-"  !*   is NOT matching mask, case insensitive (wildcard \"*\" is allowed)"
+"  !*   is NOT matching mask, case-insensitive (wildcard \"*\" is allowed)"
 msgstr ""
 
-msgid "  ==-  is included, case sensitive"
+msgid "  ==-  is included, case-sensitive"
 msgstr ""
 
-msgid "  !!-  is NOT included, case sensitive"
+msgid "  !!-  is NOT included, case-sensitive"
 msgstr ""
 
-msgid "  =-   is included, case insensitive"
+msgid "  =-   is included, case-insensitive"
 msgstr ""
 
-msgid "  !-   is NOT included, case insensitive"
+msgid "  !-   is NOT included, case-insensitive"
 msgstr ""
 
 msgid "  ==   equal"
@@ -1901,11 +1820,11 @@ msgid ""
 "filter messages in buffers, to hide/show them according to tags or regex"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list || enable|disable|toggle [<name>|<mask>|@ [<name>|<mask>|@...]] || add|"
-"addreplace <name> <buffer>[,<buffer>...] <tags> <regex> || rename <name> "
-"<new_name> || recreate <name> || del <name>|<mask> [<name>|<mask>...]"
+"list || enable|disable|toggle [<name>|<mask>|@...] || add|addreplace <name> "
+"<buffer>[,<buffer>...] <tags> <regex> || rename <name> <new_name> || "
+"recreate <name> || del <name>|<mask>..."
 msgstr ""
 
 msgid "raw[list]: list all filters"
@@ -1961,8 +1880,8 @@ msgid "> - wildcard \"*\" is allowed"
 msgstr ""
 
 msgid ""
-"tags: comma separated list of tags (for example \"irc_join,irc_part,"
-"irc_quit\"):"
+"tags: comma separated list of tags (for example "
+"\"irc_join,irc_part,irc_quit\"):"
 msgstr ""
 
 msgid ""
@@ -1992,7 +1911,7 @@ msgid ""
 msgstr ""
 
 msgid ""
-"> - regex are case insensitive, they can start by \"(?-i)\" to become case "
+"> - regex are case-insensitive, they can start by \"(?-i)\" to become case-"
 "sensitive"
 msgstr ""
 
@@ -2042,8 +1961,8 @@ msgstr ""
 msgid "display help about commands and options"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "-list|-listfull [<plugin> [<plugin>...]] || <command> || <option>"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "-list|-listfull [<plugin>...]] || <command> || <option>"
 msgstr ""
 
 msgid ""
@@ -2066,7 +1985,7 @@ msgstr ""
 msgid "show buffer command history"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "clear || <value>"
 msgstr ""
 
@@ -2079,7 +1998,7 @@ msgstr ""
 msgid "manage hotlist"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "add [low|message|private|highlight] || clear [<level>] || remove || restore "
 "[-all]"
@@ -2110,7 +2029,7 @@ msgstr ""
 msgid "functions for command line"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<action> [<arguments>]"
 msgstr ""
 
@@ -2294,11 +2213,11 @@ msgstr ""
 msgid "manage custom bar items"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "list || add|addreplace <name> \"<conditions>\" \"<content>\" || rename "
-"<name> <new_name> || refresh <name> [<name>...] || recreate <name> || del "
-"<name>|<mask> [<name>|<mask>...]"
+"<name> <new_name> || refresh <name>|<mask>... || recreate <name> || del "
+"<name>|<mask>..."
 msgstr ""
 
 msgid "raw[list]: list all custom bar items"
@@ -2365,12 +2284,12 @@ msgstr ""
 msgid "bind/unbind keys"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[list|listdefault|listdiff] [<context>] || bind <key> [<command> [<args>]] "
 "|| bindctxt <context> <key> [<command> [<args>]] || unbind <key> || "
 "unbindctxt <context> <key> || reset <key> || resetctxt <context> <key> || "
-"resetall -yes [<context>] || missing [<context>] || legacy <key> [<key>...]"
+"resetall -yes [<context>] || missing [<context>] || legacy <key>..."
 msgstr ""
 
 msgid "raw[list]: list all current keys"
@@ -2504,7 +2423,7 @@ msgstr ""
 msgid "manage buffers/windows layouts"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "store [<name>] [buffers|windows] || apply [<name>] [buffers|windows] || "
 "leave || del [<name>] [buffers|windows] || rename <name> <new_name>"
@@ -2541,8 +2460,8 @@ msgid "Without argument, this command displays stored layouts."
 msgstr ""
 
 msgid ""
-"The current layout can be saved on /quit command with the option \"weechat."
-"look.save_layout_on_exit\"."
+"The current layout can be saved on /quit command with the option "
+"\"weechat.look.save_layout_on_exit\"."
 msgstr ""
 
 msgid ""
@@ -2555,7 +2474,7 @@ msgstr ""
 msgid "mouse control"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "enable|disable|toggle [<delay>]"
 msgstr ""
 
@@ -2579,8 +2498,8 @@ msgstr ""
 msgid "execute a command silently"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "[-core | -current | -buffer <name>] <command>"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "[-core|-current|-buffer <name>] <command>"
 msgstr ""
 
 msgid "raw[-core]: no output on WeeChat core buffer"
@@ -2593,8 +2512,8 @@ msgid "raw[-buffer]: no output on specified buffer"
 msgstr ""
 
 msgid ""
-"name: full buffer name (examples: \"irc.server.libera\", \"irc.libera."
-"#weechat\")"
+"name: full buffer name (examples: \"irc.server.libera\", "
+"\"irc.libera.#weechat\")"
 msgstr ""
 
 msgid ""
@@ -2607,10 +2526,93 @@ msgid ""
 "default is to mute all buffers."
 msgstr ""
 
+msgid "redirect command output to a buffer, a file or a hsignal"
+msgstr ""
+
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid ""
+"[-buffer <name>|-file <filename>|-hsignal <name>] [-color strip|keep|ansi] [-"
+"concat <separator>] [-strip <chars>] [-skipempty] [-c] [-o] [-g] [-nl] "
+"<command>"
+msgstr ""
+
+msgid "raw[-buffer]: display command output on this buffer"
+msgstr ""
+
+msgid ""
+"name: full buffer name (examples: \"core.weechat\", \"irc.server.libera\", "
+"\"irc.libera.#weechat\")"
+msgstr ""
+
+msgid "raw[-file]: write command output in this file"
+msgstr ""
+
+msgid ""
+"raw[-hsignal]: send command output as hsignal; keys: \"command\", \"output\" "
+"(lines separated by separator) and \"tags\" (tags of each line separated by "
+"newline)"
+msgstr ""
+
+msgid "raw[-color]: convert colors"
+msgstr ""
+
+msgid ""
+"raw[-o]: send command output to the buffer as input; colors are stripped and "
+"commands are NOT executed (used only with -buffer)"
+msgstr ""
+
+msgid ""
+"raw[-concat]: concatenate all lines displayed using a separator; chars can "
+"be escaped (example: \\x20 for space)"
+msgstr ""
+
+msgid ""
+"raw[-strip]: strip chars from lines (beginning/end); chars can be escaped "
+"(example: \\x20 for space)"
+msgstr ""
+
+msgid "raw[-skipempty]: skip empty lines when lines are concatenated"
+msgstr ""
+
+msgid "raw[-c]: alias for \"-concat \\x20 -strip \\x20 -skipempty\""
+msgstr ""
+
+msgid ""
+"raw[-nl]: display messages in English during the command execution (do not "
+"use the current locale)"
+msgstr ""
+
+msgid ""
+"If no target is specified (\"-buffer\", \"-file\" or \"-hsignal\"), then the "
+"command output is sent on the current buffer."
+msgstr ""
+
+msgid ""
+"Note: for commands that display messages in an asynchronous way (like /exec "
+"and many IRC commands), the output will not be caught by this command."
+msgstr ""
+
+msgid ""
+"For example \"/pipe /whois nick\" will NOT redirect the answer from IRC "
+"server to the current buffer."
+msgstr ""
+
+msgid "  write info about external libraries in a file:"
+msgstr ""
+
+msgid "  send output of \"/debug libs\" as a single line on current channel:"
+msgstr ""
+
+msgid "  display info about all buffers on current buffer:"
+msgstr ""
+
+msgid "  send list of filters on current channel, in English:"
+msgstr ""
+
 msgid "list/load/unload plugins"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "list [-o|-ol|-i|-il|<name>] || listfull [<name>] || load <filename> "
 "[<arguments>] || autoload [<arguments>] || reload [<name>|* [<arguments>]] "
@@ -2668,9 +2670,9 @@ msgstr ""
 msgid "display text on a buffer"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"[-buffer <number>|<name>] [-newbuffer <name>] [-free] [-switch] [-core|-"
+"[-buffer <id>|<number>|<name>] [-newbuffer <name>] [-free] [-switch] [-core|-"
 "current] [-y <line>] [-escape] [-date <date>] [-tags <tags>] [-action|-"
 "error|-join|-network|-quit] [<text>] || -stdout|-stderr [<text>] || -beep"
 msgstr ""
@@ -2744,8 +2746,8 @@ msgid "raw[-beep]: alias of \"-stderr \\a\""
 msgstr ""
 
 msgid ""
-"The options -action ... -quit use the prefix defined in options \"weechat."
-"look.prefix_*\"."
+"The options -action ... -quit use the prefix defined in options "
+"\"weechat.look.prefix_*\"."
 msgstr ""
 
 msgid "Following escaped chars are supported:"
@@ -2784,16 +2786,19 @@ msgstr ""
 msgid "manage proxies"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list || add <name> <type> <address> <port> [<username> [<password>]] || del "
-"<name>|<mask> [<name>|<mask>...] || set <name> <option> <value>"
+"list || add|addreplace <name> <type> <address> <port> [<username> "
+"[<password>]] || del <name>|<mask>... || set <name> <option> <value>"
 msgstr ""
 
 msgid "raw[list]: list all proxies"
 msgstr ""
 
 msgid "raw[add]: add a new proxy"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace an existing proxy"
 msgstr ""
 
 msgid "name: name of proxy (must be unique)"
@@ -2828,7 +2833,7 @@ msgstr ""
 msgid "  add a http proxy, running on local host, port 8888:"
 msgstr ""
 
-msgid "  add a http proxy using IPv6 protocol:"
+msgid "  add a http proxy using IPv6 protocol only:"
 msgstr ""
 
 msgid "  add a socks5 proxy with username/password:"
@@ -2840,7 +2845,7 @@ msgstr ""
 msgid "quit WeeChat"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-yes] [<arguments>]"
 msgstr ""
 
@@ -2861,8 +2866,8 @@ msgstr ""
 msgid "reload configuration files from disk"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "[<file> [<file>...]]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "[<file>...]"
 msgstr ""
 
 msgid "file: configuration file to reload (without extension \".conf\")"
@@ -2874,7 +2879,7 @@ msgstr ""
 msgid "execute a command several times"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-interval <delay>[<unit>]] <count> <command>"
 msgstr ""
 
@@ -2926,7 +2931,7 @@ msgstr ""
 
 msgid ""
 "Note: the command is executed on buffer where /repeat was executed (if the "
-"buffer does not exist any more, the command is not executed)."
+"buffer does not exist anymore, the command is not executed)."
 msgstr ""
 
 msgid "  scroll 2 pages up:"
@@ -2938,7 +2943,7 @@ msgstr ""
 msgid "reset config options"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<option> || -mask <option>"
 msgstr ""
 
@@ -2968,7 +2973,7 @@ msgid ""
 "manage secured data (passwords or private data encrypted in file sec.conf)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "passphrase <passphrase>|-delete || decrypt <passphrase>|-discard || set "
 "<name> <value> || del <name>"
@@ -3014,8 +3019,8 @@ msgid ""
 "It is possible to set environment variable \"WEECHAT_PASSPHRASE\" to prevent "
 "the prompt (this same variable is used by WeeChat on /upgrade), or to set "
 "option sec.crypt.passphrase_command to read the passphrase from the output "
-"of an external command like a password manager (see /help sec.crypt."
-"passphrase_command)."
+"of an external command like a password manager (see /help "
+"sec.crypt.passphrase_command)."
 msgstr ""
 
 msgid "Secured data with format ${sec.data.xxx} can be used in:"
@@ -3061,17 +3066,16 @@ msgid "  alias to ghost the nick \"mynick\":"
 msgstr ""
 
 msgid ""
-"    /alias add ghost /eval /msg -server libera nickserv ghost mynick ${sec."
-"data.libera}"
+"    /alias add ghost /eval /msg -server libera nickserv ghost mynick $"
+"{sec.data.libera}"
 msgstr ""
 
 msgid "set config options and environment variables"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"[<option> [<value>]] || diff [<option> [<option>...]] || env [<variable> "
-"[<value>]]"
+"[<option> [<value>]] || diff [<option>...] || env [<variable> [<value>]]"
 msgstr ""
 
 msgid ""
@@ -3150,8 +3154,8 @@ msgstr ""
 msgid "toggle value of a config option"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "<option> [<value> [<value>...]]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "<option> [<value>...]"
 msgstr ""
 
 msgid ""
@@ -3217,7 +3221,7 @@ msgid ""
 "from servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-yes] [<path_to_binary>|-save|-quit] || -o|-ol"
 msgstr ""
 
@@ -3234,7 +3238,7 @@ msgid ""
 msgstr ""
 
 msgid ""
-"raw[-save]: only save the session, do not quit nor reload WeeChat; the "
+"raw[-save]: only save the session, neither quit nor reload WeeChat; the "
 "configuration files are not saved (if needed you can use /save before this "
 "command)"
 msgstr ""
@@ -3351,6 +3355,11 @@ msgid "raw[-ol]: send version to current buffer as input (translated string)"
 msgstr ""
 
 msgid ""
+"raw[-v]: verbose mode: display information about upgrades of WeeChat with /"
+"upgrade"
+msgstr ""
+
+msgid ""
 "The default alias /v can be used to execute this command on all buffers "
 "(otherwise the irc command /version is used on irc buffers)."
 msgstr ""
@@ -3358,7 +3367,7 @@ msgstr ""
 msgid "schedule a command execution in future"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<number>[<unit>] <command>"
 msgstr ""
 
@@ -3367,7 +3376,7 @@ msgstr ""
 
 msgid ""
 "Note: the command is executed on buffer where /wait was executed (if the "
-"buffer does not exist any more, the command is not executed)."
+"buffer does not exist anymore, the command is not executed)."
 msgstr ""
 
 msgid "  join channel #test in 10 seconds:"
@@ -3388,7 +3397,7 @@ msgstr ""
 msgid "manage windows"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 #, no-c-format
 msgid ""
 "list || -1|+1|b#|up|down|left|right [-window <number>] || <number> || splith|"
@@ -3570,6 +3579,9 @@ msgstr ""
 msgid "names of enabled filters"
 msgstr ""
 
+msgid "hook types"
+msgstr ""
+
 msgid ""
 "commands (weechat and plugins); optional argument: prefix to add before the "
 "commands"
@@ -3599,6 +3611,9 @@ msgid ""
 msgstr ""
 
 msgid "names of bars"
+msgstr ""
+
+msgid "names of bar items"
 msgstr ""
 
 msgid "names of custom bar items"
@@ -3660,14 +3675,99 @@ msgstr ""
 msgid "variables that can be used in /eval command"
 msgstr ""
 
+#, c-format
+msgid "Writing configuration file %s%s%s"
+msgstr ""
+
+msgid "(default options)"
+msgstr ""
+
+#, c-format
+msgid "%sCannot create file \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sWARNING: failed to set permissions on configuration file \"%s\" (%s)"
+msgstr ""
+
+#, c-format
+msgid "%sError writing configuration file \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sFile %s has been backed up as %s"
+msgstr ""
+
+#, c-format
+msgid "%sError: unable to backup file %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sImportant: file %s has been updated from version %d to %d, it is not "
+"compatible and cannot be loaded anymore with any older version"
+msgstr ""
+
+#, c-format
+msgid "%sWARNING: failed to read configuration file \"%s\" (%s)"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sWARNING: file \"%s\" will be overwritten on exit with default values (it "
+"is HIGHLY recommended to backup this file now)"
+msgstr ""
+
+#, c-format
+msgid "Reading configuration file %s"
+msgstr ""
+
+#, c-format
+msgid "%sWarning: %s, line %d: invalid syntax, missing \"]\""
+msgstr ""
+
+#, c-format
+msgid "%sWarning: %s, line %d: ignoring unknown section identifier (\"%s\")"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sError: %s, line %d: invalid config version: \"%s\" => rest of file is "
+"IGNORED, default options are used"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sError: %s, version read (%d) is newer than supported version (%d) => rest "
+"of file is IGNORED, default options are used"
+msgstr ""
+
+#, c-format
+msgid "%sWarning: %s, line %d: ignoring option outside section: %s"
+msgstr ""
+
+#, c-format
+msgid "%sWarning: %s, line %d: ignoring unknown option for section \"%s\": %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sWarning: %s, line %d: ignoring invalid value for option in section \"%s\": "
+"%s"
+msgstr ""
+
+#, c-format
+msgid "Reloading configuration file %s"
+msgstr ""
+
 msgid ""
 "Warning: option weechat.look.save_config_on_exit is disabled, so the option "
 "weechat.look.save_layout_on_exit is ignored"
 msgstr ""
 
 msgid ""
-"Warning: you should now issue /save to write option weechat.look."
-"save_config_on_exit in configuration file"
+"Warning: you should now issue /save to write option "
+"weechat.look.save_config_on_exit in configuration file"
 msgstr ""
 
 msgid ""
@@ -3744,11 +3844,11 @@ msgid "display WeeChat version at startup"
 msgstr ""
 
 msgid ""
-"set resource limits for WeeChat process, format is: \"res1:limit1,res2:"
-"limit2\"; resource name is the end of constant (RLIMIT_XXX) in lower case "
-"(see man setrlimit for values); limit -1 means \"unlimited\"; example: set "
-"unlimited size for core file and max 1GB of virtual memory: \"core:-1,"
-"as:1000000000\""
+"set resource limits for WeeChat process, format is: "
+"\"res1:limit1,res2:limit2\"; resource name is the end of constant "
+"(RLIMIT_XXX) in lower case (see man setrlimit for values); limit -1 means "
+"\"unlimited\"; example: set unlimited size for core file and max 1GB of "
+"virtual memory: \"core:-1,as:1000000000\""
 msgstr ""
 
 msgid ""
@@ -3757,9 +3857,9 @@ msgid ""
 msgstr ""
 
 msgid ""
-"alignment for multiline words according to option weechat.look."
-"align_end_of_lines; if disabled, the multiline words will not be aligned, "
-"which can be useful to not break long URLs"
+"alignment for multiline words according to option "
+"weechat.look.align_end_of_lines; if disabled, the multiline words will not "
+"be aligned, which can be useful to not break long URLs"
 msgstr ""
 
 msgid ""
@@ -3811,7 +3911,7 @@ msgid ""
 "buffer has no layout number"
 msgstr ""
 
-msgid "default text search in buffer: case sensitive or not"
+msgid "default text search in buffer: case-sensitive or not"
 msgstr ""
 
 msgid ""
@@ -3839,13 +3939,12 @@ msgid ""
 "you can use colors with format \"${color:xxx}\", see /help eval); variable "
 "\"${highlight}\" can be used in a condition to have a format specific to "
 "lines with highlight (see also option weechat.look.highlight_prefix); for "
-"example time using grayscale: "
-"\"${color:252}%H${color:243}%M${color:237}%S\", the same with milliseconds: "
-"\"${color:252}%H${color:243}%M${color:237}%S.%.3\", red background in case "
-"of highlight: \"${if:${highlight}?${color:,red}}%H:%M:%S\", red background "
-"in case of highlight with grayscale: ${if:${highlight}?${color:"
-"yellow,124}%H${color:187}%M${color:181}%S.%.3:"
-"${color:252}%H${color:243}%M${color:237}%S.%.3}"
+"example time using grayscale: \"${color:252}%H${color:243}%M$"
+"{color:237}%S\", the same with milliseconds: \"${color:252}%H${color:243}%M$"
+"{color:237}%S.%.3\", red background in case of highlight: \"${if:$"
+"{highlight}?${color:,red}}%H:%M:%S\", red background in case of highlight "
+"with grayscale: ${if:${highlight}?${color:yellow,124}%H${color:187}%M$"
+"{color:181}%S.%.3:${color:252}%H${color:243}%M${color:237}%S.%.3}"
 msgstr ""
 
 #. TRANSLATORS: string "${color:xxx}" must NOT be translated
@@ -3898,7 +3997,7 @@ msgid ""
 "current window)"
 msgstr ""
 
-msgid "use a different color for offline nicks (not in nicklist any more)"
+msgid "use a different color for offline nicks (not in nicklist anymore)"
 msgstr ""
 
 msgid ""
@@ -3951,8 +4050,8 @@ msgstr ""
 msgid ""
 "message displayed when the day has changed, with one date displayed (for "
 "example at beginning of buffer) (see man strftime for date/time specifiers) "
-"(note: content is evaluated, so you can use colors with format \"${color:"
-"xxx}\", see /help eval)"
+"(note: content is evaluated, so you can use colors with format \"${color:xxx}"
+"\", see /help eval)"
 msgstr ""
 
 #. TRANSLATORS: string "${color:xxx}" must NOT be translated
@@ -3979,18 +4078,18 @@ msgid ""
 msgstr ""
 
 msgid ""
-"comma separated list of words to highlight; case insensitive comparison (use "
-"\"(?-i)\" at beginning of words to make them case sensitive), words may "
-"begin or end with \"*\" for partial match; example: \"test,(?-i)*toto*,"
-"flash*\""
+"comma separated list of words to highlight; case-insensitive comparison (use "
+"\"(?-i)\" at beginning of words to make them case-sensitive), words may "
+"begin or end with \"*\" for partial match; example: \"test,(?-"
+"i)*toto*,flash*\""
 msgstr ""
 
 msgid ""
 "POSIX extended regular expression used to prevent any highlight from a "
 "message: this option has higher priority over other highlight options (if "
 "the string is found in the message, the highlight is disabled and the other "
-"options are ignored), regular expression is case insensitive (use \"(?-i)\" "
-"at beginning to make it case sensitive), examples: \"<flash.*>\", \"(?-"
+"options are ignored), regular expression is case-insensitive (use \"(?-i)\" "
+"at beginning to make it case-sensitive), examples: \"<flash.*>\", \"(?-"
 "i)<Flash.*>\""
 msgstr ""
 
@@ -4003,12 +4102,12 @@ msgid ""
 "POSIX extended regular expression used to check if a message has highlight "
 "or not, at least one match in string must be surrounded by delimiters (chars "
 "different from: alphanumeric, \"-\", \"_\" and \"|\"), regular expression is "
-"case insensitive (use \"(?-i)\" at beginning to make it case sensitive), "
+"case-insensitive (use \"(?-i)\" at beginning to make it case-sensitive), "
 "examples: \"flashcode|flashy\", \"(?-i)FlashCode|flashy\""
 msgstr ""
 
 msgid ""
-"comma separated list of tags to highlight; case insensitive comparison; "
+"comma separated list of tags to highlight; case-insensitive comparison; "
 "wildcard \"*\" is allowed in each tag; many tags can be separated by \"+\" "
 "to make a logical \"and\" between tags; examples: \"nick_flashcode\" for "
 "messages from nick \"FlashCode\", \"irc_notice+nick_toto*\" for notices from "
@@ -4069,11 +4168,12 @@ msgstr ""
 
 msgid ""
 "comma-separated list of fields to sort hotlist; each field is a hdata "
-"variable of hotlist (\"var\") or a hdata variable of buffer (\"buffer."
-"var\"); char \"-\" can be used before field to reverse order, char \"~\" can "
-"be used to do a case insensitive comparison; examples: \"-priority,buffer."
-"number\" for sort on hotlist priority then by buffer number, \"-~buffer."
-"full_name\" for case insensitive and reverse sort on buffer full name"
+"variable of hotlist (\"var\") or a hdata variable of buffer "
+"(\"buffer.var\"); char \"-\" can be used before field to reverse order, char "
+"\"~\" can be used to do a case-insensitive comparison; examples: \"-"
+"priority,buffer.number\" for sort on hotlist priority then by buffer number, "
+"\"-~buffer.full_name\" for case-insensitive and reverse sort on buffer full "
+"name"
 msgstr ""
 
 msgid "text displayed at the end of the hotlist"
@@ -4179,9 +4279,9 @@ msgid ""
 "chars used to stop in nick when computing color with letters of nick (at "
 "least one char outside this list must be in string before stopping) "
 "(example: nick \"|nick|away\" with \"|\" in chars will return color of nick "
-"\"|nick\"); this option has an impact on option weechat.look."
-"nick_color_force, so the nick for the forced color must not contain the "
-"chars ignored by this option"
+"\"|nick\"); this option has an impact on option "
+"weechat.look.nick_color_force, so the nick for the forced color must not "
+"contain the chars ignored by this option"
 msgstr ""
 
 msgid "text to display before nick in prefix of message, example: \"<\""
@@ -4353,12 +4453,24 @@ msgid ""
 "will draw a real line with ncurses); width on screen must be exactly one char"
 msgstr ""
 
+msgid ""
+"first char to display for tabulations when whitespace mode is enabled with "
+"command `/debug whitespace`; width on screen must be exactly one char; "
+"subsequent chars are set by option weechat.look.whitespace_char"
+msgstr ""
+
 msgid "number of spaces used to display tabs in messages"
 msgstr ""
 
 msgid ""
 "time format for dates converted to strings and displayed in messages (see "
 "man strftime for date/time specifiers)"
+msgstr ""
+
+msgid ""
+"char to display for spaces when whitespace mode is enabled with command `/"
+"debug whitespace`; width on screen must be exactly one char; see also option "
+"weechat.look.tab_whitespace_char"
 msgstr ""
 
 msgid ""
@@ -4451,7 +4563,7 @@ msgid ""
 msgstr ""
 
 msgid ""
-"text color for offline nick (not in nicklist any more); this color is used "
+"text color for offline nick (not in nicklist anymore); this color is used "
 "only if option weechat.look.color_nick_offline is enabled"
 msgstr ""
 
@@ -4558,9 +4670,9 @@ msgstr ""
 
 #. TRANSLATORS: please do not translate "lightred:blue"
 msgid ""
-"text color for syntax highlighting in evaluated strings, with "
-"\"${raw_hl:...}\" and \"${hl:...}\" (comma separated list of colors, "
-"background is allowed with format: \"fg:bg\", for example: \"lightred:blue\")"
+"text color for syntax highlighting in evaluated strings, with \"${raw_hl:...}"
+"\" and \"${hl:...}\" (comma separated list of colors, background is allowed "
+"with format: \"fg:bg\", for example: \"lightred:blue\")"
 msgstr ""
 
 msgid "text color for actions in input line"
@@ -4646,7 +4758,7 @@ msgid ""
 "the base word ends at first space after cursor"
 msgstr ""
 
-msgid "if enabled, the completion is case sensitive by default"
+msgid "if enabled, the completion is case-sensitive by default"
 msgstr ""
 
 msgid ""
@@ -4665,7 +4777,7 @@ msgid ""
 "add space after nick completion (when nick is not first word on command line)"
 msgstr ""
 
-msgid "case sensitive completion for nicks"
+msgid "case-sensitive completion for nicks"
 msgstr ""
 
 msgid ""
@@ -4677,6 +4789,14 @@ msgid "complete only with first nick found"
 msgstr ""
 
 msgid "chars ignored for nick completion"
+msgstr ""
+
+msgid ""
+"comma-separated list of nicks to ignore (not completed); the whole nick must "
+"be set in this option even if chars are ignored in completion with option "
+"weechat.completion.nick_ignore_chars; look up for nicks is with exact case "
+"then lower case, so it's possible to use only lower case for nicks in this "
+"option"
 msgstr ""
 
 msgid "send alert (BEL) when a partial completion occurs"
@@ -4782,89 +4902,12 @@ msgstr ""
 msgid "FATAL: error initializing configuration options"
 msgstr ""
 
+#. TRANSLATORS: "%s %s" after "compiled on" is date and time
 #, c-format
-msgid "Writing configuration file %s%s%s"
+msgid "WeeChat %s, compiled on %s %s\n"
 msgstr ""
 
-msgid "(default options)"
-msgstr ""
-
-#, c-format
-msgid "%sCannot create file \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%sWARNING: failed to set permissions on configuration file \"%s\" (%s)"
-msgstr ""
-
-#, c-format
-msgid "%sError writing configuration file \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%sFile %s has been backed up as %s"
-msgstr ""
-
-#, c-format
-msgid "%sError: unable to backup file %s"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sImportant: file %s has been updated from version %d to %d, it is not "
-"compatible and can not be loaded any more with any older version"
-msgstr ""
-
-#, c-format
-msgid "%sWARNING: failed to read configuration file \"%s\" (%s)"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sWARNING: file \"%s\" will be overwritten on exit with default values (it "
-"is HIGHLY recommended to backup this file now)"
-msgstr ""
-
-#, c-format
-msgid "Reading configuration file %s"
-msgstr ""
-
-#, c-format
-msgid "%sWarning: %s, line %d: invalid syntax, missing \"]\""
-msgstr ""
-
-#, c-format
-msgid "%sWarning: %s, line %d: ignoring unknown section identifier (\"%s\")"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sError: %s, line %d: invalid config version: \"%s\" => rest of file is "
-"IGNORED, default options are used"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sError: %s, version read (%d) is newer than supported version (%d) => rest "
-"of file is IGNORED, default options are used"
-msgstr ""
-
-#, c-format
-msgid "%sWarning: %s, line %d: ignoring option outside section: %s"
-msgstr ""
-
-#, c-format
-msgid "%sWarning: %s, line %d: ignoring unknown option for section \"%s\": %s"
-msgstr ""
-
-#, c-format
-msgid ""
-"%sWarning: %s, line %d: ignoring invalid value for option in section \"%s\": "
-"%s"
-msgstr ""
-
-#, c-format
-msgid "Reloading configuration file %s"
+msgid "Build options:\n"
 msgstr ""
 
 msgid "Windows tree:"
@@ -5006,7 +5049,7 @@ msgid "%sError sending signal %d to pid %d: %s"
 msgstr ""
 
 #, c-format
-msgid "%sYou can not write text in this buffer"
+msgid "%sYou cannot write text in this buffer"
 msgstr ""
 
 #, c-format
@@ -5076,7 +5119,7 @@ msgstr ""
 msgid "proxy type (http (default), socks4, socks5)"
 msgstr ""
 
-msgid "connect to proxy using ipv6"
+msgid "connect to proxy using IPv6"
 msgstr ""
 
 msgid "proxy server address (IP or hostname)"
@@ -5139,7 +5182,7 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%sOption %s.%s.%s can not be changed because there are still encrypted data"
+"%sOption %s.%s.%s cannot be changed because there are still encrypted data"
 msgstr ""
 
 #, c-format
@@ -5149,12 +5192,12 @@ msgstr ""
 #, c-format
 msgid ""
 "%sFailed to decrypt data \"%s\": hash algorithm \"%s\" is not available "
-"(ligbcrypt version is too old?)"
+"(libgcrypt version is too old?)"
 msgstr ""
 
 #, c-format
 msgid ""
-"%sFailed to decrypt data \"%s\": cipher \"%s\" is not available (ligbcrypt "
+"%sFailed to decrypt data \"%s\": cipher \"%s\" is not available (libgcrypt "
 "version is too old?)"
 msgstr ""
 
@@ -5169,12 +5212,12 @@ msgstr ""
 #, c-format
 msgid ""
 "%sFailed to encrypt data \"%s\": hash algorithm \"%s\" is not available "
-"(ligbcrypt version is too old?)"
+"(libgcrypt version is too old?)"
 msgstr ""
 
 #, c-format
 msgid ""
-"%sFailed to encrypt data \"%s\": cipher \"%s\" is not available (ligbcrypt "
+"%sFailed to encrypt data \"%s\": cipher \"%s\" is not available (libgcrypt "
 "version is too old?)"
 msgstr ""
 
@@ -5262,15 +5305,6 @@ msgid "Resource usage (see \"man getrusage\" for help):"
 msgstr ""
 
 #, c-format
-msgid "debug: removing file: %s"
-msgstr ""
-
-#. TRANSLATORS: %.02fs is a float number + "s" ("seconds")
-#, c-format
-msgid "Upgrade done (%.02fs)"
-msgstr ""
-
-#, c-format
 msgid "%sError upgrading WeeChat with file \"%s\":"
 msgstr ""
 
@@ -5337,6 +5371,15 @@ msgid ""
 "version)"
 msgstr ""
 
+#, c-format
+msgid "debug: removing file: %s"
+msgstr ""
+
+#. TRANSLATORS: %.02fs is a float number + "s" ("seconds")
+#, c-format
+msgid "Upgrade done (%.02fs)"
+msgstr ""
+
 msgid "invalid URL"
 msgstr ""
 
@@ -5348,7 +5391,7 @@ msgid "file \"%s\" not found"
 msgstr ""
 
 #, c-format
-msgid "can not write file \"%s\""
+msgid "cannot write file \"%s\""
 msgstr ""
 
 msgid "transfer error"
@@ -5356,6 +5399,159 @@ msgstr ""
 
 #, c-format
 msgid "curl error %d (%s) (URL: \"%s\")\n"
+msgstr ""
+
+#, c-format
+msgid "%sAnother command \"%s\" already exists for plugin \"%s\""
+msgstr ""
+
+#, c-format
+msgid ""
+"%sUnknown command \"%s\" (commands are case-sensitive, type /help for help), "
+"commands with similar name: %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sUnknown command \"%s\" (type /help for help), commands with similar name: "
+"%s"
+msgstr ""
+
+#, c-format
+msgid "%sBad file descriptor (%d) used in hook_fd"
+msgstr ""
+
+#, c-format
+msgid "End of command '%s', timeout reached (%.3fs)"
+msgstr ""
+
+#, c-format
+msgid "System clock skew detected (%+ld seconds), reinitializing all timers"
+msgstr ""
+
+#, c-format
+msgid "%sURL transfer error: %s (URL: \"%s\")"
+msgstr ""
+
+#, c-format
+msgid "End of URL transfer '%s', timeout reached (%.3fs)"
+msgstr ""
+
+#, c-format
+msgid "%sError running thread in hook_url: %s (URL: \"%s\")"
+msgstr ""
+
+#. TRANSLATORS: "%s %s" after "compiled on" is date and time
+#, c-format
+msgid ""
+"WeeChat %s Copyright %s, compiled on %s %s\n"
+"Developed by Sébastien Helleu <flashcode@flashtux.org> - %s"
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [option...] [plugin:option...]\n"
+msgstr ""
+
+msgid ""
+"  -a, --no-connect         disable auto-connect to servers at startup\n"
+"  -c, --colors             display default colors in terminal and exit\n"
+"  -d, --dir <path>         force a single WeeChat home directory\n"
+"                           or 5 different directories separated by colons "
+"(in this order: config, data, state, cache, runtime)\n"
+"                           (environment variable WEECHAT_HOME is read if "
+"this option is not given)\n"
+"  -t, --temp-dir           create a temporary WeeChat home directory and "
+"delete it on exit\n"
+"                           (incompatible with option \"-d\")\n"
+"  -h, --help               display this help and exit\n"
+"  -i, --build-info         display build information and exit\n"
+"  -l, --license            display WeeChat license and exit\n"
+"  -p, --no-plugin          don't load any plugin at startup\n"
+"  -P, --plugins <plugins>  load only these plugins at startup\n"
+"                           (see /help weechat.plugin.autoload)\n"
+"  -r, --run-command <cmd>  run command(s) after startup;\n"
+"                           many commands can be separated by semicolons and "
+"are evaluated,\n"
+"                           this option can be given multiple times\n"
+"  -s, --no-script          don't load any script at startup\n"
+"      --upgrade            upgrade WeeChat using session files (see /help "
+"upgrade in WeeChat)\n"
+"  -v, --version            display WeeChat version and exit\n"
+"  plugin:option            option for plugin (see man weechat)\n"
+msgstr ""
+
+msgid "Extra options in headless mode:\n"
+msgstr ""
+
+msgid ""
+"      --doc-gen <path>     generate files to build documentation and exit\n"
+msgstr ""
+
+msgid ""
+"      --daemon             run WeeChat as a daemon (fork, new process group, "
+"file descriptors closed);\n"
+msgstr ""
+
+msgid ""
+"                           (by default in headless mode WeeChat is blocking "
+"and does not run in background)\n"
+msgstr ""
+
+msgid ""
+"      --stdout             display log messages on standard output instead "
+"of writing them in log file\n"
+msgstr ""
+
+msgid ""
+"                           (option ignored if option \"--daemon\" is given)\n"
+msgstr ""
+
+msgid ""
+"Debug options (for tools like valgrind, DO NOT USE IN PRODUCTION):\n"
+"      --no-dlclose         do not call function dlclose after plugins are "
+"unloaded\n"
+"      --no-gnutls          disable init/deinit of gnutls\n"
+"      --no-gcrypt          disable init/deinit of gcrypt\n"
+msgstr ""
+
+#, c-format
+msgid "Error: missing argument for \"%s\" option\n"
+msgstr ""
+
+msgid "WeeChat is running in headless mode (ctrl-c to quit)."
+msgstr ""
+
+msgid ""
+"Welcome to WeeChat!\n"
+"\n"
+"If you are discovering WeeChat, it is recommended to read at least the "
+"quickstart guide, and the user's guide if you have some time; they explain "
+"main WeeChat concepts.\n"
+"All WeeChat docs are available at: https://weechat.org/doc/\n"
+"\n"
+"Moreover, there is inline help with /help on all commands and options (use "
+"Tab key to complete the name).\n"
+"The command /fset can help to customize WeeChat.\n"
+"\n"
+"You can add and connect to an IRC server with /server and /connect commands "
+"(see /help server)."
+msgstr ""
+
+#. TRANSLATORS: the "under %s" can be "under screen" or "under tmux"
+#, c-format
+msgid ""
+"%sWarning: WeeChat is running under %s and $TERM is \"%s\", which can cause "
+"display bugs; $TERM should be set to one of these values: %s"
+msgstr ""
+
+#, c-format
+msgid "%sYou should add this line in the file %s:  %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sWarning: cannot set the locale; make sure $LANG and $LC_* variables are "
+"correct"
 msgstr ""
 
 #, c-format
@@ -5436,6 +5632,49 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+msgid "condition(s) to display the bar item (evaluated, see /help eval)"
+msgstr ""
+
+msgid "content of bar item (evaluated, see /help eval)"
+msgstr ""
+
+#, c-format
+msgid "debug: long callback: bar: %s, item: %s, plugin: %s, time elapsed: %s"
+msgstr ""
+
+#, c-format
+msgid "%sPaste %d line? [ctrl-y] Yes [ctrl-n] No"
+msgid_plural "%sPaste %d lines? [ctrl-y] Yes [ctrl-n] No"
+msgstr[0] ""
+msgstr[1] ""
+
+#. TRANSLATORS: search in "local" history
+msgid "local"
+msgstr ""
+
+#. TRANSLATORS: search in "global" history
+msgid "global"
+msgstr ""
+
+msgid "Search lines"
+msgstr ""
+
+msgid "Search command"
+msgstr ""
+
+msgid "keyboard and mouse debug ('q' to quit debug mode)"
+msgstr ""
+
+#, c-format
+msgid "%s-MORE(%d)-"
+msgstr ""
+
+msgid "Lag"
+msgstr ""
+
+msgid "away"
+msgstr ""
+
 #, c-format
 msgid ""
 "%sUnable to change bar type: you must delete bar and create another to do "
@@ -5454,9 +5693,9 @@ msgstr ""
 msgid ""
 "conditions to display the bar: a simple condition: \"active\", \"inactive\", "
 "\"nicklist\" (window must be active/inactive, buffer must have a nicklist), "
-"or an expression with condition(s) (see /help eval), like: \"${nicklist} && "
-"${info:term_width} > 100\" (local variables for expression are ${active}, "
-"${inactive} and ${nicklist})"
+"or an expression with condition(s) (see /help eval), like: \"${nicklist} && $"
+"{info:term_width} > 100\" (local variables for expression are ${active}, $"
+"{inactive} and ${nicklist})"
 msgstr ""
 
 msgid "bar position (bottom, top, left, right)"
@@ -5506,53 +5745,6 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Bar \"%s\" updated"
-msgstr ""
-
-#, c-format
-msgid "debug: long callback: bar: %s, item: %s, plugin: %s, time elapsed: %s"
-msgstr ""
-
-#, c-format
-msgid "%sPaste %d line? [ctrl-y] Yes [ctrl-n] No"
-msgid_plural "%sPaste %d lines? [ctrl-y] Yes [ctrl-n] No"
-msgstr[0] ""
-msgstr[1] ""
-
-#. TRANSLATORS: search in "local" history
-msgid "local"
-msgstr ""
-
-#. TRANSLATORS: search in "global" history
-msgid "global"
-msgstr ""
-
-msgid "Search lines"
-msgstr ""
-
-msgid "Search command"
-msgstr ""
-
-msgid "keyboard and mouse debug ('q' to quit debug mode)"
-msgstr ""
-
-#, c-format
-msgid "%s-MORE(%d)-"
-msgstr ""
-
-msgid "Lag"
-msgstr ""
-
-msgid "away"
-msgstr ""
-
-msgid "condition(s) to display the bar item (evaluated, see /help eval)"
-msgstr ""
-
-msgid "content of bar item (evaluated, see /help eval)"
-msgstr ""
-
-#, c-format
 msgid "Notify changed for \"%s%s%s\": \"%s%s%s\" to \"%s%s%s\""
 msgstr ""
 
@@ -5596,10 +5788,6 @@ msgstr ""
 #. TRANSLATORS: %s is the error returned by regerror
 #, c-format
 msgid "invalid regular expression (%s)"
-msgstr ""
-
-#, c-format
-msgid "key \"%s\" in context \"%s\""
 msgstr ""
 
 #, c-format
@@ -5664,23 +5852,16 @@ msgstr ""
 msgid "Debug disabled for mouse"
 msgstr ""
 
-msgid "Alias commands"
-msgstr ""
-
-#, c-format
-msgid "%s%s: error, circular reference when calling alias \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: invalid alias name: \"%s\""
-msgstr ""
-
 #, c-format
 msgid "%s%s: error creating alias \"%s\" => \"%s\""
 msgstr ""
 
 #, c-format
-msgid "Alias \"%s\" => \"%s\" created"
+msgid "Alias updated: \"%s\" => \"%s\""
+msgstr ""
+
+#, c-format
+msgid "Alias created: \"%s\" => \"%s\""
 msgstr ""
 
 #, c-format
@@ -5701,15 +5882,15 @@ msgid "No alias defined"
 msgstr ""
 
 #, c-format
+msgid "%sAlias \"%s\" already exists"
+msgstr ""
+
+#, c-format
 msgid "Alias \"%s\" removed"
 msgstr ""
 
 #, c-format
 msgid "%sAlias \"%s\" not found"
-msgstr ""
-
-#, c-format
-msgid "%sAlias \"%s\" already exists"
 msgstr ""
 
 #, c-format
@@ -5719,11 +5900,11 @@ msgstr ""
 msgid "list, add or remove command aliases"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list [<name>] || add <name> [<command>[;<command>...]] || addcompletion "
-"<completion> <name> [<command>[;<command>...]] || del <name>|<mask> [<name>|"
-"<mask>...] || rename <name> <new_name> || missing"
+"list [<name>] || add|addreplace <name> [<command>[;<command>...]] || "
+"addcompletion|addreplacecompletion <completion> <name> [<command>[;"
+"<command>...]] || del <name>|<mask>... || rename <name> <new_name> || missing"
 msgstr ""
 
 msgid "raw[list]: list aliases (without argument, this list is displayed)"
@@ -5732,19 +5913,18 @@ msgstr ""
 msgid "raw[add]: add an alias"
 msgstr ""
 
-msgid "name: name of alias"
+msgid "raw[addreplace]: add or replace an existing alias"
 msgstr ""
 
 msgid "raw[addcompletion]: add an alias with a custom completion"
 msgstr ""
 
-msgid "raw[del]: delete aliases"
+msgid ""
+"raw[addreplacecompletion]: add or replace an existing alias with a custom "
+"completion"
 msgstr ""
 
-msgid "raw[rename]: rename an alias"
-msgstr ""
-
-msgid "raw[missing]: add missing aliases (using default aliases)"
+msgid "name: name of alias"
 msgstr ""
 
 #, c-format
@@ -5757,6 +5937,15 @@ msgstr ""
 msgid ""
 "command: command name with arguments (many commands can be separated by "
 "semicolons)"
+msgstr ""
+
+msgid "raw[del]: delete aliases"
+msgstr ""
+
+msgid "raw[rename]: rename an alias"
+msgstr ""
+
+msgid "raw[missing]: add missing aliases (using default aliases)"
 msgstr ""
 
 msgid "In command, special variables are replaced:"
@@ -5811,15 +6000,15 @@ msgstr ""
 msgid "list of default aliases"
 msgstr ""
 
-msgid "Buffers list"
+msgid "Alias commands"
 msgstr ""
 
 #, c-format
-msgid ""
-"%sbuflist: warning: the script buffers.pl is loaded and provides a bar with "
-"list of buffers similar to the buflist plugin; you may want to uninstall the "
-"script buffers.pl (/script remove buffers.pl) or disable/unload the buflist "
-"plugin; see WeeChat release notes for more information"
+msgid "%s%s: error, circular reference when calling alias \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: invalid alias name: \"%s\""
 msgstr ""
 
 msgid "bar item with list of buffers"
@@ -5898,14 +6087,14 @@ msgstr ""
 
 msgid ""
 "    - ${current_buffer}: a boolean (\"0\" or \"1\"), \"1\" if this is the "
-"current buffer; it can be used in a condition: ${if:"
-"${current_buffer}?...:...}"
+"current buffer; it can be used in a condition: ${if:$"
+"{current_buffer}?...:...}"
 msgstr ""
 
 msgid ""
 "    - ${merged}: a boolean (\"0\" or \"1\"), \"1\" if the buffer is merged "
-"with at least another buffer; it can be used in a condition: ${if:"
-"${merged}?...:...}"
+"with at least another buffer; it can be used in a condition: ${if:$"
+"{merged}?...:...}"
 msgstr ""
 
 msgid ""
@@ -5949,8 +6138,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"    - ${format_name}: formatted name (evaluation of option buflist.format."
-"name)"
+"    - ${format_name}: formatted name (evaluation of option "
+"buflist.format.name)"
 msgstr ""
 
 msgid "    - ${name}: the short name (if set), with a fallback on the name"
@@ -5963,8 +6152,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"    - ${format_hotlist}: the formatted hotlist (evaluation of option buflist."
-"format.hotlist)"
+"    - ${format_hotlist}: the formatted hotlist (evaluation of option "
+"buflist.format.hotlist)"
 msgstr ""
 
 msgid "    - ${hotlist}: the raw hotlist"
@@ -6003,7 +6192,7 @@ msgstr ""
 msgid ""
 "add newline between the buffers displayed, so each buffer is displayed on a "
 "separate line (recommended); if disabled, newlines must be manually added in "
-"the formats with \"${\\n}\", and the mouse actions are not possible any more"
+"the formats with \"${\\n}\", and the mouse actions are not possible anymore"
 msgstr ""
 
 msgid ""
@@ -6024,8 +6213,8 @@ msgstr ""
 
 msgid ""
 "enable buflist; it is recommended to use this option instead of just hiding "
-"the bar because it also removes some internal hooks that are not needed any "
-"more when the bar is hidden; you can also use the command \"/buflist "
+"the bar because it also removes some internal hooks that are not needed "
+"anymore when the bar is hidden; you can also use the command \"/buflist "
 "toggle\" or use the default key alt+shift+b"
 msgstr ""
 
@@ -6049,7 +6238,7 @@ msgstr ""
 
 msgid ""
 "when the nick prefix is enabled, display a space instead if there is no nick "
-"prefix on the buffer"
+"prefix on the buffer (only for channel, private and list buffers)"
 msgstr ""
 
 msgid ""
@@ -6060,16 +6249,16 @@ msgstr ""
 
 msgid ""
 "comma-separated list of fields to sort buffers; each field is a hdata "
-"variable of buffer (\"var\"), a hdata variable of IRC server (\"irc_server."
-"var\") or a hdata variable of IRC channel (\"irc_channel.var\"); char \"-\" "
-"can be used before field to reverse order, char \"~\" can be used to do a "
-"case insensitive comparison; examples: \"-~short_name\" for case insensitive "
-"and reverse sort on buffer short name, \"-hotlist.priority,hotlist.time,"
-"hotlist.time_usec,number,-active\" for sort like the hotlist then by buffer "
-"number for buffers without activity (note: the content is evaluated, before "
-"being split into fields, but at that time \"bar_item\" is the only variable "
-"that can be used, to distinguish between different buflist items, for "
-"example \"${bar_item.name}\")"
+"variable of buffer (\"var\"), a hdata variable of IRC server "
+"(\"irc_server.var\") or a hdata variable of IRC channel "
+"(\"irc_channel.var\"); char \"-\" can be used before field to reverse order, "
+"char \"~\" can be used to do a case-insensitive comparison; examples: \"-"
+"~short_name\" for case-insensitive and reverse sort on buffer short name, \"-"
+"hotlist.priority,hotlist.time,hotlist.time_usec,number,-active\" for sort "
+"like the hotlist then by buffer number for buffers without activity (note: "
+"the content is evaluated, before being split into fields, but at that time "
+"\"bar_item\" is the only variable that can be used, to distinguish between "
+"different buflist items, for example \"${bar_item.name}\")"
 msgstr ""
 
 msgid ""
@@ -6082,9 +6271,8 @@ msgid ""
 "format of each line with a buffer (note: content is evaluated, see /help "
 "buflist); example: standard format for bar item \"buflist\" and only the "
 "buffer number between square brackets for other bar items (\"buflist2\" to "
-"\"buflist5\"): \"${if:${bar_item.name}==buflist?"
-"${format_number}${indent}${format_nick_prefix}${color_hotlist}${format_name}:"
-"[${number}]}\""
+"\"buflist5\"): \"${if:${bar_item.name}==buflist?${format_number}${indent}$"
+"{format_nick_prefix}${color_hotlist}${format_name}:[${number}]}\""
 msgstr ""
 
 msgid ""
@@ -6159,6 +6347,17 @@ msgstr ""
 msgid "buflist bar item name (optional)"
 msgstr ""
 
+msgid "Buffers list"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sbuflist: warning: the script buffers.pl is loaded and provides a bar with "
+"list of buffers similar to the buflist plugin; you may want to uninstall the "
+"script buffers.pl (/script remove buffers.pl) or disable/unload the buflist "
+"plugin; see WeeChat release notes for more information"
+msgstr ""
+
 msgid "Charset conversions"
 msgstr ""
 
@@ -6202,7 +6401,7 @@ msgstr ""
 msgid "change charset for current buffer"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "decode|encode <charset> || reset"
 msgstr ""
 
@@ -6219,17 +6418,6 @@ msgid "raw[reset]: reset charsets for current buffer"
 msgstr ""
 
 msgid "Executed commands"
-msgstr ""
-
-msgid "Execution of external commands in WeeChat"
-msgstr ""
-
-#, c-format
-msgid "%s: end of command %ld (\"%s\"), return code: %d"
-msgstr ""
-
-#, c-format
-msgid "%s: unexpected end of command %ld (\"%s\")"
 msgstr ""
 
 msgid "No command is running"
@@ -6263,7 +6451,7 @@ msgid "%s%s: command id \"%s\" not found"
 msgstr ""
 
 #, c-format
-msgid "%s%s: command with id \"%s\" is not running any more"
+msgid "%s%s: command with id \"%s\" is not running anymore"
 msgstr ""
 
 #, c-format
@@ -6289,14 +6477,14 @@ msgstr ""
 msgid "execute external commands"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "-list || [-sh|-nosh] [-bg|-nobg] [-stdin|-nostdin] [-buffer <name>] [-l|-o|-"
 "oc|-n|-nf] [-oerr] [-cl|-nocl] [-sw|-nosw] [-ln|-noln] [-flush|-noflush] [-"
 "color ansi|auto|irc|weechat|strip] [-rc|-norc] [-timeout <timeout>] [-name "
-"<name>] [-pipe <command>] [-hsignal <name>] <command> || -in <id> <text> || -"
-"inclose <id> [<text>] || -signal <id> <signal> || -kill <id> || -killall || -"
-"set <id> <property> <value> || -del <id>|-all [<id>...]"
+"<name>] [-pipe <command>] [-hsignal <name>] <command> || -in <id> <text> || "
+"-inclose <id> [<text>] || -signal <id> <signal> || -kill <id> || -killall || "
+"-set <id> <property> <value> || -del <id>|-all [<id>...]"
 msgstr ""
 
 msgid "raw[-list]: list commands"
@@ -6505,39 +6693,15 @@ msgstr ""
 msgid "text color for a running command flag in list of commands"
 msgstr ""
 
-msgid "FIFO pipe for remote control"
+msgid "Execution of external commands in WeeChat"
 msgstr ""
 
 #, c-format
-msgid "%s%s: not enough memory (%s)"
+msgid "%s: end of command %ld (\"%s\"), return code: %d"
 msgstr ""
 
 #, c-format
-msgid "%s: pipe opened (file: %s)"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to open pipe (%s) for reading"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to create pipe for remote control (%s): error %d %s"
-msgstr ""
-
-#, c-format
-msgid "%s: pipe closed"
-msgstr ""
-
-#, c-format
-msgid "%s%s: invalid text received in pipe"
-msgstr ""
-
-#, c-format
-msgid "%s%s: buffer \"%s\" not found"
-msgstr ""
-
-#, c-format
-msgid "%s%s: error reading pipe (%d %s), closing it"
+msgid "%s: unexpected end of command %ld (\"%s\")"
 msgstr ""
 
 #, c-format
@@ -6597,6 +6761,41 @@ msgstr ""
 msgid "name of FIFO pipe"
 msgstr ""
 
+msgid "FIFO pipe for remote control"
+msgstr ""
+
+#, c-format
+msgid "%s%s: not enough memory (%s)"
+msgstr ""
+
+#, c-format
+msgid "%s: pipe opened (file: %s)"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to open pipe (%s) for reading"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to create pipe for remote control (%s): error %d %s"
+msgstr ""
+
+#, c-format
+msgid "%s: pipe closed"
+msgstr ""
+
+#, c-format
+msgid "%s%s: invalid text received in pipe"
+msgstr ""
+
+#, c-format
+msgid "%s%s: buffer \"%s\" not found"
+msgstr ""
+
+#, c-format
+msgid "%s%s: error reading pipe (%d %s), closing it"
+msgstr ""
+
 msgid "values:"
 msgstr ""
 
@@ -6612,15 +6811,12 @@ msgstr ""
 msgid ""
 "%s%d%s/%s%d%s%s | Filter: %s%s%s | Sort: %s%s%s | Key(input): "
 "alt+space=toggle boolean, alt+'-'(-)=subtract 1 or set, alt+'+'(+)=add 1 or "
-"append, alt+f,alt+r(r)=reset, alt+f,alt+u(u)=unset, alt+enter(s)=set, alt+f,"
-"alt+n(n)=set new value, alt+f,alt+a(a)=append, alt+','=mark/unmark, "
+"append, alt+f,alt+r(r)=reset, alt+f,alt+u(u)=unset, alt+enter(s)=set, "
+"alt+f,alt+n(n)=set new value, alt+f,alt+a(a)=append, alt+','=mark/unmark, "
 "shift+down=mark and move down, shift+up=move up and mark, ($)=refresh, ($"
 "$)=unmark/refresh, (m)=mark matching options, (u)=unmark matching options, "
 "alt+p(p)=toggle plugins desc, alt+v(v)=toggle help bar, ctrl+x(x)=switch "
 "format, (q)=close buffer"
-msgstr ""
-
-msgid "Fast set of WeeChat and plugins options"
 msgstr ""
 
 #, c-format
@@ -6644,11 +6840,11 @@ msgstr[1] ""
 msgid "fast set WeeChat and plugins options"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "-bar || -refresh || -up|-down [<number>] || -left|-right [<percent>] || -go "
-"<line>|end || -toggle || -add [<value>] || -reset || -unset || -set || -"
-"setnew || -append || -mark || -format || -export [-help|-nohelp] <filename> "
+"<line>|end || -toggle || -add [<value>] || -reset || -unset || -set || "
+"-setnew || -append || -mark || -format || -export [-help|-nohelp] <filename> "
 "|| -import <filename> || <filter>"
 msgstr ""
 
@@ -6714,7 +6910,7 @@ msgid "raw[-format]: switch to the next available format"
 msgstr ""
 
 msgid ""
-"raw[-export]: export the options and values displayed in a file (each line "
+"raw[-export]: export the options and values displayed to a file (each line "
 "has format: \"/set name value\" or \"/unset name\")"
 msgstr ""
 
@@ -6729,8 +6925,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"raw[-nohelp]: do not write help on options in exported file (see /help fset."
-"look.export_help_default)"
+"raw[-nohelp]: do not write help on options in exported file (see /help "
+"fset.look.export_help_default)"
 msgstr ""
 
 msgid ""
@@ -6868,8 +7064,8 @@ msgid "    - ${description_en}: option description (in English)"
 msgstr ""
 
 msgid ""
-"    - ${description_en2}: option description (in English), \"(no "
-"description)\" if there's no description"
+"    - ${description_en2}: option description (in English), \"(no description)"
+"\" if there's no description"
 msgstr ""
 
 msgid "    - ${string_values}: string values allowed for set of an enum option"
@@ -6895,16 +7091,16 @@ msgid "  - option data, raw format (no colors/spaces):"
 msgstr ""
 
 msgid ""
-"    - same names prefixed by two underscores, for example: ${__name}, "
-"${__type}, ..."
+"    - same names prefixed by two underscores, for example: ${__name}, $"
+"{__type}, ..."
 msgstr ""
 
 msgid "  - option data, only spaces:"
 msgstr ""
 
 msgid ""
-"    - same names prefixed with \"empty_\", for example: ${empty_name}, "
-"${empty_type}"
+"    - same names prefixed with \"empty_\", for example: ${empty_name}, $"
+"{empty_type}"
 msgstr ""
 
 msgid "  - other data:"
@@ -6976,8 +7172,8 @@ msgstr ""
 msgid ""
 "comma-separated list of fields to sort options (see /help fset for a list of "
 "fields); char \"-\" can be used before field to reverse order, char \"~\" "
-"can be used to do a case insensitive comparison; example: \"-~name\" for "
-"case insensitive and reverse sort on option name"
+"can be used to do a case-insensitive comparison; example: \"-~name\" for "
+"case-insensitive and reverse sort on option name"
 msgstr ""
 
 msgid "string displayed when an option is not marked"
@@ -7035,8 +7231,8 @@ msgid "color for color name when option fset.look.use_color_value is enabled"
 msgstr ""
 
 msgid ""
-"color for color name on the selected line when option fset.look."
-"use_color_value is enabled"
+"color for color name on the selected line when option "
+"fset.look.use_color_value is enabled"
 msgstr ""
 
 msgid "color for default value"
@@ -7246,6 +7442,9 @@ msgstr ""
 msgid "any color"
 msgstr ""
 
+msgid "Fast set of WeeChat and plugins options"
+msgstr ""
+
 #, c-format
 msgid "%s%s: script \"%s\" already registered (register ignored)"
 msgstr ""
@@ -7304,36 +7503,6 @@ msgstr ""
 
 #. TRANSLATORS: this is displayed in a bar item and must be as short as possible
 msgid "cleartext"
-msgstr ""
-
-msgid "IRC (Internet Relay Chat) protocol"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: disconnecting from server because upgrade can't work for servers "
-"connected via TLS"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: disconnected from %d server (TLS connection not supported with upgrade)"
-msgid_plural ""
-"%s%s: disconnected from %d servers (TLS connection not supported with "
-"upgrade)"
-msgstr[0] ""
-msgstr[1] ""
-
-#, c-format
-msgid ""
-"%s%s: unable to add temporary server \"%s\" (check if there is already a "
-"server with this name)"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: WARNING: some network connections may still be opened and not visible, "
-"you should restart WeeChat now (with /quit)."
 msgstr ""
 
 #, c-format
@@ -7419,6 +7588,12 @@ msgstr ""
 
 #, c-format
 msgid ""
+"%s%s: unable to add temporary server \"%s\" (check if there is already a "
+"server with this name)"
+msgstr ""
+
+#, c-format
+msgid ""
 "%s%s: unable to add temporary server \"%s\" because the addition of "
 "temporary servers with command /connect is currently disabled"
 msgstr ""
@@ -7431,7 +7606,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "%s%s: \"%s\" command can not be executed on a server buffer"
+msgid "%s%s: \"%s\" command cannot be executed on a server buffer"
 msgstr ""
 
 #, c-format
@@ -7472,6 +7647,10 @@ msgid "%s%s: ignore already exists"
 msgstr ""
 
 #, c-format
+msgid "%s: ignore updated:"
+msgstr ""
+
+#, c-format
 msgid "%s: ignore added:"
 msgstr ""
 
@@ -7501,6 +7680,18 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: mask must begin with nick"
+msgstr ""
+
+#, c-format
+msgid "%s%s: list buffer is not displayed"
+msgstr ""
+
+#, c-format
+msgid "%s%s: no channels displayed on list buffer"
+msgstr ""
+
+#, c-format
+msgid "%s%s: error exporting channels to file \"%s\""
 msgstr ""
 
 #, c-format
@@ -7534,6 +7725,10 @@ msgid "%sMonitor list is full (%d)"
 msgstr ""
 
 #, c-format
+msgid "%s: notification updated for %s%s%s"
+msgstr ""
+
+#, c-format
 msgid "%s: notification added for %s%s%s"
 msgstr ""
 
@@ -7558,7 +7753,7 @@ msgid "%s%s: notification not found"
 msgstr ""
 
 #, c-format
-msgid "%s%s: \"%s\" command can not be executed with a channel name (\"%s\")"
+msgid "%s%s: \"%s\" command cannot be executed with a channel name (\"%s\")"
 msgstr ""
 
 #, c-format
@@ -7597,10 +7792,20 @@ msgid_plural "channels"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "All connected servers:"
+msgstr ""
+
 msgid "All servers:"
 msgstr ""
 
+msgid "No connected server"
+msgstr ""
+
 msgid "No server"
+msgstr ""
+
+#, c-format
+msgid "Connected servers with \"%s\":"
 msgstr ""
 
 #, c-format
@@ -7608,15 +7813,23 @@ msgid "Servers with \"%s\":"
 msgstr ""
 
 #, c-format
+msgid "No connected server found with \"%s\""
+msgstr ""
+
+#, c-format
 msgid "No server found with \"%s\""
 msgstr ""
 
 #, c-format
-msgid "%s%s: server \"%s\" already exists, can't add it!"
+msgid "%s%s: server \"%s\" already exists"
 msgstr ""
 
 #, c-format
 msgid "%s%s: unable to add server"
+msgstr ""
+
+#, c-format
+msgid "%s: server updated: %s%s%s -> %s"
 msgstr ""
 
 #, c-format
@@ -7650,12 +7863,12 @@ msgid "%s%s: server \"%s\" is not a temporary server"
 msgstr ""
 
 #, c-format
-msgid "%s: server %s%s%s is not temporary any more"
+msgid "%s: server %s%s%s is not temporary anymore"
 msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: you can not delete server \"%s\" because you are connected to. Try \"/"
+"%s%s: you cannot delete server \"%s\" because you are connected to. Try \"/"
 "disconnect %s\" before."
 msgstr ""
 
@@ -7680,7 +7893,7 @@ msgstr ""
 msgid "send a CTCP action to a nick or channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-server <server>] <target>[,<target>...] <text>"
 msgstr ""
 
@@ -7696,7 +7909,7 @@ msgstr ""
 msgid "find information about the administrator of the server"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<target>]"
 msgstr ""
 
@@ -7706,7 +7919,7 @@ msgstr ""
 msgid "execute a command on all channels of all connected servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[-current] [-parted|-all] [-exclude=<channel>[,<channel>...]] <command> || [-"
 "current] [-parted|-all] -include=<channel>[,<channel>...] <command>"
@@ -7781,10 +7994,10 @@ msgstr ""
 msgid "execute a command on all private buffers of all connected servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"[-current] [-exclude=<nick>[,<nick>...]] <command> || [-current] -"
-"include=<nick>[,<nick>...] <command>"
+"[-current] [-exclude=<nick>[,<nick>...]] <command> || [-current] "
+"-include=<nick>[,<nick>...] <command>"
 msgstr ""
 
 msgid ""
@@ -7828,7 +8041,7 @@ msgstr ""
 msgid "execute a command on all connected servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[-exclude=<server>[,<server>...]] <command> || -include=<server>[,"
 "<server>...] <command>"
@@ -7849,7 +8062,7 @@ msgstr ""
 msgid "authenticate with SASL"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<username> <password>]"
 msgstr ""
 
@@ -7861,8 +8074,8 @@ msgstr ""
 
 msgid ""
 "password: SASL password or path to file with private key (content is "
-"evaluated, see /help eval; server options are evaluated with ${irc_server."
-"xxx} and ${server} is replaced by the server name)"
+"evaluated, see /help eval; server options are evaluated with $"
+"{irc_server.xxx} and ${server} is replaced by the server name)"
 msgstr ""
 
 msgid ""
@@ -7883,11 +8096,10 @@ msgstr ""
 msgid "configure the \"autojoin\" server option"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"add [<channel1> [<channel2>...]] || addraw <channel1>[,<channel2>...] "
-"[<key1>[,<key2>...]] || del [<channel1> [<channel2>...]] || apply || join || "
-"sort [buffer]"
+"add [<channel>...] || addraw <channel1>[,<channel2>...] [<key1>[,<key2>...]] "
+"|| del [<channel>...] || apply || join || sort [buffer]"
 msgstr ""
 
 msgid ""
@@ -7926,8 +8138,8 @@ msgstr ""
 msgid "ban nicks or hosts"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "[<channel>] [<nick> [<nick>...]]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "[<channel>] [<nick>...]"
 msgstr ""
 
 msgid "nick: nick or host"
@@ -7940,8 +8152,8 @@ msgstr ""
 msgid "client capability negotiation"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "ls || list || req|ack [<capability> [<capability>...]] || end"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "ls || list || req|ack [<capability>...] || end"
 msgstr ""
 
 msgid "raw[ls]: list the capabilities supported by the server"
@@ -7973,9 +8185,9 @@ msgid ""
 msgstr ""
 
 msgid ""
-"The capabilities to automatically enable on servers can be set in option irc."
-"server_default.capabilities (or by server in option irc.server.xxx."
-"capabilities)."
+"The capabilities to automatically enable on servers can be set in option "
+"irc.server_default.capabilities (or by server in option "
+"irc.server.xxx.capabilities)."
 msgstr ""
 
 msgid "  display supported and enabled capabilities:"
@@ -7993,10 +8205,10 @@ msgstr ""
 msgid "connect to IRC server(s)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"[<server> [<server>...]] [-<option>[=<value>]] [-no<option>] [-nojoin] [-"
-"switch] || -all|-auto|-open [-nojoin] [-switch]"
+"[<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-switch] || "
+"-all|-auto|-open [-nojoin] [-switch]"
 msgstr ""
 
 msgid "server: server name, which can be:"
@@ -8051,7 +8263,7 @@ msgstr ""
 msgid "send a CTCP message (Client-To-Client Protocol)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-server <server>] <target>[,<target>...] <type> [<arguments>]"
 msgstr ""
 
@@ -8067,7 +8279,7 @@ msgstr ""
 msgid "leave and rejoin a channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<channel>[,<channel>...]] [<message>]"
 msgstr ""
 
@@ -8077,7 +8289,7 @@ msgstr ""
 msgid "start a DCC (passive file transfer or direct chat)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "chat <nick> || send <nick> <file>"
 msgstr ""
 
@@ -8090,8 +8302,8 @@ msgstr ""
 msgid "remove channel half-operator status from nick(s)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "<nick> [<nick>...] || * -yes"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "<nick>... || * -yes"
 msgstr ""
 
 msgid "nick: nick or mask (wildcard \"*\" is allowed)"
@@ -8121,7 +8333,7 @@ msgstr ""
 msgid "disconnect from one or all IRC servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<server>|-all|-pending [<reason>]]"
 msgstr ""
 
@@ -8147,8 +8359,10 @@ msgstr ""
 msgid "ignore nicks/hosts from servers or channels"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "list || add [re:]<nick> [<server> [<channel>]] || del <number>|-all"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid ""
+"list || add|addreplace [re:]<nick> [<server> [<channel>]] || del <number>|-"
+"all"
 msgstr ""
 
 msgid "raw[list]: list all ignores"
@@ -8157,10 +8371,13 @@ msgstr ""
 msgid "raw[add]: add an ignore"
 msgstr ""
 
+msgid "raw[addreplace]: add or replace an existing ignore"
+msgstr ""
+
 msgid ""
 "nick: nick or hostname; can be a POSIX extended regular expression if \"re:"
 "\" is given or a mask using \"*\" to replace zero or more chars (the regular "
-"expression can start with \"(?-i)\" to become case sensitive)"
+"expression can start with \"(?-i)\" to become case-sensitive)"
 msgstr ""
 
 msgid "raw[del]: delete an ignore"
@@ -8190,21 +8407,21 @@ msgstr ""
 msgid "invite a nick on a channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "<nick> [<nick>...] [<channel>]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "<nick>... [<channel>]"
 msgstr ""
 
 msgid "check if a nick is currently on IRC"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "<nick> [<nick>...]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "<nick>..."
 msgstr ""
 
 msgid "join a channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[-noswitch] [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,"
 "<key2>...]]"
@@ -8220,7 +8437,7 @@ msgstr ""
 msgid "kick a user out of a channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<channel>] <nick> [<reason>]"
 msgstr ""
 
@@ -8241,7 +8458,7 @@ msgstr ""
 msgid "close client-server connection"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick> [<reason>]"
 msgstr ""
 
@@ -8251,7 +8468,7 @@ msgstr ""
 msgid "send a notice to an invitation-only channel, requesting an invite"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<channel> [<message>]"
 msgstr ""
 
@@ -8261,7 +8478,7 @@ msgstr ""
 msgid "list all server names which are known by the server answering the query"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[[<target>] <server_mask>]"
 msgstr ""
 
@@ -8274,20 +8491,27 @@ msgstr ""
 msgid "list channels and their topics"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"[-server <server>] [-re <regex>] [<channel>[,<channel>...]] [<target>] || -"
-"up|-down [<number>] || -left|-right [<percent>] || -go <line>|end || -join"
+"[-server <server>] [<channel>[,<channel>...]] [<target>] || [-server "
+"<server>] [-raw *|<regex>] || -up|-down [<number>] || -left|-right "
+"[<percent>] || -go <line>|end || -join || -export <filename>"
 msgstr ""
 
 msgid ""
-"regex: POSIX extended regular expression used to filter results (case "
-"insensitive, can start by \"(?-i)\" to become case sensitive); when a "
-"regular expression is used, the result is displayed on server buffer instead "
-"of a dedicated buffer"
+"raw[-raw]: display result on server buffer instead of a dedicated buffer"
+msgstr ""
+
+msgid ""
+"regex: POSIX extended regular expression used to filter results (case-"
+"insensitive, can start by \"(?-i)\" to become case-sensitive); the special "
+"value \"*\" doesn't filter results"
 msgstr ""
 
 msgid "raw[-join]: join the channel on the selected line"
+msgstr ""
+
+msgid "raw[-export]: export list of channels to a file"
 msgstr ""
 
 msgid "Sort keys on /list buffer:"
@@ -8306,16 +8530,20 @@ msgid "  raw[topic]: channel topic"
 msgstr ""
 
 msgid ""
-"  list all channels on server and display them in a dedicated buffer (can be "
-"slow on large networks):"
-msgstr ""
-
-msgid "  list channel #weechat:"
+"  list all channels on server buffer (no dedicated buffer and can be slow on "
+"large networks):"
 msgstr ""
 
 msgid ""
-"  list all channels beginning with \"#weechat\" (can be very slow on large "
-"networks):"
+"  list all channels beginning with \"#weechat\" on server buffer (no "
+"dedicated buffer and can be slow on large networks):"
+msgstr ""
+
+msgid ""
+"  list all channels on a dedicated buffer (can be slow on large networks):"
+msgstr ""
+
+msgid "  list channel #weechat on a dedicated buffer:"
 msgstr ""
 
 msgid "  on /list buffer:"
@@ -8328,7 +8556,7 @@ msgid "    channels with at least 100 users:"
 msgstr ""
 
 msgid ""
-"    channels with \"freebsd\" (case insensitive) in topic and more than 10 "
+"    channels with \"freebsd\" (case-insensitive) in topic and more than 10 "
 "users:"
 msgstr ""
 
@@ -8340,7 +8568,7 @@ msgstr ""
 msgid "get statistics about the size of the IRC network"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<mask> [<target>]]"
 msgstr ""
 
@@ -8356,14 +8584,14 @@ msgstr ""
 msgid "send a CTCP action to the current channel"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<message>"
 msgstr ""
 
 msgid "change channel or user mode"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "[<channel>] [+|-]o|p|s|i|t|n|m|l|b|e|v|k [<arguments>] || <nick> [+|-]i|s|w|o"
 msgstr ""
@@ -8442,7 +8670,7 @@ msgstr ""
 msgid "list nicks on channels"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-count | -x] [<channel>[,<channel>...]]"
 msgstr ""
 
@@ -8457,7 +8685,7 @@ msgstr ""
 msgid "change current nick"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-all] <nick>"
 msgstr ""
 
@@ -8470,7 +8698,7 @@ msgstr ""
 msgid "send notice message to user"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-server <server>] <target> <text>"
 msgstr ""
 
@@ -8480,11 +8708,14 @@ msgstr ""
 msgid "add a notification for presence or away status of nicks on servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "add <nick> [<server> [-away]] || del <nick>|-all [<server>]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "add|addreplace <nick> [<server> [-away]] || del <nick>|-all [<server>]"
 msgstr ""
 
 msgid "raw[add]: add a notification"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace a notification"
 msgstr ""
 
 msgid "server: internal server name (by default current server)"
@@ -8514,7 +8745,7 @@ msgstr ""
 msgid "get operator privileges"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<user> <password>"
 msgstr ""
 
@@ -8530,7 +8761,7 @@ msgstr ""
 msgid "send a ping to server"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<target1> [<target2>]"
 msgstr ""
 
@@ -8543,7 +8774,7 @@ msgstr ""
 msgid "answer to a ping message"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<daemon> [<daemon2>]"
 msgstr ""
 
@@ -8556,7 +8787,7 @@ msgstr ""
 msgid "send a private message to a nick"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-noswitch] [-server <server>] <nick>[,<nick>...] [<text>]"
 msgstr ""
 
@@ -8570,7 +8801,7 @@ msgstr ""
 msgid "send raw data to server without parsing"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[-server <server>] <data>"
 msgstr ""
 
@@ -8580,8 +8811,8 @@ msgstr ""
 msgid "reconnect to server(s)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "<server> [<server>...] [-nojoin] [-switch] || -all [-nojoin] [-switch]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "<server>... [-nojoin] [-switch] || -all [-nojoin] [-switch]"
 msgstr ""
 
 msgid "raw[-all]: reconnect to all servers"
@@ -8590,7 +8821,7 @@ msgstr ""
 msgid "tell the server to reload its config file"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<option>]"
 msgstr ""
 
@@ -8614,14 +8845,14 @@ msgstr ""
 msgid "force a user to join channel(s)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick> <channel>[,<channel>...]"
 msgstr ""
 
 msgid "change mode on channel, without having operator status"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<channel>] <mode>"
 msgstr ""
 
@@ -8631,7 +8862,7 @@ msgstr ""
 msgid "force a user to use another nick"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick> <new_nick>"
 msgstr ""
 
@@ -8644,14 +8875,14 @@ msgstr ""
 msgid "force a user to quit server with a reason"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick> <reason>"
 msgstr ""
 
 msgid "register a new service"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick> <reserved> <distribution> <type> <reserved> <info>"
 msgstr ""
 
@@ -8664,11 +8895,11 @@ msgstr ""
 msgid "list, add or remove IRC servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list|listfull [<name>] || add <name> <hostname>[/<port>] [-temp] [-"
-"<option>[=<value>]] [-no<option>] || copy|rename <name> <new_name> || "
-"reorder <name> [<name>...] || open <name>|-all [<name>...] || del|keep "
+"list|listfull [-connected] [<name>] || add|addreplace <name> <hostname>[/"
+"<port>] [-temp] [-<option>[=<value>]] [-no<option>] || copy|rename <name> "
+"<new_name> || reorder <name>... || open <name>|-all [<name>...] || del|keep "
 "<name> || deloutq|jump || raw [<filter>]"
 msgstr ""
 
@@ -8678,13 +8909,19 @@ msgstr ""
 msgid "raw[listfull]: list servers with detailed info for each server"
 msgstr ""
 
+msgid "raw[-connected]: list only connected servers"
+msgstr ""
+
 msgid "raw[add]: add a new server"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace an existing server"
 msgstr ""
 
 msgid ""
 "name: server name, for internal and display use; this name is used to "
-"connect to the server (/connect name) and to set server options: irc.server."
-"name.xxx"
+"connect to the server (/connect name) and to set server options: "
+"irc.server.name.xxx"
 msgstr ""
 
 msgid ""
@@ -8759,7 +8996,7 @@ msgstr ""
 msgid "list services currently connected to the network"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<mask> [<type>]]"
 msgstr ""
 
@@ -8772,7 +9009,7 @@ msgstr ""
 msgid "deliver a message to a service"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<service> <text>"
 msgstr ""
 
@@ -8782,7 +9019,7 @@ msgstr ""
 msgid "set real name"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<realname>"
 msgstr ""
 
@@ -8792,7 +9029,7 @@ msgstr ""
 msgid "disconnect server links"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<target> <comment>"
 msgstr ""
 
@@ -8802,7 +9039,7 @@ msgstr ""
 msgid "query statistics about server"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<query> [<target>]]"
 msgstr ""
 
@@ -8814,7 +9051,7 @@ msgid ""
 "please join IRC"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<user> [<target> [<channel>]]"
 msgstr ""
 
@@ -8830,7 +9067,7 @@ msgstr ""
 msgid "get/set channel topic"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<channel>] [<topic>|-delete]"
 msgstr ""
 
@@ -8846,8 +9083,8 @@ msgstr ""
 msgid "unban nicks or hosts"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
-msgid "[<channel>] <nick>|<number>|<n1>-<n2> [<nick>|<number>|<n1>-<n2>...]"
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
+msgid "[<channel>] <nick>|<number>|<n1>-<n2>..."
 msgstr ""
 
 msgid "number: ban number (as displayed by command /ban)"
@@ -8874,7 +9111,7 @@ msgstr ""
 msgid "give the version info of nick or server (current or specified)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<target>|<nick>]"
 msgstr ""
 
@@ -8887,7 +9124,7 @@ msgstr ""
 msgid "send a notice to channel ops"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<channel>] <text>"
 msgstr ""
 
@@ -8896,14 +9133,14 @@ msgid ""
 "mode for themselves"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<text>"
 msgstr ""
 
 msgid "generate a query which returns a list of information"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<mask> [o]]"
 msgstr ""
 
@@ -8916,7 +9153,7 @@ msgstr ""
 msgid "query information about user(s)"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "[<target>] [<nick>[,<nick>...]]"
 msgstr ""
 
@@ -8940,7 +9177,7 @@ msgstr ""
 msgid "ask for information about a nick which no longer exists"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "<nick>[,<nick>...] [<count> [<target>]]"
 msgstr ""
 
@@ -9063,8 +9300,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: warning: the command name \"%s\" must be lower case, the option \"irc."
-"msgbuffer.%s\" will not work"
+"%s%s: warning: the command name \"%s\" must be lower case, the option "
+"\"irc.msgbuffer.%s\" will not work"
 msgstr ""
 
 msgid "buffer used to display message received from IRC server"
@@ -9076,17 +9313,17 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: warning: the CTCP name \"%s\" must be lower case, the option \"irc."
-"ctcp.%s\" will not work"
+"%s%s: warning: the CTCP name \"%s\" must be lower case, the option "
+"\"irc.ctcp.%s\" will not work"
 msgstr ""
 
 msgid ""
 "format for CTCP reply or empty string for blocking CTCP (no reply); content "
-"is evaluated, see /help eval; following variables are replaced: "
-"${clientinfo}: list of supported CTCP, ${version}: WeeChat version, ${git}: "
+"is evaluated, see /help eval; following variables are replaced: $"
+"{clientinfo}: list of supported CTCP, ${version}: WeeChat version, ${git}: "
 "Git version, ${versiongit}: WeeChat version and Git version, ${compilation}: "
-"compilation date, ${osinfo}: info about OS, ${site}: WeeChat site, "
-"${download}: WeeChat site, download page, ${time}: current date and time as "
+"compilation date, ${osinfo}: info about OS, ${site}: WeeChat site, $"
+"{download}: WeeChat site, download page, ${time}: current date and time as "
 "text, ${username}: username on server, ${realname}: realname on server"
 msgstr ""
 
@@ -9096,8 +9333,8 @@ msgstr ""
 
 msgid ""
 "list of hostname/port or IP/port for server (separated by comma) (note: "
-"content is evaluated, see /help eval; server options are evaluated with "
-"${irc_server.xxx} and ${server} is replaced by the server name)"
+"content is evaluated, see /help eval; server options are evaluated with $"
+"{irc_server.xxx} and ${server} is replaced by the server name)"
 msgstr ""
 
 msgid ""
@@ -9105,9 +9342,7 @@ msgid ""
 "command /proxy)"
 msgstr ""
 
-msgid ""
-"use IPv6 protocol for server communication (try IPv6 then fallback to IPv4); "
-"if disabled, only IPv4 is used"
+msgid "use IPv6 protocol for server communication"
 msgstr ""
 
 msgid "use TLS for server communication"
@@ -9140,8 +9375,8 @@ msgid ""
 "chars for SHA-256, 40 chars for SHA-1 (insecure, not recommended); many "
 "fingerprints can be separated by commas; if this option is set, the other "
 "checks on certificates are NOT performed (option \"tls_verify\") (note: "
-"content is evaluated, see /help eval; server options are evaluated with "
-"${irc_server.xxx} and ${server} is replaced by the server name)"
+"content is evaluated, see /help eval; server options are evaluated with $"
+"{irc_server.xxx} and ${server} is replaced by the server name)"
 msgstr ""
 
 msgid "check that the TLS connection is fully trusted"
@@ -9181,8 +9416,8 @@ msgstr ""
 msgid ""
 "password for SASL authentication; this option is not used for mechanisms "
 "\"ecdsa-nist256p-challenge\" and \"external\" (note: content is evaluated, "
-"see /help eval; server options are evaluated with ${irc_server.xxx} and "
-"${server} is replaced by the server name)"
+"see /help eval; server options are evaluated with ${irc_server.xxx} and $"
+"{server} is replaced by the server name)"
 msgstr ""
 
 msgid ""
@@ -9196,8 +9431,8 @@ msgstr ""
 msgid ""
 "action to perform if SASL authentication fails: \"continue\" to ignore the "
 "authentication problem, \"reconnect\" to schedule a reconnection to the "
-"server, \"disconnect\" to disconnect from server (see also option irc."
-"network.sasl_fail_unavailable)"
+"server, \"disconnect\" to disconnect from server (see also option "
+"irc.network.sasl_fail_unavailable)"
 msgstr ""
 
 msgid "automatically connect to server when WeeChat is starting"
@@ -9212,8 +9447,8 @@ msgstr ""
 msgid ""
 "nicknames to use on server (separated by comma) (note: content is evaluated, "
 "see /help eval; ${username} is replaced by system username (fallback to "
-"\"weechat\" if not found), server options are evaluated with ${irc_server."
-"xxx} and ${server} is replaced by the server name)"
+"\"weechat\" if not found), server options are evaluated with $"
+"{irc_server.xxx} and ${server} is replaced by the server name)"
 msgstr ""
 
 msgid ""
@@ -9224,8 +9459,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"user name to use on server (note: content is evaluated, see /help eval; "
-"${username} is replaced by system username (fallback to \"weechat\" if not "
+"user name to use on server (note: content is evaluated, see /help eval; $"
+"{username} is replaced by system username (fallback to \"weechat\" if not "
 "found), server options are evaluated with ${irc_server.xxx} and ${server} is "
 "replaced by the server name)"
 msgstr ""
@@ -9271,11 +9506,11 @@ msgid ""
 "comma separated list of channels to join after connection to server (and "
 "after executing command + delay if they are set); the channels that require "
 "a key must be at beginning of the list, and all the keys must be given after "
-"the channels (separated by a space) (example: \"#channel1,#channel2,"
-"#channel3 key1,key2\" where #channel1 and #channel2 are protected by key1 "
-"and key2) (note: content is evaluated, see /help eval; server options are "
-"evaluated with ${irc_server.xxx} and ${server} is replaced by the server "
-"name)"
+"the channels (separated by a space) (example: "
+"\"#channel1,#channel2,#channel3 key1,key2\" where #channel1 and #channel2 "
+"are protected by key1 and key2) (note: content is evaluated, see /help eval; "
+"server options are evaluated with ${irc_server.xxx} and ${server} is "
+"replaced by the server name)"
 msgstr ""
 
 msgid ""
@@ -9331,9 +9566,9 @@ msgstr ""
 
 msgid ""
 "default quit message (disconnecting from server) (note: content is "
-"evaluated, see /help eval; special variables ${nick}, ${channel} and "
-"${server} are replaced by their values; \"%v\" is replaced by WeeChat "
-"version if there is no ${...} in string)"
+"evaluated, see /help eval; special variables ${nick}, ${channel} and $"
+"{server} are replaced by their values; \"%v\" is replaced by WeeChat version "
+"if there is no ${...} in string)"
 msgstr ""
 
 msgid ""
@@ -9481,33 +9716,33 @@ msgid ""
 msgstr ""
 
 msgid ""
-"comma separated list of words to highlight in channel buffers (case "
-"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"comma separated list of words to highlight in channel buffers (case-"
+"insensitive, use \"(?-i)\" at beginning of words to make them case-"
 "sensitive; special variables $nick, $channel and $server are replaced by "
 "their values), these words are added to buffer property \"highlight_words\" "
 "only when buffer is created (it does not affect current buffers), an empty "
-"string disables default highlight on nick, examples: \"$nick\", \"(?-"
-"i)$nick\""
+"string disables default highlight on nick, examples: \"$nick\", \"(?-i)"
+"$nick\""
 msgstr ""
 
 msgid ""
-"comma separated list of words to highlight in private buffers (case "
-"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"comma separated list of words to highlight in private buffers (case-"
+"insensitive, use \"(?-i)\" at beginning of words to make them case-"
 "sensitive; special variables $nick, $channel and $server are replaced by "
 "their values), these words are added to buffer property \"highlight_words\" "
 "only when buffer is created (it does not affect current buffers), an empty "
-"string disables default highlight on nick, examples: \"$nick\", \"(?-"
-"i)$nick\""
+"string disables default highlight on nick, examples: \"$nick\", \"(?-i)"
+"$nick\""
 msgstr ""
 
 msgid ""
-"comma separated list of words to highlight in server buffers (case "
-"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"comma separated list of words to highlight in server buffers (case-"
+"insensitive, use \"(?-i)\" at beginning of words to make them case-"
 "sensitive; special variables $nick, $channel and $server are replaced by "
 "their values), these words are added to buffer property \"highlight_words\" "
 "only when buffer is created (it does not affect current buffers), an empty "
-"string disables default highlight on nick, examples: \"$nick\", \"(?-"
-"i)$nick\""
+"string disables default highlight on nick, examples: \"$nick\", \"(?-i)"
+"$nick\""
 msgstr ""
 
 msgid ""
@@ -9547,14 +9782,19 @@ msgstr ""
 msgid "use a dedicated buffer for the output of /list"
 msgstr ""
 
+msgid ""
+"format of each channel exported in a file (note: content is evaluated, see /"
+"help list)"
+msgstr ""
+
 msgid "left/right scroll in /list buffer (percent of width)"
 msgstr ""
 
 msgid ""
 "comma-separated list of fields to sort channels (see /help list for a list "
 "of fields); char \"-\" can be used before field to reverse order, char \"~\" "
-"can be used to do a case insensitive comparison; example: \"-count,~name\" "
-"for biggest channels first then case insensitive sort on name"
+"can be used to do a case-insensitive comparison; example: \"-count,~name\" "
+"for biggest channels first then case-insensitive sort on name"
 msgstr ""
 
 msgid "strip channel topic colors in /list buffer"
@@ -9611,6 +9851,11 @@ msgid ""
 msgstr ""
 
 msgid ""
+"comma separated list of nicks for which notifications are disabled in notice "
+"messages (comparison is case-insensitive)"
+msgstr ""
+
+msgid ""
 "automatically redirect channel welcome notices to the channel buffer; such "
 "notices have the nick as target but a channel name in beginning of notice "
 "message, for example the ENTRYMSG notices sent by Atheme IRC Services which "
@@ -9655,9 +9900,9 @@ msgid ""
 msgstr ""
 
 msgid ""
-"display nicks typing on the channel in bar item \"typing\" (option typing."
-"look.enabled_nicks must be enabled and capability \"message-tags\" must be "
-"enabled on the server)"
+"display nicks typing on the channel in bar item \"typing\" (option "
+"typing.look.enabled_nicks must be enabled and capability \"message-tags\" "
+"must be enabled on the server)"
 msgstr ""
 
 msgid ""
@@ -9810,9 +10055,9 @@ msgid ""
 "remap terminal color numbers in messages using a hashtable (used only for "
 "RGB colors as hexadecimal, which are first translated to terminal color "
 "numbers): keys are \"fg,bg\" as integers between -1 (not specified) and 255, "
-"values are WeeChat color names or numbers (format is: \"1,-1:color1;2,7:"
-"color2\"), example: \"0,-1:darkgray;0,90:white,blue\" to remap black to "
-"\"darkgray\" and black on dark magenta to \"white,blue\""
+"values are WeeChat color names or numbers (format is: "
+"\"1,-1:color1;2,7:color2\"), example: \"0,-1:darkgray;0,90:white,blue\" to "
+"remap black to \"darkgray\" and black on dark magenta to \"white,blue\""
 msgstr ""
 
 msgid ""
@@ -9864,8 +10109,8 @@ msgstr ""
 
 msgid ""
 "reconnect to server if lag is greater than or equal to this value (in "
-"seconds, 0 = never reconnect); this value must be less than or equal to irc."
-"network.lag_max"
+"seconds, 0 = never reconnect); this value must be less than or equal to "
+"irc.network.lag_max"
 msgstr ""
 
 msgid ""
@@ -10002,6 +10247,21 @@ msgid "1 if the nick is ignored (message is not displayed)"
 msgstr ""
 
 msgid "server,message (message is the raw IRC message)"
+msgstr ""
+
+msgid "get pointer to an IRC server"
+msgstr ""
+
+msgid "get pointer to an IRC channel"
+msgstr ""
+
+msgid "server,channel"
+msgstr ""
+
+msgid "get pointer to an IRC nick"
+msgstr ""
+
+msgid "server,channel,nick"
 msgstr ""
 
 msgid "parse an IRC message"
@@ -10149,6 +10409,9 @@ msgstr ""
 msgid ""
 "%d channels (total: %d) | Filter: %s | Sort: %s | Key(input): ctrl+j=join "
 "channel, ($)=refresh, (q)=close buffer"
+msgstr ""
+
+msgid "Empty list of channels, try \"$\" to refresh list"
 msgstr ""
 
 #, c-format
@@ -10690,11 +10953,6 @@ msgid "unable to sign the hashed data: error %d %s"
 msgstr ""
 
 #, c-format
-msgid ""
-"%sgnutls: version >= 3.0.21 is required for SASL \"ecdsa-nist256p-challenge\""
-msgstr ""
-
-#, c-format
 msgid "%s%s: the evaluated fingerprint for server \"%s\" must not be empty"
 msgstr ""
 
@@ -10883,8 +11141,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%sgnutls: certificate fingerprint does NOT match (check value of option irc."
-"server.%s.tls_fingerprint)"
+"%sgnutls: certificate fingerprint does NOT match (check value of option "
+"irc.server.%s.tls_fingerprint)"
 msgstr ""
 
 #, c-format
@@ -10963,6 +11221,38 @@ msgstr ""
 msgid "%s%s: disconnected from server"
 msgstr ""
 
+msgid "IRC (Internet Relay Chat) protocol"
+msgstr ""
+
+#, c-format
+msgid "%s%s: failed to save upgrade data"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: disconnecting from server because upgrade can't work for servers "
+"connected via TLS"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: disconnected from %d server (TLS connection not supported with upgrade)"
+msgid_plural ""
+"%s%s: disconnected from %d servers (TLS connection not supported with "
+"upgrade)"
+msgstr[0] ""
+msgstr[1] ""
+
+#, c-format
+msgid ""
+"%s%s: WARNING: some network connections may still be opened and not visible, "
+"you should restart WeeChat now (with /quit)."
+msgstr ""
+
+#, c-format
+msgid "%s%s: exception: %s"
+msgstr ""
+
 msgid "Support of javascript scripts"
 msgstr ""
 
@@ -10987,10 +11277,6 @@ msgid "%sCommand \"/%s eval\" is not yet implemented"
 msgstr ""
 
 #, c-format
-msgid "%s%s: exception: %s"
-msgstr ""
-
-#, c-format
 msgid "%s===\t%s========== End of backlog (%d lines) =========="
 msgstr ""
 
@@ -10998,10 +11284,6 @@ msgstr ""
 msgid ""
 "%s%s: unable to start logging for buffer \"%s\": filename \"%s\" is already "
 "used by another buffer (check your log settings)"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to create directory for logs (\"%s\")"
 msgstr ""
 
 #, c-format
@@ -11018,15 +11300,6 @@ msgstr ""
 
 #, c-format
 msgid "%s\t****  End of log  ****"
-msgstr ""
-
-msgid "Log buffers to files"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: unable to find filename mask for buffer \"%s\", logging is disabled "
-"for this buffer"
 msgstr ""
 
 msgid "Logging on buffers:"
@@ -11049,7 +11322,7 @@ msgstr ""
 msgid "logger plugin configuration"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid "list || set <level> || flush || disable"
 msgstr ""
 
@@ -11223,8 +11496,8 @@ msgid ""
 "megabytes, g = gigabytes, t = terabytes; example: \"2g\" causes a rotation "
 "if the file size is > 2,000,000,000 bytes; if set to \"0\", no rotation is "
 "performed (unlimited log size); WARNING: before changing this option, you "
-"should first set the compression type via option logger.file."
-"rotation_compression_type"
+"should first set the compression type via option "
+"logger.file.rotation_compression_type"
 msgstr ""
 
 msgid ""
@@ -11244,6 +11517,19 @@ msgid "list of logger buffers"
 msgstr ""
 
 msgid "logger pointer (optional)"
+msgstr ""
+
+msgid "Log buffers to files"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to create directory for logs (\"%s\")"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: unable to find filename mask for buffer \"%s\", logging is disabled "
+"for this buffer"
 msgstr ""
 
 msgid "Support of lua scripts"
@@ -11281,90 +11567,6 @@ msgid "%s%s: unable to initialize %s"
 msgstr ""
 
 msgid "Support of PHP scripts"
-msgstr ""
-
-msgid "bar"
-msgstr ""
-
-msgid "bar item"
-msgstr ""
-
-msgid "bar window"
-msgstr ""
-
-msgid "buffer"
-msgstr ""
-
-msgid "visited buffer"
-msgstr ""
-
-msgid "structure with completion"
-msgstr ""
-
-msgid "structure with word found for a completion"
-msgstr ""
-
-msgid "config file"
-msgstr ""
-
-msgid "config section"
-msgstr ""
-
-msgid "config option"
-msgstr ""
-
-msgid "filter"
-msgstr ""
-
-msgid "history of commands in buffer"
-msgstr ""
-
-msgid "hotlist"
-msgstr ""
-
-msgid "structure with undo for input line"
-msgstr ""
-
-msgid "a key (keyboard shortcut)"
-msgstr ""
-
-msgid "layout"
-msgstr ""
-
-msgid "buffer layout"
-msgstr ""
-
-msgid "window layout"
-msgstr ""
-
-msgid "structure with lines"
-msgstr ""
-
-msgid "structure with one line"
-msgstr ""
-
-msgid "structure with one line data"
-msgstr ""
-
-msgid "group in nicklist"
-msgstr ""
-
-msgid "nick in nicklist"
-msgstr ""
-
-msgid "plugin"
-msgstr ""
-
-msgid "proxy"
-msgstr ""
-
-msgid "window"
-msgstr ""
-
-msgid "scroll info in window"
-msgstr ""
-
-msgid "tree of windows"
 msgstr ""
 
 msgid "WeeChat version"
@@ -11562,6 +11764,12 @@ msgstr ""
 msgid "plugin name"
 msgstr ""
 
+msgid "window pointer"
+msgstr ""
+
+msgid "window number"
+msgstr ""
+
 msgid "get focus info"
 msgstr ""
 
@@ -11692,68 +11900,110 @@ msgstr ""
 msgid "\"current\" for current window or a window number (optional)"
 msgstr ""
 
-#, c-format
-msgid "Initializing plugin \"%s\" (priority: %d)"
+msgid "bar"
 msgstr ""
 
-#, c-format
-msgid "%sUnable to initialize plugin \"%s\""
+msgid "bar item"
 msgstr ""
 
-#, c-format
-msgid "%sUnable to load plugin \"%s\": %s"
+msgid "bar window"
 msgstr ""
 
-#, c-format
-msgid ""
-"%sIf you're trying to load a script and not a C plugin, try command to load "
-"scripts (/perl, /python, ...)"
+msgid "buffer"
 msgstr ""
 
-#, c-format
-msgid "%sSymbol \"%s\" not found in plugin \"%s\", failed to load"
+msgid "visited buffer"
 msgstr ""
 
-#, c-format
-msgid "%sIf plugin \"%s\" is old/obsolete, you can delete this file."
+msgid "structure with completion"
 msgstr ""
 
-#, c-format
-msgid ""
-"%sAPI mismatch for plugin \"%s\" (current API: \"%s\", plugin API: \"%s\"), "
-"failed to load"
+msgid "structure with word found for a completion"
 msgstr ""
 
-#, c-format
-msgid "%sUnable to load plugin \"%s\": a plugin with same name already exists"
+msgid "config file"
 msgstr ""
 
-#, c-format
-msgid "%sFunction \"%s\" not found in plugin \"%s\", failed to load"
+msgid "config section"
 msgstr ""
 
-#, c-format
-msgid "%sUnable to load plugin \"%s\" (not enough memory)"
+msgid "config option"
 msgstr ""
 
-#, c-format
-msgid "Plugin \"%s\" loaded"
+msgid "filter"
 msgstr ""
 
-#, c-format
-msgid "Plugin \"%s\" unloaded"
+msgid "history of commands in buffer"
 msgstr ""
 
-msgid "Plugins unloaded"
+msgid "hotlist"
+msgstr ""
+
+msgid "structure with undo for input line"
+msgstr ""
+
+msgid "a key (keyboard shortcut)"
+msgstr ""
+
+msgid "layout"
+msgstr ""
+
+msgid "buffer layout"
+msgstr ""
+
+msgid "window layout"
+msgstr ""
+
+msgid "structure with lines"
+msgstr ""
+
+msgid "structure with one line"
+msgstr ""
+
+msgid "structure with one line data"
+msgstr ""
+
+msgid "group in nicklist"
+msgstr ""
+
+msgid "nick in nicklist"
+msgstr ""
+
+msgid "plugin"
+msgstr ""
+
+msgid "proxy"
+msgstr ""
+
+msgid "window"
+msgstr ""
+
+msgid "scroll info in window"
+msgstr ""
+
+msgid "tree of windows"
 msgstr ""
 
 msgid "description of plugin option"
 msgstr ""
 
+msgid ""
+"check the license of scripts when they are loaded: if the license is "
+"different from the plugin license, a warning is displayed"
+msgstr ""
+
+#, c-format
+msgid ""
+"keep context between two calls to the source code evaluation (option "
+"\"eval\" of script command or info \"%s_eval\"); a hidden script is used to "
+"eval script code; if this option is disabled, this hidden script is unloaded "
+"after each eval: this uses less memory, but is slower"
+msgstr ""
+
 msgid "list/load/unload scripts"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "list|listfull [<name>] || load [-q] <filename> || autoload || reload|unload "
 "[-q] [<name>] || eval [-o|-oc] <code> || version"
@@ -11883,19 +12133,6 @@ msgstr ""
 msgid "%s: scripts unloaded"
 msgstr ""
 
-msgid ""
-"check the license of scripts when they are loaded: if the license is "
-"different from the plugin license, a warning is displayed"
-msgstr ""
-
-#, c-format
-msgid ""
-"keep context between two calls to the source code evaluation (option "
-"\"eval\" of script command or info \"%s_eval\"); a hidden script is used to "
-"eval script code; if this option is disabled, this hidden script is unloaded "
-"after each eval: this uses less memory, but is slower"
-msgstr ""
-
 #, c-format
 msgid ""
 "%s%s: unable to call function \"%s\", script is not initialized (script: %s)"
@@ -11903,6 +12140,61 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: wrong arguments for function \"%s\" (script: %s)"
+msgstr ""
+
+#, c-format
+msgid "Initializing plugin \"%s\" (priority: %d)"
+msgstr ""
+
+#, c-format
+msgid "%sUnable to initialize plugin \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sUnable to load plugin \"%s\": %s"
+msgstr ""
+
+#, c-format
+msgid ""
+"%sIf you're trying to load a script and not a C plugin, try command to load "
+"scripts (/perl, /python, ...)"
+msgstr ""
+
+#, c-format
+msgid "%sSymbol \"%s\" not found in plugin \"%s\", failed to load"
+msgstr ""
+
+#, c-format
+msgid "%sIf plugin \"%s\" is old/obsolete, you can delete this file."
+msgstr ""
+
+#, c-format
+msgid ""
+"%sAPI mismatch for plugin \"%s\" (current API: \"%s\", plugin API: \"%s\"), "
+"failed to load"
+msgstr ""
+
+#, c-format
+msgid "%sUnable to load plugin \"%s\": a plugin with same name already exists"
+msgstr ""
+
+#, c-format
+msgid "%sFunction \"%s\" not found in plugin \"%s\", failed to load"
+msgstr ""
+
+#, c-format
+msgid "%sUnable to load plugin \"%s\" (not enough memory)"
+msgstr ""
+
+#, c-format
+msgid "Plugin \"%s\" loaded"
+msgstr ""
+
+#, c-format
+msgid "Plugin \"%s\" unloaded"
+msgstr ""
+
+msgid "Plugins unloaded"
 msgstr ""
 
 msgid "Support of python scripts"
@@ -11959,6 +12251,10 @@ msgid "%s%s: failed to execute route \"%s %s\" for client %s%s%s"
 msgstr ""
 
 #, c-format
+msgid "%sremote[%s]: unable to send data, disconnecting"
+msgstr ""
+
+#, c-format
 msgid "remote[%s]: WeeChat: %s (%s), API: %s"
 msgstr ""
 
@@ -11966,6 +12262,18 @@ msgstr ""
 msgid ""
 "%sremote[%s]: API version mismatch: remote API is %s (WeeChat %s), local API "
 "%s (WeeChat %s)"
+msgstr ""
+
+#, c-format
+msgid "%sremote[%s]: invalid data received from remote relay: \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%sremote[%s]: callback failed for body type \"%s\""
+msgstr ""
+
+#, c-format
+msgid "remote[%s]: disconnected"
 msgstr ""
 
 msgid "invalid response from remote relay"
@@ -12141,19 +12449,22 @@ msgstr ""
 msgid "%s%s: not enough memory for parsing message"
 msgstr ""
 
+msgid "fetching data"
+msgstr ""
+
 msgid "Actions (letter+enter):"
 msgstr ""
 
-msgid "  [D] Disconnect"
+msgid "  [d] Disconnect"
 msgstr ""
 
-msgid "  [R] Remove"
+msgid "  [r] Remove"
 msgstr ""
 
-msgid "  [P] Purge finished"
+msgid "  [p] Purge finished"
 msgstr ""
 
-msgid "  [Q] Close this buffer"
+msgid "  [q] Close this buffer"
 msgstr ""
 
 #, c-format
@@ -12166,38 +12477,6 @@ msgstr ""
 
 msgid "List of clients for relay"
 msgstr ""
-
-msgid "Relay WeeChat data to remote application (irc/weechat protocols)"
-msgstr ""
-
-msgid "connecting"
-msgstr ""
-
-msgid "authenticating"
-msgstr ""
-
-msgid "authentication failed"
-msgstr ""
-
-msgid "disconnected"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: disconnecting from client %s%s%s because upgrade can't work for "
-"clients connected via TLS"
-msgstr ""
-
-#. TRANSLATORS: "%s" after "%d" is "client" or "clients"
-#, c-format
-msgid ""
-"%s%s: disconnected from %d %s (TLS connection not supported with upgrade)"
-msgstr ""
-
-msgid "client"
-msgid_plural "clients"
-msgstr[0] ""
-msgstr[1] ""
 
 #, c-format
 msgid "%s%s: TLS handshake failed for client %s%s%s: error %d %s"
@@ -12221,8 +12500,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: warning: no TLS certificate/key found (option relay.network."
-"tls_cert_key)"
+"%s%s: warning: no TLS certificate/key found (option "
+"relay.network.tls_cert_key)"
 msgstr ""
 
 #, c-format
@@ -12292,6 +12571,14 @@ msgid "No server for relay"
 msgstr ""
 
 #, c-format
+msgid "%s%s: error: relay for \"%s\" already exists"
+msgstr ""
+
+#, c-format
+msgid "%s: relay \"%s\" (%s: %s) updated"
+msgstr ""
+
+#, c-format
 msgid "%s: relay \"%s\" (%s: %s) added"
 msgstr ""
 
@@ -12304,7 +12591,7 @@ msgid "%s%s: relay \"%s\" not found"
 msgstr ""
 
 #, c-format
-msgid "Remote: %s"
+msgid "Remote: %s %s[%s%s%s]"
 msgstr ""
 
 #, c-format
@@ -12322,7 +12609,13 @@ msgid "No relay remote"
 msgstr ""
 
 #, c-format
-msgid "%s%s: remote relay \"%s\" already exists, can't add it!"
+msgid ""
+"%s%s: you cannot delete remote relay \"%s\" because you are connected to. "
+"Try \"/remote disconnect %s\" before."
+msgstr ""
+
+#, c-format
+msgid "%s%s: remote relay \"%s\" already exists"
 msgstr ""
 
 #, c-format
@@ -12335,6 +12628,10 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: invalid remote relay option: \"%s\""
+msgstr ""
+
+#, c-format
+msgid "Remote relay \"%s\" updated"
 msgstr ""
 
 #, c-format
@@ -12354,17 +12651,15 @@ msgid "%s%s: no connection to remote relay \"%s\""
 msgstr ""
 
 #, c-format
+msgid "remote[%s]: auto-reconnection is cancelled"
+msgstr ""
+
+#, c-format
 msgid "%s%s: remote relay \"%s\" already exists for \"%s\" command"
 msgstr ""
 
 #, c-format
 msgid "%s: remote relay \"%s\" has been renamed to \"%s\""
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: you can not delete remote relay \"%s\" because you are connected to. "
-"Try \"/remote disconnect %s\" before."
 msgstr ""
 
 #, c-format
@@ -12374,10 +12669,10 @@ msgstr ""
 msgid "relay control"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list|listfull|listrelay || add <name> <port>|<path> || del|start|restart|"
-"stop <name> || raw || tlscertkey"
+"list|listfull|listrelay || add|addreplace <name> <port>|<path> || del|start|"
+"restart|stop <name> || raw || tlscertkey"
 msgstr ""
 
 msgid "raw[list]: list relay clients (only active relays)"
@@ -12390,6 +12685,9 @@ msgid "raw[listrelay]: list relays (name and port)"
 msgstr ""
 
 msgid "raw[add]: add a relay (listen on a port/path)"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace an existing relay"
 msgstr ""
 
 msgid "raw[del]: remove a relay (clients remain connected)"
@@ -12421,13 +12719,13 @@ msgid "raw[raw]: open buffer with raw Relay data"
 msgstr ""
 
 msgid ""
-"raw[tlscertkey]: set TLS certificate/key using path in option relay.network."
-"tls_cert_key"
+"raw[tlscertkey]: set TLS certificate/key using path in option "
+"relay.network.tls_cert_key"
 msgstr ""
 
 msgid ""
-"Relay name is: [ipv4.][ipv6.][tls.]<protocol.name> or unix.[tls.]<protocol."
-"name>:"
+"Relay name is: [ipv4.][ipv6.][tls.]<protocol.name> or unix."
+"[tls.]<protocol.name>:"
 msgstr ""
 
 msgid "  - ipv4: force use of IPv4"
@@ -12482,11 +12780,11 @@ msgstr ""
 msgid "control of remote relay servers"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
-"list|listfull [<name>] || add <name> <url> [-<option>[=<value>]] || connect "
-"<name> || send <name> <json> || disconnect <name> || rename <name> "
-"<new_name> || del <name>"
+"list|listfull [<name>] || add|addreplace <name> <url> [-<option>[=<value>]] "
+"|| connect|reconnect|disconnect|del <name> || send <name> <json> || rename "
+"<name> <new_name> || togglecmd"
 msgstr ""
 
 msgid ""
@@ -12498,6 +12796,9 @@ msgid "raw[listfull]: list remote relay servers (verbose)"
 msgstr ""
 
 msgid "raw[add]: add a remote relay server"
+msgstr ""
+
+msgid "raw[addreplace]: add or replace an existing remote relay server"
 msgstr ""
 
 msgid ""
@@ -12517,16 +12818,24 @@ msgstr ""
 msgid "raw[connect]: connect to a remote relay server"
 msgstr ""
 
-msgid "raw[send]: send JSON data to a remote relay server"
+msgid "raw[reconnect]: reconnect to a remote relay server"
 msgstr ""
 
 msgid "raw[disconnect]: disconnect from a remote relay server"
 msgstr ""
 
+msgid "raw[del]: delete a remote relay server"
+msgstr ""
+
+msgid "raw[send]: send JSON data to a remote relay server"
+msgstr ""
+
 msgid "raw[rename]: rename a remote relay server"
 msgstr ""
 
-msgid "raw[del]: delete a remote relay server"
+msgid ""
+"raw[togglecmd]: toggle execution of commands on a remote buffer: on the "
+"remote WeeChat or locally (default key: alt+ctrl+l)"
 msgstr ""
 
 msgid "all possible protocol.name for relay plugin"
@@ -12571,10 +12880,6 @@ msgstr ""
 msgid "%s%s: error: name is not allowed for protocol \"%s\""
 msgstr ""
 
-#, c-format
-msgid "%s%s: error: relay for \"%s\" already exists"
-msgstr ""
-
 msgid ""
 "path to a socket file (path is evaluated, see function string_eval_path_home "
 "in plugin API reference)"
@@ -12589,7 +12894,12 @@ msgid ""
 "recommended)"
 msgstr ""
 
-msgid "auto-connect to the remote relay"
+msgid "automatically connect to the remote relay"
+msgstr ""
+
+msgid ""
+"automatically reconnect to the remote relay after this delay, in seconds (0 "
+"= disable automatic reconnection)"
 msgstr ""
 
 msgid ""
@@ -12614,14 +12924,19 @@ msgstr ""
 
 msgid ""
 "auto open relay buffer when a new client is connecting using one of these "
-"protocols (comma-separated list); allowed protocols: \"irc\", \"weechat\", "
-"\"api\""
+"protocols (comma-separated list); allowed protocols: \"api\", \"irc\", "
+"\"weechat\""
 msgstr ""
 
 msgid ""
 "display messages when clients connect/disconnect from relay using one of "
-"these protocols (comma-separated list); allowed protocols: \"irc\", "
-"\"weechat\", \"api\""
+"these protocols (comma-separated list); allowed protocols: \"api\", \"irc\", "
+"\"weechat\""
+msgstr ""
+
+msgid ""
+"max number of chars to display in raw messages (very long messages can cause "
+"slowness); 0 = display whole messages"
 msgstr ""
 
 msgid "text color for client description"
@@ -12657,8 +12972,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"POSIX extended regular expression with IPs allowed to use relay (case "
-"insensitive, use \"(?-i)\" at beginning to make it case sensitive), example: "
+"POSIX extended regular expression with IPs allowed to use relay (case-"
+"insensitive, use \"(?-i)\" at beginning to make it case-sensitive), example: "
 "\"^(123\\.45\\.67\\.89|192\\.160\\..*)$\""
 msgstr ""
 
@@ -12670,8 +12985,8 @@ msgstr ""
 
 msgid ""
 "address for bind (if empty, connection is possible on all interfaces, use "
-"\"127.0.0.1\" to allow connections from local machine only with IPv4 and \"::"
-"ffff:127.0.0.1\" with IPv6)"
+"\"127.0.0.1\" to allow connections from local machine only with IPv4 and "
+"\"::ffff:127.0.0.1\" with IPv6)"
 msgstr ""
 
 msgid ""
@@ -12681,20 +12996,20 @@ msgstr ""
 
 msgid ""
 "comma-separated list of commands allowed/denied when input data (text or "
-"command) is received from a client (weechat and api protocols); \"*\" means "
-"any command, a name beginning with \"!\" is a negative value to prevent a "
-"command from being executed, wildcard \"*\" is allowed in names; this option "
-"should be set if the relay client is not safe (someone could use it to run "
-"commands); for example \"*,!exec,!quit\" allows any command except /exec "
-"and /quit"
+"command) is received from a client (\"api\" and \"weechat\" protocols); "
+"\"*\" means any command, a name beginning with \"!\" is a negative value to "
+"prevent a command from being executed, wildcard \"*\" is allowed in names; "
+"this option should be set if the relay client is not safe (someone could use "
+"it to run commands); for example \"*,!exec,!quit\" allows any command "
+"except /exec and /quit"
 msgstr ""
 
 msgid ""
-"compression of messages sent to clients with weechat and api protocols: 0 = "
-"disable compression, 1 = low compression / fast ... 100 = best compression / "
-"slow; the value is a percentage converted to 1-9 for zlib and 1-19 for zstd; "
-"the default value is recommended, it offers a good compromise between "
-"compression and speed"
+"compression of messages sent to clients with \"api\" and \"weechat\" "
+"protocols: 0 = disable compression, 1 = low compression / fast ... 100 = "
+"best compression / slow; the value is a percentage converted to 1-9 for zlib "
+"and 1-19 for zstd; the default value is recommended, it offers a good "
+"compromise between compression and speed"
 msgstr ""
 
 msgid ""
@@ -12736,7 +13051,7 @@ msgstr ""
 
 msgid ""
 "number of seconds to allow before and after the current time for the hash of "
-"time + password in api protocol"
+"time + password in \"api\" protocol"
 msgstr ""
 
 msgid ""
@@ -12748,9 +13063,9 @@ msgstr ""
 msgid ""
 "secret for the generation of the Time-based One-Time Password (TOTP), "
 "encoded in base32 (only letters and digits from 2 to 7); it is used as "
-"second factor in weechat and api protocols, in addition to the password, "
-"which must not be empty (empty value means no TOTP is required) (note: "
-"content is evaluated, see /help eval)"
+"second factor in \"api\" and \"weechat\" protocols, in addition to the "
+"password, which must not be empty (empty value means no TOTP is required) "
+"(note: content is evaluated, see /help eval)"
 msgstr ""
 
 msgid ""
@@ -12762,9 +13077,19 @@ msgid ""
 msgstr ""
 
 msgid ""
-"POSIX extended regular expression with origins allowed in websockets (case "
-"insensitive, use \"(?-i)\" at beginning to make it case sensitive), example: "
+"POSIX extended regular expression with origins allowed in websockets (case-"
+"insensitive, use \"(?-i)\" at beginning to make it case-sensitive), example: "
 "\"^https?://(www\\.)?example\\.(com|org)\""
+msgstr ""
+
+msgid ""
+"enable websocket extension \"permessage-deflate\" to compress websocket "
+"frames (\"api\" protocol only); if disabled, WeeChat (as server) will not "
+"enable permessage-deflate even if the client supports it, and when "
+"connecting to a remote WeeChat (api relay only), permessage-deflate support "
+"is not advertised by WeeChat; it is recommended to keep this option enabled, "
+"and you should disable it only if you have troubles with this extension, "
+"either with WeeChat or the client"
 msgstr ""
 
 msgid ""
@@ -12795,7 +13120,27 @@ msgid ""
 msgstr ""
 
 msgid ""
+"growing factor for autoreconnect delay to remote relay (1 = always same "
+"delay, 2 = delay*2 for each retry, etc.)"
+msgstr ""
+
+msgid ""
+"maximum autoreconnect delay to remote relay (in seconds, 0 = no maximum)"
+msgstr ""
+
+msgid ""
 "number of lines to retrieve on each buffer when connecting to a remote relay"
+msgstr ""
+
+msgid ""
+"text displayed after user input when the command would be executed locally "
+"(NOT sent to the remote WeeChat) (note: content is evaluated, see /help eval)"
+msgstr ""
+
+msgid ""
+"text displayed after user input when the command would be executed on the "
+"remote WeeChat (NOT executed locally) (note: content is evaluated, see /help "
+"eval)"
 msgstr ""
 
 #, c-format
@@ -12808,6 +13153,12 @@ msgstr ""
 
 #, c-format
 msgid "%s: websocket client %s%s%s has real IP address \"%s\""
+msgstr ""
+
+msgid "relay API version"
+msgstr ""
+
+msgid "relay API version (as number)"
 msgstr ""
 
 msgid "number of clients for relay"
@@ -12860,6 +13211,14 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "remote[%s]: reconnecting to remote relay in %d %s, %d %s"
+msgstr ""
+
+#, c-format
+msgid "remote[%s]: reconnecting to remote relay in %d %s"
+msgstr ""
+
+#, c-format
 msgid "%s: socket closed for %s (%s: %s)"
 msgstr ""
 
@@ -12873,8 +13232,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: cannot accept client because relay password is empty, and option relay."
-"network.allow_empty_password is off"
+"%s%s: cannot accept client because relay password is empty, and option "
+"relay.network.allow_empty_password is off"
 msgstr ""
 
 #, c-format
@@ -12963,6 +13322,38 @@ msgstr ""
 msgid "%s%s: not enough memory for listening on new port"
 msgstr ""
 
+msgid "Relay WeeChat data to remote application (irc/weechat protocols)"
+msgstr ""
+
+msgid "connecting"
+msgstr ""
+
+msgid "authenticating"
+msgstr ""
+
+msgid "authentication failed"
+msgstr ""
+
+msgid "disconnected"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: disconnecting from client %s%s%s because upgrade can't work for "
+"clients connected via TLS"
+msgstr ""
+
+#. TRANSLATORS: "%s" after "%d" is "client" or "clients"
+#, c-format
+msgid ""
+"%s%s: disconnected from %d %s (TLS connection not supported with upgrade)"
+msgstr ""
+
+msgid "client"
+msgid_plural "clients"
+msgstr[0] ""
+msgstr[1] ""
+
 #, c-format
 msgid "%s: invalid pointer in hdata path: \"%s\""
 msgstr ""
@@ -13040,7 +13431,7 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s: script \"%s\" can not be installed because plugin \"%s\" is not loaded"
+"%s: script \"%s\" cannot be installed because plugin \"%s\" is not loaded"
 msgstr ""
 
 #, c-format
@@ -13056,12 +13447,11 @@ msgid "%s: script \"%s\" is held"
 msgstr ""
 
 #, c-format
-msgid ""
-"%s: script \"%s\" can not be removed because plugin \"%s\" is not loaded"
+msgid "%s: script \"%s\" cannot be removed because plugin \"%s\" is not loaded"
 msgstr ""
 
 #, c-format
-msgid "%s: script \"%s\" is not held any more"
+msgid "%s: script \"%s\" is not held anymore"
 msgstr ""
 
 msgid "Error: file not found"
@@ -13166,15 +13556,6 @@ msgstr ""
 msgid "Scripts"
 msgstr ""
 
-msgid "Script manager"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: download of scripts is disabled by default; to enable it, type /script "
-"enable"
-msgstr ""
-
 #, c-format
 msgid "%s: download of scripts enabled"
 msgstr ""
@@ -13182,17 +13563,17 @@ msgstr ""
 msgid "WeeChat script manager"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "enable || list [-o|-ol|-i|-il] || search <text> || show <script> || load|"
-"unload|reload <script> [<script>...] || autoload|noautoload|toggleautoload "
-"<script> [<script>...] || install|remove|installremove|hold [-q] <script> "
-"[<script>...] || upgrade || update || -up|-down [<number>] || -go <line>|end"
+"unload|reload <script>... || autoload|noautoload|toggleautoload <script>... "
+"|| install|remove|installremove|hold [-q] <script>... || upgrade || update "
+"|| -up|-down [<number>] || -go <line>|end"
 msgstr ""
 
 msgid ""
-"raw[enable]: enable download of scripts (turn on option script.scripts."
-"download_enabled)"
+"raw[enable]: enable download of scripts (turn on option "
+"script.scripts.download_enabled)"
 msgstr ""
 
 msgid "raw[list]: list loaded scripts (all languages)"
@@ -13251,8 +13632,8 @@ msgid ""
 msgstr ""
 
 msgid ""
-"raw[hold]: hold/unhold script(s) (a script held will not be upgraded any "
-"more and cannot be removed)"
+"raw[hold]: hold/unhold script(s) (a script held will not be upgraded anymore "
+"and cannot be removed)"
 msgstr ""
 
 msgid ""
@@ -13290,7 +13671,7 @@ msgstr ""
 msgid "In output of /script list, this additional status can be displayed:"
 msgstr ""
 
-msgid "  `?`: unknown script (can not be downloaded/updated)"
+msgid "  `?`: unknown script (cannot be downloaded/updated)"
 msgstr ""
 
 msgid ""
@@ -13453,9 +13834,9 @@ msgstr ""
 msgid ""
 "enable download of files from the scripts repository when the /script "
 "command is used (list of scripts and scripts themselves); the list of "
-"scripts is downloaded from the URL specified in the option script.scripts."
-"url; WeeChat will sometimes download again the list of scripts when you use "
-"the /script command, even if you don't install a script"
+"scripts is downloaded from the URL specified in the option "
+"script.scripts.url; WeeChat will sometimes download again the list of "
+"scripts when you use the /script command, even if you don't install a script"
 msgstr ""
 
 msgid "timeout (in seconds) for download of scripts and list of scripts"
@@ -13463,7 +13844,7 @@ msgstr ""
 
 msgid ""
 "scripts to \"hold\": comma-separated list of scripts which will never been "
-"upgraded and can not be removed, for example: \"go.py,urlserver.py\""
+"upgraded and cannot be removed, for example: \"go.py,urlserver.py\""
 msgstr ""
 
 msgid ""
@@ -13472,6 +13853,12 @@ msgid ""
 msgstr ""
 
 msgid "URL for file with list of scripts"
+msgstr ""
+
+msgid "info on a script"
+msgstr ""
+
+msgid "script,info (script name with extension and info is a hdata variable"
 msgstr ""
 
 msgid "1 if script is loaded"
@@ -13532,15 +13919,13 @@ msgstr ""
 msgid "%s: downloading list of scripts..."
 msgstr ""
 
-msgid "Spell checker for input"
+msgid "Script manager"
 msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: warning: the plugin \"aspell\" has been renamed to \"spell\" and the "
-"file %s still exists (but not %s); if you upgraded from an older version, "
-"you should check instructions in release notes (version 2.5) to recover your "
-"settings"
+"%s%s: download of scripts is disabled by default; to enable it, type /script "
+"enable"
 msgstr ""
 
 #. TRANSLATORS: "%s" is "spell" (name of plugin)
@@ -13560,6 +13945,14 @@ msgid "%s: error: dictionary \"%s\" is not available on your system"
 msgstr ""
 
 #, c-format
+msgid "%s%s: unable to create new speller"
+msgstr ""
+
+#, c-format
+msgid "%s%s: no speller found"
+msgstr ""
+
+#, c-format
 msgid "%s%s: no dictionary on this buffer for adding word"
 msgstr ""
 
@@ -13574,7 +13967,7 @@ msgid "%s: word \"%s\" added to personal dictionary"
 msgstr ""
 
 #, c-format
-msgid "%s%s: failed to add word to personal dictionary"
+msgid "%s%s: failed to add word to personal dictionary: %s"
 msgstr ""
 
 #. TRANSLATORS: second "%s" is "aspell" or "enchant"
@@ -13607,7 +14000,7 @@ msgstr ""
 msgid "spell plugin configuration"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "enable|disable|toggle || listdict || setdict -|<dict>[,<dict>...] || deldict "
 "|| addword [<dict>] <word>"
@@ -13744,6 +14137,17 @@ msgstr ""
 msgid "%s%s: error: unable to create speller for lang \"%s\""
 msgstr ""
 
+msgid "Spell checker for input"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: warning: the plugin \"aspell\" has been renamed to \"spell\" and the "
+"file %s still exists (but not %s); if you upgraded from an older version, "
+"you should check instructions in release notes (version 2.5) to recover your "
+"settings"
+msgstr ""
+
 msgid "Support of tcl scripts"
 msgstr ""
 
@@ -13761,18 +14165,6 @@ msgstr ""
 
 #, c-format
 msgid "Trigger monitor (filter: %s) | Input: q=close, words=filter"
-msgstr ""
-
-msgid ""
-"Text replacement and command execution on events triggered by WeeChat/plugins"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to create hook for trigger \"%s\" (bad arguments)"
-msgstr ""
-
-#, c-format
-msgid "%s%s: invalid regular expression in trigger: \"%s\""
 msgstr ""
 
 msgid "no variable"
@@ -13825,7 +14217,7 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: action \"%s\" can not be executed on trigger \"%s\" because it is "
+"%s%s: action \"%s\" cannot be executed on trigger \"%s\" because it is "
 "currently running"
 msgstr ""
 
@@ -13834,7 +14226,7 @@ msgid "Trigger \"%s\" restarted"
 msgstr ""
 
 #, c-format
-msgid "%s%s: a disabled trigger can not be restarted"
+msgid "%s%s: a disabled trigger cannot be restarted"
 msgstr ""
 
 #, c-format
@@ -13949,16 +14341,15 @@ msgstr ""
 msgid "manage triggers, the Swiss Army knife for WeeChat"
 msgstr ""
 
-#. TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated
+#. TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated
 msgid ""
 "list [-o|-ol|-i|-il] || listfull || listdefault || add|addoff|addreplace "
 "<name> <hook> [\"<arguments>\" [\"<conditions>\" [\"<regex>\" [\"<command>\" "
 "[\"<return_code>\" [\"<post_action>\"]]]]]] || addinput [<hook>] || input|"
 "output|recreate <name> || set <name> <option> <value> || rename|copy <name> "
-"<new_name> || enable|disable|toggle [<name>|<mask> [<name>|<mask>...]] || "
-"restart <name>|<mask> [<name>|<mask>...] || show <name> || del <name>|<mask> "
-"[<name>|<mask>...] || restore <name>|<mask> [<name>|<mask>...] || default -"
-"yes || monitor [<filter>]"
+"<new_name> || enable|disable|toggle [<name>|<mask>...] || restart <name>|"
+"<mask>... || show <name> || del <name>|<mask>... || restore <name>|<mask>... "
+"|| default -yes || monitor [<filter>]"
 msgstr ""
 
 msgid "raw[list]: list triggers (without argument, this list is displayed)"
@@ -14027,8 +14418,8 @@ msgstr ""
 
 msgid ""
 "> type `command`: command (required), description, arguments, description of "
-"arguments, completion (all arguments except command are evaluated, "
-"\"${tg_trigger_name}\" is replaced by the trigger name, see /help eval)"
+"arguments, completion (all arguments except command are evaluated, \"$"
+"{tg_trigger_name}\" is replaced by the trigger name, see /help eval)"
 msgstr ""
 
 msgid "> type `command_run`: command(s) (required)"
@@ -14237,12 +14628,12 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%s%s: invalid regular expression in option \"regex\", see /help trigger."
-"trigger.%s.regex"
+"%s%s: invalid regular expression in option \"regex\", see /help "
+"trigger.trigger.%s.regex"
 msgstr ""
 
 msgid ""
-"if disabled, the hooks are removed from trigger, so it is not called any more"
+"if disabled, the hooks are removed from trigger, so it is not called anymore"
 msgstr ""
 
 msgid "type of hook used"
@@ -14264,8 +14655,8 @@ msgid ""
 "can be separated by a space, for example: \"/regex1/replace1/var1 /regex2/"
 "replace2/var2\"; escaped chars are interpreted in the regex (for example "
 "\"\\n\"); the separator \"/\" can be replaced by any char (one or more "
-"identical chars); matching groups can be used in replace: ${re:0} to "
-"${re:99}, ${re:+} for last match and ${hide:c,${re:N}} to replace all chars "
+"identical chars); matching groups can be used in replace: ${re:0} to $"
+"{re:99}, ${re:+} for last match and ${hide:c,${re:N}} to replace all chars "
 "of group N by char 'c'"
 msgstr ""
 
@@ -14312,11 +14703,20 @@ msgstr ""
 msgid "text color for replacement text (for regular expressions)"
 msgstr ""
 
-#. TRANSLATORS: this text is displayed before the list of nicks typing in the bar item "typing", it must be as short as possible
-msgid "Typing:"
+msgid ""
+"Text replacement and command execution on events triggered by WeeChat/plugins"
 msgstr ""
 
-msgid "Typing status of users"
+#, c-format
+msgid "%s%s: unable to create hook for trigger \"%s\" (bad arguments)"
+msgstr ""
+
+#, c-format
+msgid "%s%s: invalid regular expression in trigger: \"%s\""
+msgstr ""
+
+#. TRANSLATORS: this text is displayed before the list of nicks typing in the bar item "typing", it must be as short as possible
+msgid "Typing:"
 msgstr ""
 
 msgid ""
@@ -14350,152 +14750,25 @@ msgid ""
 "truncate content)"
 msgstr ""
 
-msgid "  [A] Accept"
+msgid "Typing status of users"
 msgstr ""
 
-msgid "  [C] Cancel"
+msgid "  [a] Accept"
+msgstr ""
+
+msgid "  [c] Cancel"
 msgstr ""
 
 msgid "xfer chat"
 msgstr ""
 
-msgid "ETA"
+msgid "time left:"
+msgstr ""
+
+msgid "time left: unknown"
 msgstr ""
 
 msgid "Xfer list"
-msgstr ""
-
-msgid "DCC file transfer and direct chat"
-msgstr ""
-
-msgid "waiting"
-msgstr ""
-
-msgid "active"
-msgstr ""
-
-msgid "done"
-msgstr ""
-
-msgid "failed"
-msgstr ""
-
-msgid "aborted"
-msgstr ""
-
-msgid "hashing"
-msgstr ""
-
-msgid "CRC in progress"
-msgstr ""
-
-msgid "CRC OK"
-msgstr ""
-
-msgid "wrong CRC"
-msgstr ""
-
-msgid "CRC error"
-msgstr ""
-
-#, c-format
-msgid "%s%s: file %s %s %s (%s): %s"
-msgstr ""
-
-msgid "sent to"
-msgstr ""
-
-msgid "received from"
-msgstr ""
-
-msgid "FAILED"
-msgstr ""
-
-#, c-format
-msgid "%s%s: chat closed with %s (%s)"
-msgstr ""
-
-#, c-format
-msgid "%s%s: aborting active xfer: \"%s\" from %s"
-msgstr ""
-
-#, c-format
-msgid "%s%s: not enough memory for new xfer"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to interpret address: error %d %s"
-msgstr ""
-
-#, c-format
-msgid "%s%s: hashing error"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s: incoming file from %s (%s, %s.%s), name: %s, %llu bytes (protocol: %s)"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s: offering file to %s (%s.%s), name: %s (local filename: %s), %llu bytes "
-"(protocol: %s)"
-msgstr ""
-
-#, c-format
-msgid "%s: incoming chat request from %s (%s, %s.%s)"
-msgstr ""
-
-#, c-format
-msgid "%s: sending chat request to %s (%s.%s)"
-msgstr ""
-
-#, c-format
-msgid "%s: file %s (local filename: %s) will be resumed at position %llu"
-msgstr ""
-
-#, c-format
-msgid "%s%s: missing arguments (%s)"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unknown xfer type \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: unknown xfer protocol \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: cannot access file \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: cannot create socket for xfer: error %d %s"
-msgstr ""
-
-#, c-format
-msgid "%s%s: cannot find available port for xfer"
-msgstr ""
-
-#, c-format
-msgid "%s%s: error creating xfer"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: unable to resume file \"%s\" (port: %d, start position: %llu): xfer "
-"not found or not ready for transfer"
-msgstr ""
-
-#, c-format
-msgid "%s: file %s resumed at position %llu"
-msgstr ""
-
-#, c-format
-msgid ""
-"%s%s: unable to accept resume file \"%s\" (port: %d, start position: %llu): "
-"xfer not found or not ready for transfer"
 msgstr ""
 
 #, c-format
@@ -14516,6 +14789,12 @@ msgstr ""
 #, c-format
 msgid ""
 "%3d. %s (%s), file: \"%s\" (local: \"%s\"), %s %s, status: %s%s%s (%llu %%)"
+msgstr ""
+
+msgid "sent to"
+msgstr ""
+
+msgid "received from"
 msgstr ""
 
 #. TRANSLATORS: "%s" after "started on" is a date
@@ -14763,4 +15042,131 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: unable to connect: unexpected error (%d)"
+msgstr ""
+
+msgid "DCC file transfer and direct chat"
+msgstr ""
+
+msgid "waiting"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+msgid "done"
+msgstr ""
+
+msgid "failed"
+msgstr ""
+
+msgid "aborted"
+msgstr ""
+
+msgid "hashing"
+msgstr ""
+
+msgid "CRC in progress"
+msgstr ""
+
+msgid "CRC OK"
+msgstr ""
+
+msgid "wrong CRC"
+msgstr ""
+
+msgid "CRC error"
+msgstr ""
+
+#, c-format
+msgid "%s%s: file %s %s %s (%s): %s"
+msgstr ""
+
+msgid "FAILED"
+msgstr ""
+
+#, c-format
+msgid "%s%s: chat closed with %s (%s)"
+msgstr ""
+
+#, c-format
+msgid "%s%s: aborting active xfer: \"%s\" from %s"
+msgstr ""
+
+#, c-format
+msgid "%s%s: not enough memory for new xfer"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to interpret address: error %d %s"
+msgstr ""
+
+#, c-format
+msgid "%s%s: hashing error"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s: incoming file from %s (%s, %s.%s), name: %s, %llu bytes (protocol: %s)"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s: offering file to %s (%s.%s), name: %s (local filename: %s), %llu bytes "
+"(protocol: %s)"
+msgstr ""
+
+#, c-format
+msgid "%s: incoming chat request from %s (%s, %s.%s)"
+msgstr ""
+
+#, c-format
+msgid "%s: sending chat request to %s (%s.%s)"
+msgstr ""
+
+#, c-format
+msgid "%s: file %s (local filename: %s) will be resumed at position %llu"
+msgstr ""
+
+#, c-format
+msgid "%s%s: missing arguments (%s)"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unknown xfer type \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: unknown xfer protocol \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: cannot access file \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: cannot create socket for xfer: error %d %s"
+msgstr ""
+
+#, c-format
+msgid "%s%s: cannot find available port for xfer"
+msgstr ""
+
+#, c-format
+msgid "%s%s: error creating xfer"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: unable to resume file \"%s\" (port: %d, start position: %llu): xfer "
+"not found or not ready for transfer"
+msgstr ""
+
+#, c-format
+msgid "%s: file %s resumed at position %llu"
+msgstr ""
+
+#, c-format
+msgid ""
+"%s%s: unable to accept resume file \"%s\" (port: %d, start position: %llu): "
+"xfer not found or not ready for transfer"
 msgstr ""

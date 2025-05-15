@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2017-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 """
 This script contains WeeChat scripting API tests
-(it can not be run directly and can not be loaded in WeeChat).
+(it cannot be run directly and cannot be loaded in WeeChat).
 
 It is parsed by testapigen.py, using Python AST (Abstract Syntax Trees),
 to generate scripts in all supported languages (Python, Perl, Ruby, ...).
@@ -70,6 +70,9 @@ def test_constants():
     check(weechat.WEECHAT_HOTLIST_HIGHLIGHT == '3')
     check(weechat.WEECHAT_HOOK_PROCESS_RUNNING == -1)
     check(weechat.WEECHAT_HOOK_PROCESS_ERROR == -2)
+    check(weechat.WEECHAT_HOOK_CONNECT_IPV6_DISABLE == 0)
+    check(weechat.WEECHAT_HOOK_CONNECT_IPV6_AUTO == 1)
+    check(weechat.WEECHAT_HOOK_CONNECT_IPV6_FORCE == 2)
     check(weechat.WEECHAT_HOOK_CONNECT_OK == 0)
     check(weechat.WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND == 1)
     check(weechat.WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND == 2)
@@ -575,10 +578,21 @@ def test_display():
     weechat.buffer_close(buffer)
 
 
-def completion_cb(data, completion_item, buf, completion):
+def completion1_cb(data, completion_item, buf, completion):
     """Completion callback."""
     check(data == 'completion_data')
-    check(completion_item == '{SCRIPT_NAME}')
+    check(completion_item == '{SCRIPT_NAME}1')
+    check(weechat.completion_get_string(completion, 'args') == 'w')
+    weechat.completion_set(completion, 'add_space', '0')
+    weechat.completion_list_add(completion, 'word_completed',
+                                0, weechat.WEECHAT_LIST_POS_END)
+    return weechat.WEECHAT_RC_OK
+
+
+def completion2_cb(data, completion_item, buf, completion):
+    """Completion callback."""
+    check(data == 'completion_data')
+    check(completion_item == '{SCRIPT_NAME}2')
     check(weechat.completion_get_string(completion, 'args') == 'w')
     weechat.completion_list_add(completion, 'word_completed',
                                 0, weechat.WEECHAT_LIST_POS_END)
@@ -595,7 +609,7 @@ def command_cb(data, buf, args):
 def command_run_cb(data, buf, command):
     """Command_run callback."""
     check(data == 'command_run_data')
-    check(command == '/cmd' + '{SCRIPT_NAME}' + ' word_completed')
+    check(command == '/cmd2' + '{SCRIPT_NAME}' + ' word_completed')
     return weechat.WEECHAT_RC_OK
 
 
@@ -605,23 +619,40 @@ def timer_cb(data, remaining_calls):
 
 
 def test_hooks():
-    """Test function hook_command."""
+    """Test hook functions."""
+    buffer = weechat.buffer_search_main()
     # hook_completion / hook_completion_args / and hook_command
-    hook_cmplt = weechat.hook_completion('{SCRIPT_NAME}', 'description',
-                                         'completion_cb', 'completion_data')
-    hook_cmd = weechat.hook_command('cmd' + '{SCRIPT_NAME}', 'description',
-                                    'arguments', 'description arguments',
-                                    '%(' + '{SCRIPT_NAME}' + ')',
-                                    'command_cb', 'command_data')
-    weechat.command('', '/input insert /cmd' + '{SCRIPT_NAME}' + ' w')
+    hook_cmplt1 = weechat.hook_completion('{SCRIPT_NAME}1', 'description',
+                                          'completion1_cb', 'completion_data')
+    hook_cmd1 = weechat.hook_command('cmd1' + '{SCRIPT_NAME}', 'description',
+                                     'arguments', 'description arguments',
+                                     '%(' + '{SCRIPT_NAME}1' + ')',
+                                     'command_cb', 'command_data')
+    hook_cmplt2 = weechat.hook_completion('{SCRIPT_NAME}2', 'description',
+                                          'completion2_cb', 'completion_data')
+    hook_cmd2 = weechat.hook_command('cmd2' + '{SCRIPT_NAME}', 'description',
+                                     'arguments', 'description arguments',
+                                     '%(' + '{SCRIPT_NAME}2' + ')',
+                                     'command_cb', 'command_data')
+    weechat.command('', '/input insert /cmd1' + '{SCRIPT_NAME}' + ' w')
     weechat.command('', '/input complete_next')
+    buffer_input = weechat.buffer_get_string(buffer, 'input')
+    check(buffer_input == '/cmd1' + '{SCRIPT_NAME}' + ' word_completed')
+    weechat.command('', '/input delete_line')
+    weechat.command('', '/input insert /cmd2' + '{SCRIPT_NAME}' + ' w')
+    weechat.command('', '/input complete_next')
+    buffer_input = weechat.buffer_get_string(buffer, 'input')
+    check(buffer_input == '/cmd2' + '{SCRIPT_NAME}' + ' word_completed ')
     # hook_command_run
-    hook_cmd_run = weechat.hook_command_run('/cmd' + '{SCRIPT_NAME}' + '*',
+    hook_cmd_run = weechat.hook_command_run('/cmd2' + '{SCRIPT_NAME}' + '*',
                                             'command_run_cb', 'command_run_data')
     weechat.command('', '/input return')
     weechat.unhook(hook_cmd_run)
-    weechat.unhook(hook_cmd)
-    weechat.unhook(hook_cmplt)
+    weechat.unhook(hook_cmd1)
+    weechat.unhook(hook_cmplt1)
+    weechat.unhook(hook_cmd2)
+    weechat.unhook(hook_cmplt2)
+    # weechat.unhook(hook_cmplt2)
     # hook_timer
     hook_timer = weechat.hook_timer(2000111000, 0, 1,
                                     'timer_cb', 'timer_cb_data')
@@ -631,6 +662,75 @@ def test_hooks():
     check(weechat.infolist_string(ptr_infolist, 'interval') == '2000111000')
     weechat.infolist_free(ptr_infolist)
     weechat.unhook(hook_timer)
+
+
+def test_buffers():
+    """Test buffer functions."""
+    buffer1 = weechat.buffer_new('test1', 'buffer_input_cb', '', 'buffer_close_cb', '')
+    check(buffer1 != '')
+    check(weechat.buffer_get_integer(buffer1, 'number') == 2)
+    check(weechat.buffer_get_string(buffer1, 'short_name') == 'test1')
+    props = {
+        'short_name': 't2',
+    }
+    buffer2 = weechat.buffer_new_props('test2', props, 'buffer_input_cb', '', 'buffer_close_cb', '')
+    check(buffer2 != '')
+    check(weechat.buffer_get_integer(buffer2, 'number') == 3)
+    check(weechat.buffer_get_string(buffer2, 'short_name') == 't2')
+    check(weechat.buffer_get_integer(buffer2, 'next_line_id') == 0)
+    weechat.prnt(buffer2, '## test line 1')
+    check(weechat.buffer_get_integer(buffer2, 'next_line_id') == 1)
+    weechat.buffer_clear(buffer2)
+    weechat.buffer_merge(buffer2, buffer1)
+    check(weechat.buffer_get_integer(buffer1, 'number') == 2)
+    check(weechat.buffer_get_integer(buffer2, 'number') == 2)
+    weechat.buffer_unmerge(buffer2, 3)
+    check(weechat.buffer_get_integer(buffer1, 'number') == 2)
+    check(weechat.buffer_get_integer(buffer2, 'number') == 3)
+    check(weechat.current_buffer() != '')
+    check(weechat.buffer_get_integer(buffer1, 'hidden') == 0)
+    weechat.buffer_set(buffer1, 'hidden', '1')
+    check(weechat.buffer_get_integer(buffer1, 'hidden') == 1)
+    weechat.buffer_set(buffer1, 'hidden', '0')
+    check(weechat.buffer_get_integer(buffer1, 'hidden') == 0)
+    weechat.buffer_set(buffer1, 'localvar_set_var1', 'value1')
+    check(weechat.buffer_string_replace_local_var(buffer1, 'test $var1') == 'test value1')
+    buffer = weechat.buffer_search_main()
+    buffer_id = weechat.buffer_get_string(buffer, 'id')
+    check(weechat.buffer_search('xxx', 'yyy') == '')
+    check(weechat.buffer_search('==', 'xxx') == '')
+    check(weechat.buffer_search('==id', '0') == '')
+    check(weechat.buffer_search('core', 'weechat') == buffer)
+    check(weechat.buffer_search('==', 'core.weechat') == buffer)
+    check(weechat.buffer_search('==id', buffer_id) == buffer)
+    check(weechat.buffer_match_list(buffer, '') == 0)
+    check(weechat.buffer_match_list(buffer, '*') == 1)
+    check(weechat.buffer_match_list(buffer, 'core.weechat') == 1)
+    check(weechat.buffer_match_list(buffer, '*,!core.weechat') == 0)
+    weechat.buffer_close(buffer1)
+    weechat.buffer_close(buffer2)
+
+
+def test_lines():
+    """Test line functions."""
+    buffer = weechat.buffer_search_main()
+    check(weechat.line_search_by_id(buffer, -1) == '')
+    check(weechat.line_search_by_id(buffer, 1234567) == '')
+    check(weechat.line_search_by_id(buffer, 0) != '')
+
+
+def test_windows():
+    """Test window functions."""
+    window = weechat.current_window()
+    check(window != '')
+    buffer = weechat.buffer_search_main()
+    check(weechat.window_search_with_buffer(buffer) != '')
+    buffer1 = weechat.buffer_new('test1', 'buffer_input_cb', '', 'buffer_close_cb', '')
+    check(buffer1 != '')
+    check(weechat.window_search_with_buffer(buffer1) == '')
+    weechat.buffer_close(buffer1)
+    check(weechat.window_get_integer(window, 'number') == 1)
+    check(weechat.window_get_string(window, 'xxx') == '')
 
 
 def test_command():
@@ -802,6 +902,9 @@ def cmd_test_cb(data, buf, args):
     test_key()
     test_display()
     test_hooks()
+    test_buffers()
+    test_lines()
+    test_windows()
     test_command()
     test_infolist()
     test_hdata()

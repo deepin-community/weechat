@@ -1,7 +1,7 @@
 /*
  * irc-sasl.c - SASL authentication with IRC server
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -27,9 +27,7 @@
 #include <gcrypt.h>
 
 #include <gnutls/gnutls.h>
-#if LIBGNUTLS_VERSION_NUMBER >= 0x020a01 /* 2.10.1 */
 #include <gnutls/abstract.h>
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x020a01 */
 
 #include "../weechat-plugin.h"
 #include "irc.h"
@@ -61,30 +59,32 @@ irc_sasl_mechanism_plain (const char *sasl_username, const char *sasl_password)
     if (!sasl_username || !sasl_password)
         return NULL;
 
-    answer_base64 = NULL;
-    length_username = strlen (sasl_username);
-    length = ((length_username + 1) * 2) + strlen (sasl_password) + 1;
-    string = malloc (length);
-    if (string)
+    if (weechat_asprintf (&string,
+                          "%s|%s|%s",
+                          sasl_username,
+                          sasl_username,
+                          sasl_password) < 0)
     {
-        snprintf (string, length, "%s|%s|%s",
-                  sasl_username, sasl_username, sasl_password);
-        string[length_username] = '\0';
-        string[(length_username * 2) + 1] = '\0';
-
-        answer_base64 = malloc (length * 4);
-        if (answer_base64)
-        {
-            if (weechat_string_base_encode ("64", string, length - 1,
-                                            answer_base64) < 0)
-            {
-                free (answer_base64);
-                answer_base64 = NULL;
-            }
-        }
-
-        free (string);
+        return NULL;
     }
+
+    length = strlen (string);
+
+    length_username = strlen (sasl_username);
+    string[length_username] = '\0';
+    string[(length_username * 2) + 1] = '\0';
+
+    answer_base64 = malloc ((length * 4) + 1);
+    if (answer_base64)
+    {
+        if (weechat_string_base_encode ("64", string, length, answer_base64) < 0)
+        {
+            free (answer_base64);
+            answer_base64 = NULL;
+        }
+    }
+
+    free (string);
 
     return answer_base64;
 }
@@ -160,11 +160,11 @@ irc_sasl_mechanism_scram (struct t_irc_server *server,
         if (!username2)
             goto memory_error;
         length = 5 + strlen (username2) + 3 + sizeof (nonce_client_base64) - 1;
-        string = malloc (length + 1);
-        if (string)
+        if (weechat_asprintf (&string,
+                              "n,,n=%s,r=%s",
+                              username2,
+                              nonce_client_base64) >= 0)
         {
-            snprintf (string, length + 1, "n,,n=%s,r=%s",
-                      username2, nonce_client_base64);
             free (server->sasl_scram_client_first);
             server->sasl_scram_client_first = strdup (string + 3);
         }
@@ -368,12 +368,13 @@ irc_sasl_mechanism_scram (struct t_irc_server *server,
                 goto base64_encode_error;
             /* final message: auth_no_proof + "," + proof */
             length = strlen (auth_no_proof) + 3 + strlen (client_proof_base64);
-            string = malloc (length + 1);
-            rc = snprintf (string, length + 1, "%s,p=%s",
-                           auth_no_proof,
-                           client_proof_base64);
-            if ((rc < 0) || (rc >= length + 1))
+            if (weechat_asprintf (&string,
+                                  "%s,p=%s",
+                                  auth_no_proof,
+                                  client_proof_base64) < 0)
+            {
                 goto memory_error;
+            }
         }
     }
     goto end;
@@ -507,18 +508,15 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
                                              const char *sasl_key,
                                              char **sasl_error)
 {
-#if LIBGNUTLS_VERSION_NUMBER >= 0x030015 /* 3.0.21 */
     char *answer_base64, *string, *data, str_error[4096];
     int length_data, length_username, length, ret;
     char *str_privkey;
     gnutls_x509_privkey_t x509_privkey;
     gnutls_privkey_t privkey;
     gnutls_datum_t filedatum, decoded_data, signature;
-#if LIBGNUTLS_VERSION_NUMBER >= 0x030300 /* 3.3.0 */
     gnutls_ecc_curve_t curve;
     gnutls_datum_t x, y, k;
     char *pubkey, *pubkey_base64;
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x030300 */
 
     answer_base64 = NULL;
     string = NULL;
@@ -531,8 +529,13 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
         string = malloc (length + 1);
         if (string)
         {
-            snprintf (string, length + 1, "%s|%s", sasl_username, sasl_username);
-            string[length_username] = '\0';
+            if (weechat_asprintf (&string,
+                                  "%s|%s",
+                                  sasl_username,
+                                  sasl_username) >= 0)
+            {
+                string[length_username] = '\0';
+            }
         }
     }
     else
@@ -577,7 +580,6 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
             return NULL;
         }
 
-#if LIBGNUTLS_VERSION_NUMBER >= 0x030300 /* 3.3.0 */
         /* read raw values in key, to display public key */
         ret = gnutls_x509_privkey_export_ecc_raw (x509_privkey,
                                                   &curve, &x, &y, &k);
@@ -610,10 +612,9 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
             gnutls_free (y.data);
             gnutls_free (k.data);
         }
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x030300 */
 
         /* import private key in an abstract key structure */
-        ret = gnutls_privkey_import_x509 (privkey, x509_privkey, 0); /* gnutls >= 2.11.0 */
+        ret = gnutls_privkey_import_x509 (privkey, x509_privkey, 0);
         if (ret != GNUTLS_E_SUCCESS)
         {
             if (sasl_error)
@@ -632,7 +633,7 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
 
         decoded_data.data = (unsigned char *)data;
         decoded_data.size = length_data;
-        ret = gnutls_privkey_sign_hash (privkey, GNUTLS_DIG_SHA256, 0, /* gnutls >= 2.11.0 */
+        ret = gnutls_privkey_sign_hash (privkey, GNUTLS_DIG_SHA256, 0,
                                         &decoded_data, &signature);
         if (ret != GNUTLS_E_SUCCESS)
         {
@@ -680,21 +681,4 @@ irc_sasl_mechanism_ecdsa_nist256p_challenge (struct t_irc_server *server,
     free (string);
 
     return answer_base64;
-
-#else /* GnuTLS < 3.0.21 */
-
-    /* make C compiler happy */
-    (void) data_base64;
-    (void) sasl_username;
-    (void) sasl_key;
-
-    if (sasl_error)
-    {
-        *sasl_error = strdup (
-            _("%sgnutls: version >= 3.0.21 is required for SASL "
-              "\"ecdsa-nist256p-challenge\""));
-    }
-
-    return NULL;
-#endif /* LIBGNUTLS_VERSION_NUMBER >= 0x030015 */
 }

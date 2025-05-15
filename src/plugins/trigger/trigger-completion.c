@@ -1,7 +1,7 @@
 /*
  * trigger-completion.c - completion for trigger commands
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -307,17 +307,12 @@ trigger_completion_add_quoted_word (struct t_gui_completion *completion,
                                     const char *word)
 {
     char *temp;
-    int length;
 
-    length = 1 + strlen (word) + 1 + 1;
-    temp = malloc (length);
-    if (!temp)
-        return;
-
-    snprintf (temp, length, "\"%s\"", word);
-    weechat_completion_list_add (completion, temp, 0, WEECHAT_LIST_POS_END);
-
-    free (temp);
+    if (weechat_asprintf (&temp, "\"%s\"", word) >= 0)
+    {
+        weechat_completion_list_add (completion, temp, 0, WEECHAT_LIST_POS_END);
+        free (temp);
+    }
 }
 
 /*
@@ -609,7 +604,7 @@ trigger_completion_add_arguments_cb (const void *pointer, void *data,
  */
 
 void
-trigger_completion_init ()
+trigger_completion_init (void)
 {
     weechat_hook_completion ("trigger_names",
                              N_("triggers"),

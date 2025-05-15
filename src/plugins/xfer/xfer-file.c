@@ -1,7 +1,7 @@
 /*
  * xfer-file.c - file functions for xfer plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <limits.h>
 
 #include "../weechat-plugin.h"
 #include "xfer.h"
@@ -127,7 +128,7 @@ xfer_file_resume (struct t_xfer *xfer, const char *filename)
  * Checks if file can be downloaded with a given suffix index (if 0 the
  * filename is unchanged, otherwise .1, .2, etc. are added to the filename).
  *
- * Returns 1 if the file can be downloaded with this suffix, 0 if it can not.
+ * Returns 1 if the file can be downloaded with this suffix, 0 if it cannot.
  */
 
 int
@@ -135,7 +136,7 @@ xfer_file_check_suffix (struct t_xfer *xfer, int suffix)
 {
     char *new_filename, *new_temp_filename;
     const char *ptr_suffix;
-    int rc, length_suffix, length, filename_exists, temp_filename_exists;
+    int rc, length_suffix, filename_exists, temp_filename_exists;
     int same_files;
 
     rc = 0;
@@ -148,32 +149,20 @@ xfer_file_check_suffix (struct t_xfer *xfer, int suffix)
 
     /* build filename with suffix */
     if (suffix == 0)
-    {
         new_filename = strdup (xfer->local_filename);
-    }
     else
-    {
-        length = strlen (xfer->local_filename) + 16 + 1;
-        new_filename = malloc (length);
-        if (new_filename)
-        {
-            snprintf (new_filename, length, "%s.%d",
-                      xfer->local_filename,
-                      suffix);
-        }
-    }
+        weechat_asprintf (&new_filename, "%s.%d", xfer->local_filename, suffix);
     if (!new_filename)
         goto error;
 
     /* build temp filename with suffix */
-    length = strlen (new_filename) + length_suffix + 1;
-    new_temp_filename = malloc (length);
-    if (!new_temp_filename)
+    if (weechat_asprintf (&new_temp_filename,
+                          "%s%s",
+                          new_filename,
+                          (ptr_suffix) ? ptr_suffix : "") < 0)
+    {
         goto error;
-    snprintf (new_temp_filename, length,
-              "%s%s",
-              new_filename,
-              (ptr_suffix) ? ptr_suffix : "");
+    }
 
     filename_exists = (access (new_filename, F_OK) == 0);
     temp_filename_exists = (access (new_temp_filename, F_OK) == 0);
@@ -316,37 +305,44 @@ xfer_file_find_filename (struct t_xfer *xfer)
 void
 xfer_file_calculate_speed (struct t_xfer *xfer, int ended)
 {
-    time_t local_time, elapsed;
-    unsigned long long bytes_per_sec_total;
+    struct timeval local_time;
+    long long elapsed_usec;
+    double bytes_per_usec_total;
 
-    local_time = time (NULL);
-    if (ended || local_time > xfer->last_check_time)
+    gettimeofday (&local_time, NULL);
+    if (ended || (weechat_util_timeval_cmp (&local_time, &xfer->last_check_time) > 0))
     {
         if (ended)
         {
             /* calculate bytes per second (global) */
-            elapsed = local_time - xfer->start_transfer;
-            if (elapsed == 0)
-                elapsed = 1;
-            xfer->bytes_per_sec = (xfer->pos - xfer->start_resume) / elapsed;
+            elapsed_usec = weechat_util_timeval_diff (&xfer->start_transfer, &local_time);
+            if (elapsed_usec == 0)
+                elapsed_usec = 1;
+            xfer->bytes_per_sec = ((xfer->pos - xfer->start_resume) * 1000000.0) / elapsed_usec;
             xfer->eta = 0;
         }
         else
         {
             /* calculate ETA */
-            elapsed = local_time - xfer->start_transfer;
-            if (elapsed == 0)
-                elapsed = 1;
-            bytes_per_sec_total = (xfer->pos - xfer->start_resume) / elapsed;
-            if (bytes_per_sec_total == 0)
-                bytes_per_sec_total = 1;
-            xfer->eta = (xfer->size - xfer->pos) / bytes_per_sec_total;
+            elapsed_usec = weechat_util_timeval_diff (&xfer->start_transfer, &local_time);
+            if (elapsed_usec == 0)
+            {
+                xfer->eta = ULLONG_MAX;
+            }
+            else
+            {
+                bytes_per_usec_total = (double)(xfer->pos - xfer->start_resume) / (double)elapsed_usec;
+                if (bytes_per_usec_total == 0)
+                    xfer->eta = ULLONG_MAX;
+                else
+                    xfer->eta = (xfer->size - xfer->pos) / bytes_per_usec_total / 1000000.0;
+            }
 
             /* calculate bytes per second (since last check time) */
-            elapsed = local_time - xfer->last_check_time;
-            if (elapsed == 0)
-                elapsed = 1;
-            xfer->bytes_per_sec = (xfer->pos - xfer->last_check_pos) / elapsed;
+            elapsed_usec = weechat_util_timeval_diff (&xfer->last_check_time, &local_time);
+            if (elapsed_usec == 0)
+                elapsed_usec = 1;
+            xfer->bytes_per_sec = ((xfer->pos - xfer->last_check_pos) * 1000000.0) / elapsed_usec;
         }
         xfer->last_check_time = local_time;
         xfer->last_check_pos = xfer->pos;

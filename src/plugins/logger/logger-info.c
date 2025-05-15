@@ -1,7 +1,7 @@
 /*
  * logger-info.c - info and infolist hooks for logger plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -38,7 +38,6 @@ logger_info_log_file_cb (const void *pointer, void *data,
                          const char *arguments)
 {
     int rc;
-    unsigned long value;
     struct t_gui_buffer *buffer;
     struct t_logger_buffer *logger_buffer;
 
@@ -53,15 +52,19 @@ logger_info_log_file_cb (const void *pointer, void *data,
     buffer = NULL;
     if (strncmp (arguments, "0x", 2) == 0)
     {
-        rc = sscanf (arguments, "%lx", &value);
-        if ((rc != EOF) && (rc != 0) && value)
+        rc = sscanf (arguments, "%p", &buffer);
+        if ((rc != EOF) && (rc != 0) && buffer)
         {
-            if (weechat_hdata_check_pointer (weechat_hdata_get ("buffer"),
-                                             NULL,
-                                             (struct t_gui_buffer *)value))
+            if (!weechat_hdata_check_pointer (weechat_hdata_get ("buffer"),
+                                              NULL,
+                                              buffer))
             {
-                buffer = (struct t_gui_buffer *)value;
+                buffer = NULL;
             }
+        }
+        else
+        {
+            buffer = NULL;
         }
     }
     else
@@ -140,7 +143,7 @@ logger_info_infolist_logger_buffer_cb (const void *pointer, void *data,
  */
 
 void
-logger_info_init ()
+logger_info_init (void)
 {
     /* info hooks */
     weechat_hook_info (

@@ -1,7 +1,7 @@
 /*
  * buflist-config.c - buflist configuration options (file buflist.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -105,7 +105,7 @@ buflist_config_reload (const void *pointer, void *data,
  */
 
 void
-buflist_config_free_signals_refresh ()
+buflist_config_free_signals_refresh (void)
 {
     int i;
 
@@ -169,7 +169,7 @@ buflist_config_signal_buffer_cb (const void *pointer, void *data,
  */
 
 void
-buflist_config_hook_signals_refresh ()
+buflist_config_hook_signals_refresh (void)
 {
     char **all_signals, **signals;
     const char *ptr_signals_refresh;
@@ -469,7 +469,7 @@ buflist_config_change_format (const void *pointer, void *data,
  */
 
 int
-buflist_config_init ()
+buflist_config_init (void)
 {
     buflist_config_file = weechat_config_new (
         BUFLIST_CONFIG_PRIO_NAME,
@@ -494,7 +494,7 @@ buflist_config_init ()
             N_("add newline between the buffers displayed, so each buffer is "
                "displayed on a separate line (recommended); if disabled, "
                "newlines must be manually added in the formats with \"${\\n}\", "
-               "and the mouse actions are not possible any more"),
+               "and the mouse actions are not possible anymore"),
             NULL, 0, 0, "on", NULL, 0,
             NULL, NULL, NULL,
             &buflist_config_change_buflist, NULL, NULL,
@@ -530,7 +530,7 @@ buflist_config_init ()
             "enabled", "boolean",
             N_("enable buflist; it is recommended to use this option instead of "
                "just hiding the bar because it also removes some internal hooks "
-               "that are not needed any more when the bar is hidden; you can "
+               "that are not needed anymore when the bar is hidden; you can "
                "also use the command \"/buflist toggle\" or use the default key "
                "alt+shift+b"),
             NULL, 0, 0, "on", NULL, 0,
@@ -578,7 +578,8 @@ buflist_config_init ()
             buflist_config_file, buflist_config_section_look,
             "nick_prefix_empty", "boolean",
             N_("when the nick prefix is enabled, display a space instead if "
-               "there is no nick prefix on the buffer"),
+               "there is no nick prefix on the buffer (only for channel, "
+               "private and list buffers)"),
             NULL, 0, 0, "on", NULL, 0,
             NULL, NULL, NULL,
             &buflist_config_change_buflist, NULL, NULL,
@@ -602,8 +603,8 @@ buflist_config_init ()
                "IRC server (\"irc_server.var\") or a hdata variable of "
                "IRC channel (\"irc_channel.var\"); "
                "char \"-\" can be used before field to reverse order, "
-               "char \"~\" can be used to do a case insensitive comparison; "
-               "examples: \"-~short_name\" for case insensitive and reverse "
+               "char \"~\" can be used to do a case-insensitive comparison; "
+               "examples: \"-~short_name\" for case-insensitive and reverse "
                "sort on buffer short name, "
                "\"-hotlist.priority,hotlist.time,hotlist.time_usec,number,-active\" "
                "for sort like the hotlist then by buffer number for buffers "
@@ -804,7 +805,7 @@ buflist_config_init ()
  */
 
 int
-buflist_config_read ()
+buflist_config_read (void)
 {
     int rc;
 
@@ -825,7 +826,7 @@ buflist_config_read ()
  */
 
 int
-buflist_config_write ()
+buflist_config_write (void)
 {
     return weechat_config_write (buflist_config_file);
 }
@@ -835,7 +836,7 @@ buflist_config_write ()
  */
 
 void
-buflist_config_free ()
+buflist_config_free (void)
 {
     int i;
 

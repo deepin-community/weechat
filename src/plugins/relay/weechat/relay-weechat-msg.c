@@ -1,7 +1,7 @@
 /*
  * relay-weechat-msg.c - build binary messages for WeeChat protocol
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -300,6 +300,8 @@ relay_weechat_msg_hashtable_map_cb (void *data,
             relay_weechat_msg_add_pointer (msg, (void *)pointers[i]);
         else if (strcmp (type, WEECHAT_HASHTABLE_TIME) == 0)
             relay_weechat_msg_add_time (msg, *((time_t *)pointers[i]));
+        else if (strcmp (type, WEECHAT_HASHTABLE_LONGLONG) == 0)
+            relay_weechat_msg_add_longlong (msg, *((long long *)pointers[i]));
     }
 }
 
@@ -328,6 +330,8 @@ relay_weechat_msg_add_hashtable (struct t_relay_weechat_msg *msg,
             relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_POINTER);
         else if (strcmp (type, WEECHAT_HASHTABLE_TIME) == 0)
             relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_TIME);
+        else if (strcmp (type, WEECHAT_HASHTABLE_LONGLONG) == 0)
+            relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_LONG);
     }
 
     /* number of items */
@@ -584,7 +588,6 @@ relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
     char *path_returned;
     const char *hdata_name, *array_size;
     void *pointer, **path_pointers;
-    unsigned long value;
     int rc, num_keys, num_path, i, type, pos_count, count, rc_sscanf;
     uint32_t count32;
 
@@ -625,10 +628,9 @@ relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
         pos[0] = '\0';
     if (strncmp (list_path[0], "0x", 2) == 0)
     {
-        rc_sscanf = sscanf (list_path[0], "%lx", &value);
+        rc_sscanf = sscanf (list_path[0], "%p", &pointer);
         if ((rc_sscanf != EOF) && (rc_sscanf != 0))
         {
-            pointer = (void *)value;
             if (!weechat_hdata_check_pointer (ptr_hdata_head, NULL, pointer))
             {
                 if (weechat_relay_plugin->debug >= 1)
@@ -641,6 +643,10 @@ relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
                 }
                 goto end;
             }
+        }
+        else
+        {
+            pointer = NULL;
         }
     }
     else

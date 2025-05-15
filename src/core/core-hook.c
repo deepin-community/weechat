@@ -1,7 +1,7 @@
 /*
  * core-hook.c - WeeChat hooks management
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -159,7 +159,7 @@ t_callback_hook *hook_callback_print_log[HOOK_NUM_TYPES] =
  */
 
 void
-hook_init ()
+hook_init (void)
 {
     int type, sock[2], rc;
 
@@ -367,7 +367,7 @@ hook_remove_from_list (struct t_hook *hook)
  */
 
 void
-hook_remove_deleted ()
+hook_remove_deleted (void)
 {
     int type;
     struct t_hook *ptr_hook, *next_hook;
@@ -458,7 +458,7 @@ hook_valid (struct t_hook *hook)
  */
 
 void
-hook_exec_start ()
+hook_exec_start (void)
 {
     hook_exec_recursion++;
 }
@@ -468,7 +468,7 @@ hook_exec_start ()
  */
 
 void
-hook_exec_end ()
+hook_exec_end (void)
 {
     if (hook_exec_recursion > 0)
         hook_exec_recursion--;
@@ -523,7 +523,7 @@ hook_callback_end (struct t_hook *hook, struct t_hook_exec_cb *hook_exec_cb)
         time_diff = util_timeval_diff (&hook_exec_cb->start_time, &end_time);
         if (time_diff >= debug_long_callbacks)
         {
-            str_diff = util_get_microseconds_string (time_diff);
+            str_diff = util_get_microseconds_string ((unsigned long long)time_diff);
             log_printf (
                 _("debug: long callback: hook %s (%s), plugin: %s, "
                   "subplugin: %s, time elapsed: %s"),
@@ -620,6 +620,30 @@ hook_set (struct t_hook *hook, const char *property, const char *value)
                                      (int)number,
                                      HOOK_PROCESS(hook, child_pid),
                                      strerror (errno));
+                }
+            }
+        }
+    }
+    else if (strcmp (property, "keep_spaces_right") == 0)
+    {
+        if (!hook->deleted
+            && ((hook->type == HOOK_TYPE_COMMAND)
+                || (hook->type == HOOK_TYPE_COMMAND_RUN)))
+        {
+            error = NULL;
+            number = strtol (value, &error, 10);
+            if (error && !error[0])
+            {
+                switch (hook->type)
+                {
+                    case HOOK_TYPE_COMMAND:
+                        HOOK_COMMAND(hook, keep_spaces_right) = (number) ? 1 : 0;
+                        break;
+                    case HOOK_TYPE_COMMAND_RUN:
+                        HOOK_COMMAND_RUN(hook, keep_spaces_right) = (number) ? 1 : 0;
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -750,7 +774,7 @@ unhook_all_plugin (struct t_weechat_plugin *plugin, const char *subplugin)
  */
 
 void
-unhook_all ()
+unhook_all (void)
 {
     int type;
     struct t_hook *ptr_hook, *next_hook;
@@ -915,7 +939,7 @@ hook_add_to_infolist (struct t_infolist *infolist, struct t_hook *pointer,
  */
 
 void
-hook_print_log ()
+hook_print_log (void)
 {
     int type;
     struct t_hook *ptr_hook;

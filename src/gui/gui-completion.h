@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -45,7 +45,7 @@ struct t_gui_completion
     /* completion context */
     struct t_gui_buffer *buffer;  /* buffer where completion was asked       */
     int context;                  /* context: null, nick, command, cmd arg   */
-    int case_sensitive;           /* case sensitive completion?              */
+    int case_sensitive;           /* case-sensitive completion?              */
     char *base_command;           /* cmd with arg to complete (can be NULL)  */
     int base_command_arg_index;   /* # arg to complete (if context=cmd arg)  */
     char *base_word;              /* word to complete (when Tab was pressed) */
@@ -94,12 +94,14 @@ extern int gui_completion_search (struct t_gui_completion *completion,
                                   int direction);
 extern const char *gui_completion_get_string (struct t_gui_completion *completion,
                                               const char *property);
+extern void gui_completion_set (struct t_gui_completion *completion,
+                                const char *property, const char *value);
 extern struct t_hdata *gui_completion_hdata_completion_cb (const void *pointer,
                                                            void *data,
                                                            const char *hdata_name);
 extern struct t_hdata *gui_completion_hdata_completion_word_cb (const void *pointer,
                                                                 void *data,
                                                                 const char *hdata_name);
-extern void gui_completion_print_log ();
+extern void gui_completion_print_log (void);
 
 #endif /* WEECHAT_GUI_COMPLETION_H */

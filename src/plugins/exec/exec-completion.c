@@ -1,7 +1,7 @@
 /*
  * exec-completion.c - completion for exec commands
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -68,7 +68,7 @@ exec_completion_commands_ids_cb (const void *pointer, void *data,
  */
 
 void
-exec_completion_init ()
+exec_completion_init (void)
 {
     weechat_hook_completion ("exec_commands_ids",
                              N_("ids (numbers and names) of executed commands"),

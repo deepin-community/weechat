@@ -1,7 +1,7 @@
 /*
  * relay-weechat-protocol.c - WeeChat protocol for relay to client
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -49,17 +49,14 @@ struct t_gui_buffer *
 relay_weechat_protocol_get_buffer (const char *arg)
 {
     struct t_gui_buffer *ptr_buffer;
-    unsigned long value;
     int rc;
 
     ptr_buffer = NULL;
 
     if (strncmp (arg, "0x", 2) == 0)
     {
-        rc = sscanf (arg, "%lx", &value);
-        if ((rc != EOF) && (rc != 0))
-            ptr_buffer = (struct t_gui_buffer *)value;
-        if (ptr_buffer)
+        rc = sscanf (arg, "%p", &ptr_buffer);
+        if ((rc != EOF) && (rc != 0) && ptr_buffer)
         {
             if (!weechat_hdata_check_pointer (
                     relay_hdata_buffer,
@@ -69,6 +66,10 @@ relay_weechat_protocol_get_buffer (const char *arg)
                 /* invalid pointer! */
                 ptr_buffer = NULL;
             }
+        }
+        else
+        {
+            ptr_buffer = NULL;
         }
     }
     else
@@ -218,8 +219,9 @@ relay_weechat_protocol_handshake_reply (struct t_relay_client *client,
 
 RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
 {
-    char **options, **auths, **compressions, *pos;
-    int i, j, index_hash_algo, hash_algo_found, auth_allowed, compression;
+    char **options, **auths, **compressions, *pos, **ptr_option, **ptr_auth;
+    char **ptr_comp;
+    int index_hash_algo, hash_algo_found, auth_allowed, compression;
     int password_received, plain_text_password;
 
     RELAY_WEECHAT_PROTOCOL_MIN_ARGS(0);
@@ -241,14 +243,14 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
         weechat_string_split_command (argv_eol[0], ',') : NULL;
     if (options)
     {
-        for (i = 0; options[i]; i++)
+        for (ptr_option = options; *ptr_option; ptr_option++)
         {
-            pos = strchr (options[i], '=');
+            pos = strchr (*ptr_option, '=');
             if (pos)
             {
                 pos[0] = '\0';
                 pos++;
-                if (strcmp (options[i], "password_hash_algo") == 0)
+                if (strcmp (*ptr_option, "password_hash_algo") == 0)
                 {
                     password_received = 1;
                     auths = weechat_string_split (
@@ -262,10 +264,9 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
                         NULL);
                     if (auths)
                     {
-                        for (j = 0; auths[j]; j++)
+                        for (ptr_auth = auths; *ptr_auth; ptr_auth++)
                         {
-                            index_hash_algo = relay_auth_password_hash_algo_search (
-                                auths[j]);
+                            index_hash_algo = relay_auth_password_hash_algo_search (*ptr_auth);
                             if ((index_hash_algo >= 0) && (index_hash_algo > hash_algo_found))
                             {
                                 auth_allowed = weechat_string_match_list (
@@ -279,7 +280,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
                         weechat_string_free_split (auths);
                     }
                 }
-                else if (strcmp (options[i], "compression") == 0)
+                else if (strcmp (*ptr_option, "compression") == 0)
                 {
                     compressions = weechat_string_split (
                         pos,
@@ -292,9 +293,9 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
                         NULL);
                     if (compressions)
                     {
-                        for (j = 0; compressions[j]; j++)
+                        for (ptr_comp = compressions; *ptr_comp; ptr_comp++)
                         {
-                            compression = relay_weechat_compression_search (compressions[j]);
+                            compression = relay_weechat_compression_search (*ptr_comp);
                             if (compression >= 0)
                             {
                                 RELAY_WEECHAT_DATA(client, compression) = compression;
@@ -304,7 +305,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
                         weechat_string_free_split (compressions);
                     }
                 }
-                else if (strcmp (options[i], "escape_commands") == 0)
+                else if (strcmp (*ptr_option, "escape_commands") == 0)
                 {
                     RELAY_WEECHAT_DATA(client, escape_commands) =
                         (weechat_strcmp (pos, "on") == 0) ?
@@ -360,8 +361,9 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(handshake)
 
 RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
 {
-    char **options, *pos, *relay_password, *totp_secret, *info_totp_args, *info_totp;
-    int i, length, password_received, totp_received;
+    char **options, *pos, *relay_password, *totp_secret;
+    char *info_totp_args, *info_totp, **ptr_option;
+    int password_received, totp_received;
 
     RELAY_WEECHAT_PROTOCOL_MIN_ARGS(0);
 
@@ -379,14 +381,14 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
         weechat_string_split_command (argv_eol[0], ',') : NULL;
     if (options)
     {
-        for (i = 0; options[i]; i++)
+        for (ptr_option = options; *ptr_option; ptr_option++)
         {
-            pos = strchr (options[i], '=');
+            pos = strchr (*ptr_option, '=');
             if (pos)
             {
                 pos[0] = '\0';
                 pos++;
-                if (strcmp (options[i], "password") == 0)
+                if (strcmp (*ptr_option, "password") == 0)
                 {
                     password_received = 1;
                     if ((client->password_hash_algo == RELAY_AUTH_PASSWORD_HASH_PLAIN)
@@ -395,27 +397,25 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
                         RELAY_WEECHAT_DATA(client, password_ok) = 1;
                     }
                 }
-                else if (strcmp (options[i], "password_hash") == 0)
+                else if (strcmp (*ptr_option, "password_hash") == 0)
                 {
                     password_received = 1;
                     if (relay_auth_password_hash (client, pos, relay_password) == 0)
                         RELAY_WEECHAT_DATA(client, password_ok) = 1;
                 }
-                else if (strcmp (options[i], "totp") == 0)
+                else if (strcmp (*ptr_option, "totp") == 0)
                 {
                     totp_received = 1;
                     if (totp_secret)
                     {
-                        length = strlen (totp_secret) + strlen (pos) + 16 + 1;
-                        info_totp_args = malloc (length);
-                        if (info_totp_args)
+                        /* validate the OTP received from the client */
+                        if (weechat_asprintf (
+                                &info_totp_args,
+                                "%s,%s,0,%d",
+                                totp_secret,  /* the shared secret */
+                                pos,          /* the OTP from client */
+                                weechat_config_integer (relay_config_network_totp_window)) >= 0)
                         {
-                            /* validate the OTP received from the client */
-                            snprintf (info_totp_args, length,
-                                      "%s,%s,0,%d",
-                                      totp_secret,  /* the shared secret */
-                                      pos,          /* the OTP from client */
-                                      weechat_config_integer (relay_config_network_totp_window));
                             info_totp = weechat_info_get ("totp_validate", info_totp_args);
                             if (info_totp && (strcmp (info_totp, "1") == 0))
                                 RELAY_WEECHAT_DATA(client, totp_ok) = 1;
@@ -527,7 +527,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(info)
 RELAY_WEECHAT_PROTOCOL_CALLBACK(infolist)
 {
     struct t_relay_weechat_msg *msg;
-    unsigned long value;
+    void *pointer;
     char *args;
     int rc;
 
@@ -536,17 +536,17 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(infolist)
     msg = relay_weechat_msg_new (id);
     if (msg)
     {
-        value = 0;
+        pointer = NULL;
         args = NULL;
         if (argc > 1)
         {
-            rc = sscanf (argv[1], "%lx", &value);
+            rc = sscanf (argv[1], "%p", &pointer);
             if ((rc == EOF) || (rc == 0))
-                value = 0;
+                pointer = NULL;
             if (argc > 2)
                 args = argv_eol[2];
         }
-        relay_weechat_msg_add_infolist (msg, argv[0], (void *)value, args);
+        relay_weechat_msg_add_infolist (msg, argv[0], pointer, args);
         relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
@@ -872,7 +872,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,short_name,"
                                              "nicklist,title,local_variables,"
@@ -896,7 +897,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,type");
                 relay_weechat_msg_send (ptr_client, msg);
@@ -918,7 +920,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,"
                                              "prev_buffer,next_buffer");
@@ -942,7 +945,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,"
                                              "prev_buffer,next_buffer");
@@ -966,7 +970,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,"
                                              "prev_buffer,next_buffer");
@@ -1010,7 +1015,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,short_name,"
                                              "local_variables");
@@ -1033,7 +1039,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,title");
                 relay_weechat_msg_send (ptr_client, msg);
@@ -1055,7 +1062,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name,local_variables");
                 relay_weechat_msg_send (ptr_client, msg);
@@ -1076,7 +1084,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name");
                 relay_weechat_msg_send (ptr_client, msg);
@@ -1107,11 +1116,42 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             if (msg)
             {
                 snprintf (cmd_hdata, sizeof (cmd_hdata),
-                          "line_data:%p",
-                          ptr_line_data);
+                          "line_data:0x%lx",
+                          (unsigned long)ptr_line_data);
                 relay_weechat_msg_add_hdata (
                     msg, cmd_hdata,
-                    "buffer,date,date_usec,date_printed,date_usec_printed,"
+                    "buffer,id,date,date_usec,date_printed,date_usec_printed,"
+                    "displayed,notify_level,highlight,tags_array,"
+                    "prefix,message");
+                relay_weechat_msg_send (ptr_client, msg);
+                relay_weechat_msg_free (msg);
+            }
+        }
+    }
+    else if (strcmp (signal, "buffer_line_data_changed") == 0)
+    {
+        ptr_line_data = (struct t_gui_line_data *)signal_data;
+        if (!ptr_line_data)
+            return WEECHAT_RC_OK;
+
+        ptr_buffer = weechat_hdata_pointer (relay_hdata_line_data, ptr_line_data,
+                                            "buffer");
+        if (!ptr_buffer || relay_buffer_is_relay (ptr_buffer))
+            return WEECHAT_RC_OK;
+
+        /* send signal only if sync with flag "buffer" */
+        if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
+                                            RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
+        {
+            msg = relay_weechat_msg_new (str_signal);
+            if (msg)
+            {
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "line_data:0x%lx",
+                          (unsigned long)ptr_line_data);
+                relay_weechat_msg_add_hdata (
+                    msg, cmd_hdata,
+                    "buffer,id,date,date_usec,date_printed,date_usec_printed,"
                     "displayed,notify_level,highlight,tags_array,"
                     "prefix,message");
                 relay_weechat_msg_send (ptr_client, msg);
@@ -1133,7 +1173,8 @@ relay_weechat_protocol_signal_buffer_cb (const void *pointer, void *data,
             msg = relay_weechat_msg_new (str_signal);
             if (msg)
             {
-                snprintf (cmd_hdata, sizeof (cmd_hdata), "buffer:%p", ptr_buffer);
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (unsigned long)ptr_buffer);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "id,number,full_name");
                 relay_weechat_msg_send (ptr_client, msg);

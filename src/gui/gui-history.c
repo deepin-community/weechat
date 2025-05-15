@@ -1,7 +1,7 @@
 /*
  * gui-history.c - memorize commands or text for buffers (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -118,7 +118,7 @@ gui_history_buffer_add (struct t_gui_buffer *buffer, const char *string)
  */
 
 void
-gui_history_global_remove_oldest ()
+gui_history_global_remove_oldest (void)
 {
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_history *ptr_history;
@@ -192,7 +192,7 @@ gui_history_add (struct t_gui_buffer *buffer, const char *string)
 {
     char *string2, str_buffer[128];
 
-    snprintf (str_buffer, sizeof (str_buffer), "%p", buffer);
+    snprintf (str_buffer, sizeof (str_buffer), "0x%lx", (unsigned long)buffer);
     string2 = hook_modifier_exec (NULL, "history_add", str_buffer, string);
 
     /*
@@ -300,7 +300,7 @@ gui_history_search (struct t_gui_buffer *buffer,
  */
 
 void
-gui_history_global_free ()
+gui_history_global_free (void)
 {
     struct t_gui_history *ptr_history;
 
@@ -356,7 +356,6 @@ gui_history_hdata_history_update_cb (void *data,
     struct t_gui_history *ptr_history;
     struct t_gui_buffer *ptr_buffer;
     const char *text, *buffer;
-    unsigned long value;
     int rc;
 
     /* make C compiler happy */
@@ -385,9 +384,9 @@ gui_history_hdata_history_update_cb (void *data,
             buffer = hashtable_get (hashtable, "buffer");
             if (buffer)
             {
-                rc = sscanf (buffer, "%lx", &value);
-                if ((rc != EOF) && (rc != 0))
-                    ptr_buffer = (struct t_gui_buffer *)value;
+                rc = sscanf (buffer, "%p", &ptr_buffer);
+                if ((rc == EOF) || (rc == 0))
+                    ptr_buffer = NULL;
             }
         }
         if (ptr_buffer)

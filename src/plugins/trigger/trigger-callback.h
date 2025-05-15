@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -150,7 +150,7 @@ extern struct t_hashtable *trigger_callback_info_hashtable_cb (const void *point
                                                                void *data,
                                                                const char *info_name,
                                                                struct t_hashtable *hashtable);
-extern void trigger_callback_init ();
-extern void trigger_callback_end ();
+extern void trigger_callback_init (void);
+extern void trigger_callback_end (void);
 
 #endif /* WEECHAT_PLUGIN_TRIGGER_CALLBACK_H */

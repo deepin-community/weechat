@@ -2,11 +2,11 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: sr
-:toc-title: Садржај
+include::includes/attributes-sr.adoc[]
 
 Превод:
 
-* Иван Пешић (<ivan.pesic@gmail.com>), 2021.
+* Иван Пешић (<ivan.pesic@gmail.com>), 2025.
 
 Ово упутство описује WeeChat чет клијент и део је програма WeeChat.
 
@@ -61,7 +61,7 @@ Almost all examples in this doc are written in Python, but API is the same for o
 ===== Модул
 
 Програм WeeChat дефинише `weechat` модул који мора да се увезе командом `import weechat`. +
-Python стаб за WeeChat API је соступан у репозиторијуму: https://raw.githubusercontent.com/weechat/weechat/master/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
+Python стаб за WeeChat API је соступан у репозиторијуму: https://raw.githubusercontent.com/weechat/weechat/main/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
 
 [[python_functions]]
 ===== Функције
@@ -181,7 +181,7 @@ null типа када функција прихвата null вредности
 
 Ову константу можете да проследите када функција као аргумент прихвата null и
 вретиће вам се као вредност аргумента у функцији повратног позива ако је вредност
-аргумента null. Да бисте видели које функције прихватају null вредности и 
+аргумента null. Да бисте видели које функције прихватају null вредности и
 прослеђују null вредности функцијама повратног позива, погледајте Python прототипе
 у link:weechat_plugin_api.en.html[API референтном приручнику WeeChat додатака ^↗^^].
 
@@ -341,9 +341,10 @@ weechat_print('', 'Поздрав од PHP скрипте!');
 
 На пример, са језиком Python:
 
+[source,shell]
 ----
-$ cd ~/.local/share/weechat/python/autoload
-$ ln -s ../script.py
+cd ~/.local/share/weechat/python/autoload
+ln -s ../script.py
 ----
 
 [NOTE]

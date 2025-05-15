@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: ja-jp
-:toc-title: 目次
+include::includes/attributes-ja.adoc[]
 
 翻訳者:
 
@@ -57,12 +57,14 @@ If you still have issues, please report them to the developers.
 
 https://brew.sh/[Homebrew ^↗^^] を使うことをお勧めします、ヘルプを見るには:
 
+[source,shell]
 ----
 brew info weechat
 ----
 
 以下のコマンドで WeeChat をインストールします:
 
+[source,shell]
 ----
 brew install weechat
 ----
@@ -319,10 +321,15 @@ just the contents of the currently selected window, without any formatting.
 (rxvt-unicode、konsole、gnome-terminal、...)。通常、キーは
 kbd:[Ctrl] + kbd:[Alt] + マウス選択です。
 
+// TRANSLATION MISSING
+You can toggle nicklist and make it visible only when needed, with key
+kbd:[Alt+Shift+N].
+
 別の解決策はニックネームリストを上か下かに移動することです、例えば:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 [[urls]]
@@ -333,10 +340,14 @@ You can use the bare display (default key: kbd:[Alt+l] (`L`)).
 
 URL を簡単にクリックできるようにするには、以下を試してみてください:
 
+// TRANSLATION MISSING
+* toggle nicklist and make it visible only when needed, with key kbd:[Alt+Shift+N]
+
 * ニックネームリストを上方に移動します:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 * 複数行に渡る単語の整列を無効化します:
@@ -390,6 +401,7 @@ There is no option in WeeChat to change the timezone, the environment variable
 // TRANSLATION MISSING
 In your shell initialization file or on command line, before starting WeeChat:
 
+[source,shell]
 ----
 export TZ=Asia/Tokyo
 ----
@@ -700,16 +712,18 @@ to display its code):
 
 マウスサポートを端末から確認するには:
 
+[source,shell]
 ----
-$ printf '\033[?1002h'
+printf '\033[?1002h'
 ----
 
 端末の最初の文字 (左上) をクリックしてください。" !!#!!" と見えるはずです。
 
 端末のマウスサポートを無効化するには:
 
+[source,shell]
 ----
-$ printf '\033[?1002l'
+printf '\033[?1002l'
 ----
 
 [[mouse_coords]]
@@ -765,7 +779,7 @@ gnutls ハンドシェイクに関するエラーの場合、Diffie-Hellman キ�
 You can try a different priority string, replace "xxx" by your server name:
 
 ----
-/set irc.server.xxx.tls_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
+/set irc.server.xxx.tls_priorities "NORMAL:%COMPAT"
 ----
 
 [[irc_tls_libera]]
@@ -1032,8 +1046,9 @@ for help).
 
 それでもだめなら、手作業で (シェルから) スクリプトリストファイルを削除してください:
 
+[source,shell]
 ----
-$ rm ~/.cache/weechat/script/plugins.xml.gz
+rm ~/.cache/weechat/script/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1058,9 +1073,10 @@ If you are not using the XDG directories, the path could be: _~/.weechat/script/
 
 * シェルからスクリプトリストファイルをダウンロードします (必要なら curl をインストールしてください):
 
+[source,shell]
 ----
-$ cd ~/.cache/weechat/script
-$ curl -O https://weechat.org/files/plugins.xml.gz
+cd ~/.cache/weechat/script
+curl -O https://weechat.org/files/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1068,6 +1084,7 @@ If you're running macOS and the downloaded file has a size of 0 bytes,
 try to set this variable in your shell initialization file or on command line,
 before starting WeeChat:
 
+[source,shell]
 ----
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ----
@@ -1244,6 +1261,7 @@ See https://weechat.org/about/support/[this page ^↗^^].
 
 gdb で WeeChat を実行する場合、以下のエラーが出るかもしれません:
 
+[source,shell]
 ----
 $ gdb /path/to/weechat
 (gdb) run
@@ -1254,6 +1272,7 @@ Cannot find new threads: generic error
 これを修正するには、以下のコマンドを使って gdb を実行してください
 (システム上の libpthread と WeeChat へのパスを変更):
 
+[source,shell]
 ----
 $ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat
 (gdb) run
@@ -1263,7 +1282,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat
 === WeeChat をサポートするプラットフォームのリストを教えてください。他のオペレーティングシステムへの移植予定はありますか。
 
 // TRANSLATION MISSING
-WeeChat runs fine on most Linux/BSD distributions, GNU/Hurd, Mac OS and Windows
+WeeChat runs fine on most Linux/BSD distributions, GNU/Hurd, macOS and Windows
 (Cygwin and Windows Subsystem for Linux).
 
 我々は可能な限り多くのプラットフォームに移植することに最善を尽くしています。我々が持っていない

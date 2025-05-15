@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -25,8 +25,8 @@
 extern struct t_gui_buffer *secure_buffer;
 extern int secure_buffer_display_values;
 
-extern void secure_buffer_display ();
-extern void secure_buffer_assign ();
-extern void secure_buffer_open ();
+extern void secure_buffer_display (void);
+extern void secure_buffer_assign (void);
+extern void secure_buffer_open (void);
 
 #endif /* WEECHAT_SECURE_BUFFER_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,7 +20,7 @@
 #ifndef WEECHAT_PLUGIN_IRC_BAR_ITEM_H
 #define WEECHAT_PLUGIN_IRC_BAR_ITEM_H
 
-extern void irc_bar_item_update_channel ();
-extern void irc_bar_item_init ();
+extern void irc_bar_item_update_channel (void);
+extern void irc_bar_item_init (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_BAR_ITEM_H */

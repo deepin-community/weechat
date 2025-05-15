@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -111,6 +111,6 @@ extern time_t infolist_time (struct t_infolist *infolist,
                              const char *var);
 extern void infolist_free (struct t_infolist *infolist);
 extern void infolist_free_all_plugin (struct t_weechat_plugin *plugin);
-extern void infolist_print_log ();
+extern void infolist_print_log (void);
 
 #endif /* WEECHAT_INFOLIST_H */

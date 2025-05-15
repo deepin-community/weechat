@@ -1,7 +1,7 @@
 /*
  * fset-mouse.c - mouse actions for Fast Set plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -41,7 +41,6 @@ fset_mouse_focus_cb (const void *pointer, void *data, struct t_hashtable *info)
 {
     const char *buffer;
     int rc, format_number;
-    unsigned long value;
     struct t_gui_buffer *ptr_buffer;
     long y, option_index;
     char *error, str_value[128];
@@ -58,11 +57,9 @@ fset_mouse_focus_cb (const void *pointer, void *data, struct t_hashtable *info)
     if (!buffer)
         return info;
 
-    rc = sscanf (buffer, "%lx", &value);
+    rc = sscanf (buffer, "%p", &ptr_buffer);
     if ((rc == EOF) || (rc == 0))
         return info;
-
-    ptr_buffer = (struct t_gui_buffer *)value;
 
     if (!ptr_buffer || (ptr_buffer != fset_buffer))
         return info;
@@ -82,7 +79,8 @@ fset_mouse_focus_cb (const void *pointer, void *data, struct t_hashtable *info)
     if (!ptr_fset_option)
         return info;
 
-    snprintf (str_value, sizeof (str_value), "%p", ptr_fset_option);
+    snprintf (str_value, sizeof (str_value),
+              "0x%lx", (unsigned long)ptr_fset_option);
     weechat_hashtable_set (info, "fset_option", str_value);
     snprintf (str_value, sizeof (str_value), "%ld", option_index);
     weechat_hashtable_set (info, "fset_option_index", str_value);
@@ -186,7 +184,6 @@ fset_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
     const char *ptr_key, *ptr_fset_option_pointer;
     char str_command[1024];
     struct t_fset_option *ptr_fset_option;
-    unsigned long value;
     int rc, distance, num_options, min_y, max_y, i;
     int chat_line_x, chat_line_x2, y, y2, chat_line_y, chat_line_y2;
     int option_index, option_index2, index1, index2;
@@ -205,10 +202,9 @@ fset_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
     if (!ptr_key || !ptr_fset_option_pointer)
         return WEECHAT_RC_OK;
 
-    rc = sscanf (ptr_fset_option_pointer, "%lx", &value);
+    rc = sscanf (ptr_fset_option_pointer, "%p", &ptr_fset_option);
     if ((rc == EOF) || (rc == 0))
         return WEECHAT_RC_OK;
-    ptr_fset_option = (struct t_fset_option *)value;
     if (!ptr_fset_option)
         return WEECHAT_RC_OK;
 
@@ -315,7 +311,7 @@ fset_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
  */
 
 int
-fset_mouse_init ()
+fset_mouse_init (void)
 {
     struct t_hashtable *keys;
 
@@ -360,6 +356,6 @@ fset_mouse_init ()
  */
 
 void
-fset_mouse_end ()
+fset_mouse_end (void)
 {
 }

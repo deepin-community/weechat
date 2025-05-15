@@ -1,7 +1,7 @@
 /*
  * irc-tag.c - functions for IRC message tags
  *
- * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -301,7 +301,7 @@ irc_tag_add_to_string_cb (void *data,
 
     string = (char **)data;
 
-    if (*string[0])
+    if ((*string)[0])
         weechat_string_dyn_concat (string, ";", -1);
 
     weechat_string_dyn_concat (string, key, -1);

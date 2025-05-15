@@ -1,7 +1,7 @@
- * test-relay-remote-event.cpp - test event functions for relay remote
 /*
+ * test-relay-remote-event.cpp - test event functions for relay remote
  *
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -51,6 +51,46 @@ TEST(RelayRemoteEvent, SearchBuffer)
  */
 
 TEST(RelayRemoteEvent, GetBufferId)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_build_string_tags
+ */
+
+TEST(RelayRemoteEvent, BuildStringTags)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_line_add
+ */
+
+TEST(RelayRemoteEvent, LineAdd)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_search_line_by_id
+ */
+
+TEST(RelayRemoteEvent, SearchLineById)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_line_update
+ */
+
+TEST(RelayRemoteEvent, LineUpdate)
 {
     /* TODO: write tests */
 }
@@ -127,10 +167,90 @@ TEST(RelayRemoteEvent, BufferInputCb)
 
 /*
  * Tests functions:
+ *   relay_remote_event_check_local_var
+ */
+
+TEST(RelayRemoteEvent, CheckLocalVar)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_remove_localvar_cb
+ */
+
+TEST(RelayRemoteEvent, RemoveLocalVarCb)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_initial_sync_buffers
+ */
+
+TEST(RelayRemoteEvent, InitialSyncBuffers)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
  *   relay_remote_event_cb_buffer
  */
 
 TEST(RelayRemoteEvent, CbBuffer)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_cb_buffer_cleared
+ */
+
+TEST(RelayRemoteEvent, CbBufferCleared)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_cb_buffer_closed
+ */
+
+TEST(RelayRemoteEvent, CbBufferClosed)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_cb_vinput
+ */
+
+TEST(RelayRemoteEvent, CbInput)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_clear_buffers
+ */
+
+TEST(RelayRemoteEvent, ClearBuffers)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_sync_with_remote
+ */
+
+TEST(RelayRemoteEvent, SyncWithRemote)
 {
     /* TODO: write tests */
 }
@@ -147,10 +267,20 @@ TEST(RelayRemoteEvent, CbVersion)
 
 /*
  * Tests functions:
- *   relay_remote_event_sync_with_remote
+ *   relay_remote_event_cb_upgrade
  */
 
-TEST(RelayRemoteEvent, SyncWithRemote)
+TEST(RelayRemoteEvent, CbUpgrade)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   relay_remote_event_cb_quit
+ */
+
+TEST(RelayRemoteEvent, CbQuit)
 {
     /* TODO: write tests */
 }

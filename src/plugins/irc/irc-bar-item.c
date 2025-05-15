@@ -1,7 +1,7 @@
 /*
  * irc-bar-item.c - bar items for IRC plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -543,7 +543,6 @@ irc_bar_item_nick_modes (const void *pointer, void *data,
 {
     struct t_irc_server *server;
     char *buf;
-    int length;
 
     /* make C compiler happy */
     (void) pointer;
@@ -559,14 +558,9 @@ irc_bar_item_nick_modes (const void *pointer, void *data,
     if (!server || !server->nick_modes || !server->nick_modes[0])
         return NULL;
 
-    length = 64 + strlen (server->nick_modes) + 1;
-    buf = malloc (length);
-    if (buf)
-    {
-        snprintf (buf, length, "%s%s",
-                  IRC_COLOR_ITEM_NICK_MODES,
-                  server->nick_modes);
-    }
+    weechat_asprintf (&buf,
+                      "%s%s",
+                      IRC_COLOR_ITEM_NICK_MODES, server->nick_modes);
 
     return buf;
 }
@@ -630,7 +624,6 @@ struct t_hashtable *
 irc_bar_item_focus_buffer_nicklist (const void *pointer, void *data,
                                     struct t_hashtable *info)
 {
-    unsigned long value;
     int rc;
     struct t_gui_buffer *buffer;
     struct t_irc_nick *ptr_nick;
@@ -641,11 +634,9 @@ irc_bar_item_focus_buffer_nicklist (const void *pointer, void *data,
     if (!str_buffer || !str_buffer[0])
         return NULL;
 
-    rc = sscanf (str_buffer, "%lx", &value);
+    rc = sscanf (str_buffer, "%p", &buffer);
     if ((rc == EOF) || (rc == 0))
         return NULL;
-
-    buffer = (struct t_gui_buffer *)value;
 
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
 
@@ -661,7 +652,8 @@ irc_bar_item_focus_buffer_nicklist (const void *pointer, void *data,
             ptr_nick = irc_nick_search (ptr_server, ptr_channel, nick);
             if (ptr_nick)
             {
-                snprintf (str_value, sizeof (str_value), "%p", ptr_nick);
+                snprintf (str_value, sizeof (str_value),
+                          "0x%lx", (unsigned long)ptr_nick);
                 weechat_hashtable_set (info, "irc_nick", str_value);
 
                 if (ptr_nick->host)
@@ -712,7 +704,7 @@ irc_bar_item_buffer_switch (const void *pointer, void *data,
  */
 
 void
-irc_bar_item_update_channel ()
+irc_bar_item_update_channel (void)
 {
     weechat_bar_item_update ("buffer_name");
     weechat_bar_item_update ("buffer_short_name");
@@ -724,7 +716,7 @@ irc_bar_item_update_channel ()
  */
 
 void
-irc_bar_item_init ()
+irc_bar_item_init (void)
 {
     weechat_bar_item_new ("buffer_plugin",
                           &irc_bar_item_buffer_plugin, NULL, NULL);

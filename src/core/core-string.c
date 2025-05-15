@@ -1,7 +1,7 @@
 /*
  * core-string.c - string functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -31,7 +31,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <wctype.h>
-#include <wchar.h>
 #include <regex.h>
 #include <stdint.h>
 #include <gcrypt.h>
@@ -516,7 +515,7 @@ string_toupper_range (const char *string, int range)
 }
 
 /*
- * Compares two chars (case sensitive).
+ * Compares two chars (case-sensitive).
  *
  * Returns: arithmetic result of subtracting the first UTF-8 char in string2
  * from the first UTF-8 char in string1:
@@ -532,7 +531,7 @@ string_charcmp (const char *string1, const char *string2)
 }
 
 /*
- * Compares two chars (case insensitive).
+ * Compares two chars (case-insensitive).
  *
  * Returns: arithmetic result of subtracting the first UTF-8 char in string2
  * (converted to lowercase) from the first UTF-8 char in string1 (converted
@@ -571,7 +570,7 @@ string_charcasecmp (const char *string1, const char *string2)
 }
 
 /*
- * Compares two chars (case insensitive using a range).
+ * Compares two chars (case-insensitive using a range).
  *
  * The range is the number of chars which can be converted from upper to lower
  * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
@@ -607,7 +606,7 @@ string_charcasecmp_range (const char *string1, const char *string2, int range)
 }
 
 /*
- * Compares two strings (case sensitive).
+ * Compares two strings (case-sensitive).
  *
  * Returns: arithmetic result of subtracting the last compared UTF-8 char in
  * string2 from the last compared UTF-8 char in string1:
@@ -641,7 +640,7 @@ string_strcmp (const char *string1, const char *string2)
 }
 
 /*
- * Compares two strings with max length (case sensitive).
+ * Compares two strings with max length (case-sensitive).
  *
  * Returns: arithmetic result of subtracting the last compared UTF-8 char in
  * string2 from the last compared UTF-8 char in string1:
@@ -680,7 +679,7 @@ string_strncmp (const char *string1, const char *string2, int max)
 }
 
 /*
- * Compares two strings (case insensitive).
+ * Compares two strings (case-insensitive).
  *
  * Returns: arithmetic result of subtracting the last compared UTF-8 char in
  * string2 (converted to lowercase) from the last compared UTF-8 char in
@@ -715,7 +714,7 @@ string_strcasecmp (const char *string1, const char *string2)
 }
 
 /*
- * Compares two strings (case insensitive using a range).
+ * Compares two strings (case-insensitive using a range).
  *
  * The range is the number of chars which can be converted from upper to lower
  * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
@@ -759,7 +758,7 @@ string_strcasecmp_range (const char *string1, const char *string2, int range)
 }
 
 /*
- * Compares two strings with max length (case insensitive).
+ * Compares two strings with max length (case-insensitive).
  *
  * Returns: arithmetic result of subtracting the last compared UTF-8 char in
  * string2 (converted to lowercase) from the last compared UTF-8 char in
@@ -799,7 +798,7 @@ string_strncasecmp (const char *string1, const char *string2, int max)
 }
 
 /*
- * Compares two strings with max length (case insensitive using a range).
+ * Compares two strings with max length (case-insensitive using a range).
  *
  * The range is the number of chars which can be converted from upper to lower
  * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
@@ -1093,20 +1092,20 @@ string_match (const char *string, const char *mask, int case_sensitive)
 int
 string_match_list (const char *string, const char **masks, int case_sensitive)
 {
-    int match, i;
-    const char *ptr_mask;
+    int match;
+    const char **ptr_mask, *ptr_mask2;
 
     if (!string || !masks)
         return 0;
 
     match = 0;
 
-    for (i = 0; masks[i]; i++)
+    for (ptr_mask = masks; *ptr_mask; ptr_mask++)
     {
-        ptr_mask = (masks[i][0] == '!') ? masks[i] + 1 : masks[i];
-        if (string_match (string, ptr_mask, case_sensitive))
+        ptr_mask2 = ((*ptr_mask)[0] == '!') ? *ptr_mask + 1 : *ptr_mask;
+        if (string_match (string, ptr_mask2, case_sensitive))
         {
-            if (masks[i][0] == '!')
+            if ((*ptr_mask)[0] == '!')
                 return 0;
             else
                 match = 1;
@@ -1128,7 +1127,6 @@ char *
 string_expand_home (const char *path)
 {
     char *ptr_home, *str;
-    int length;
 
     if (!path)
         return NULL;
@@ -1143,12 +1141,7 @@ string_expand_home (const char *path)
     if (!ptr_home)
         return NULL;
 
-    length = strlen (ptr_home) + strlen (path + 1) + 1;
-    str = malloc (length);
-    if (!str)
-        return strdup (path);
-
-    snprintf (str, length, "%s%s", ptr_home, path + 1);
+    string_asprintf (&str, "%s%s", ptr_home, path + 1);
 
     return str;
 }
@@ -1172,7 +1165,6 @@ string_eval_path_home (const char *path,
 {
     char *path1, *path2, *path3;
     const char *ptr_option_directory, *ptr_directory;
-    int length;
 
     if (!path)
         return NULL;
@@ -1183,7 +1175,7 @@ string_eval_path_home (const char *path,
 
     /*
      * replace "%h" by WeeChat home
-     * (deprecated: "%h" should not be used any more with WeeChat ≥ 3.2)
+     * (deprecated: "%h" should not be used anymore with WeeChat ≥ 3.2)
      */
     if (strncmp (path, "%h", 2) == 0)
     {
@@ -1202,13 +1194,12 @@ string_eval_path_home (const char *path,
             else if (strcmp (ptr_option_directory, "runtime") == 0)
                 ptr_directory = weechat_runtime_dir;
         }
-        length = strlen (ptr_directory) + strlen (path + 2) + 1;
-        path1 = malloc (length);
-        if (path1)
-            snprintf (path1, length, "%s%s", ptr_directory, path + 2);
+        string_asprintf (&path1, "%s%s", ptr_directory, path + 2);
     }
     else
+    {
         path1 = strdup (path);
+    }
     if (!path1)
         goto end;
 
@@ -1638,7 +1629,7 @@ string_mask_to_regex (const char *mask)
  * Format of flags is: (?eins-eins)string
  * Flags are:
  *   e: POSIX extended regex (REG_EXTENDED)
- *   i: case insensitive (REG_ICASE)
+ *   i: case-insensitive (REG_ICASE)
  *   n: match-any-character operators don't match a newline (REG_NEWLINE)
  *   s: support for substring addressing of matches is not required (REG_NOSUB)
  *
@@ -2185,11 +2176,7 @@ string_replace_regex (const char *string, void *regex, const char *replace,
     if (!string || !regex)
         return NULL;
 
-    length = strlen (string) + 1;
-    result = malloc (length);
-    if (!result)
-        return NULL;
-    snprintf (result, length, "%s", string);
+    result = strdup (string);
 
     start_offset = 0;
     while (result && result[start_offset])
@@ -2849,12 +2836,12 @@ string_split_shell (const char *string, int *num_items)
 void
 string_free_split (char **split_string)
 {
-    int i;
+    char **ptr;
 
     if (split_string)
     {
-        for (i = 0; split_string[i]; i++)
-            free (split_string[i]);
+        for (ptr = split_string; *ptr; ptr++)
+            free (*ptr);
         free (split_string);
     }
 }
@@ -2866,12 +2853,12 @@ string_free_split (char **split_string)
 void
 string_free_split_shared (char **split_string)
 {
-    int i;
+    char **ptr;
 
     if (split_string)
     {
-        for (i = 0; split_string[i]; i++)
-            string_shared_free (split_string[i]);
+        for (ptr = split_string; *ptr; ptr++)
+            string_shared_free (*ptr);
         free (split_string);
     }
 }
@@ -2883,7 +2870,7 @@ string_free_split_shared (char **split_string)
  * If index_end < 0, then all arguments are used until NULL is found.
  * If NULL is found before index_end, then the build stops there (at NULL).
  *
- * Note: result must be free after use.
+ * Note: result must be freed after use.
  */
 
 char *
@@ -2891,8 +2878,9 @@ string_rebuild_split_string (const char **split_string,
                              const char *separator,
                              int index_start, int index_end)
 {
-    int i, length, length_separator;
-    char *result;
+    const char **ptr_string;
+    char **result;
+    int i;
 
     if (!split_string || (index_start < 0)
         || ((index_end >= 0) && (index_end < index_start)))
@@ -2900,39 +2888,23 @@ string_rebuild_split_string (const char **split_string,
         return NULL;
     }
 
-    length = 0;
-    length_separator = (separator) ? strlen (separator) : 0;
+    result = string_dyn_alloc (256);
 
-    for (i = 0; split_string[i]; i++)
+    for (ptr_string = split_string, i = 0; *ptr_string; ptr_string++, i++)
     {
         if ((index_end >= 0) && (i > index_end))
             break;
         if (i >= index_start)
-            length += strlen (split_string[i]) + length_separator;
-    }
-
-    if (length == 0)
-        return strdup ("");
-
-    result = malloc (length + 1);
-    if (!result)
-        return NULL;
-
-    result[0] = '\0';
-
-    for (i = index_start; split_string[i]; i++)
-    {
-        if ((index_end >= 0) && (i > index_end))
-            break;
-        strcat (result, split_string[i]);
-        if (separator && ((index_end < 0) || (i + 1 <= index_end))
-            && split_string[i + 1])
         {
-            strcat (result, separator);
+            if (i > index_start)
+                string_dyn_concat (result, separator, -1);
+            string_dyn_concat (result, *ptr_string, -1);
         }
+        if (i == INT_MAX)
+            break;
     }
 
-    return result;
+    return string_dyn_free (result, 0);
 }
 
 /*
@@ -2993,9 +2965,9 @@ string_split_command (const char *command, char separator)
             buffer[str_idx] = '\0';
             str_idx = -1;
             p = buffer;
-            /* strip white spaces a the beginning of the line */
-            while (*p == ' ') p++;
-            if (p  && p[0])
+            /* strip white spaces at the beginning of the line */
+            while (p[0] == ' ') p++;
+            if (p[0])
                 array[arr_idx++] = strdup (p);
         }
         else if (type == 2)
@@ -3008,8 +2980,8 @@ string_split_command (const char *command, char separator)
 
     buffer[str_idx] = '\0';
     p = buffer;
-    while (*p == ' ') p++;
-    if (p  && p[0])
+    while (p[0] == ' ') p++;
+    if (p[0])
         array[arr_idx++] = strdup (p);
 
     array[arr_idx] = NULL;
@@ -3033,12 +3005,12 @@ string_split_command (const char *command, char separator)
 void
 string_free_split_command (char **split_command)
 {
-    int i;
+    char **ptr;
 
     if (split_command)
     {
-        for (i = 0; split_command[i]; i++)
-            free (split_command[i]);
+        for (ptr = split_command; *ptr; ptr++)
+            free (*ptr);
         free (split_command);
     }
 }
@@ -3102,14 +3074,12 @@ string_split_tags (const char *tags, int *num_tags)
 void
 string_free_split_tags (char ***split_tags)
 {
-    int i;
+    char ***ptr;
 
     if (split_tags)
     {
-        for (i = 0; split_tags[i]; i++)
-        {
-            string_free_split_shared (split_tags[i]);
-        }
+        for (ptr = split_tags; *ptr; ptr++)
+            string_free_split_shared (*ptr);
         free (split_tags);
     }
 }
@@ -3271,7 +3241,8 @@ string_iconv_to_internal (const char *charset, const char *string)
 }
 
 /*
- * Converts internal string to terminal charset, for display.
+ * Converts internal string to terminal charset, for display or write of
+ * configuration files.
  *
  * Note: result must be freed after use.
  */
@@ -3287,6 +3258,10 @@ string_iconv_from_internal (const char *charset, const char *string)
     input = strdup (string);
     if (!input)
         return NULL;
+
+    /* if the locale is wrong, we keep UTF-8 */
+    if (!weechat_locale_ok)
+        return input;
 
     /*
      * optimized for UTF-8: if charset is NULL => we use term charset => if
@@ -4262,7 +4237,7 @@ string_levenshtein (const char *string1, const char *string2,
  *
  * If allow_escape == 1, the prefix/suffix can be escaped with a backslash
  * (which is then omitted in the result).
- * If allow_escape == 0, the backslash is kept as-is and can not be
+ * If allow_escape == 0, the backslash is kept as-is and cannot be
  * used to escape the prefix/suffix.
  *
  * Argument "list_prefix_no_replace" is a list to prevent replacements in
@@ -4645,8 +4620,8 @@ string_shared_free (const char *string)
  *
  * The string returned can be used with following restrictions:
  *   - changes are allowed in the string, between the first char and the final
- *     '\0', which must not be removed nor moved,
- *   - no other '\0' must be added in the string,
+ *     '\0', which must remain at its current location,
+ *   - no other '\0' may be added in the string,
  *   - content can be added in the string with function string_dyn_concat(),
  *   - string can be freed with function string_dyn_free() (do NEVER call
  *     directly free() on the string).
@@ -4900,7 +4875,7 @@ string_concat (const char *separator, ...)
  */
 
 void
-string_init ()
+string_init (void)
 {
     int i;
 
@@ -4915,7 +4890,7 @@ string_init ()
  */
 
 void
-string_end ()
+string_end (void)
 {
     int i;
 

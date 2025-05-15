@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,6 @@
 #ifndef WEECHAT_PLUGIN_IRC_DEBUG_H
 #define WEECHAT_PLUGIN_IRC_DEBUG_H
 
-extern void irc_debug_init ();
+extern void irc_debug_init (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_DEBUG_H */

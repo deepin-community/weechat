@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -26,9 +26,9 @@
 extern struct t_config_option *fifo_config_file_enabled;
 extern struct t_config_option *fifo_config_file_path;
 
-extern int fifo_config_init ();
-extern int fifo_config_read ();
-extern int fifo_config_write ();
-extern void fifo_config_free ();
+extern int fifo_config_init (void);
+extern int fifo_config_read (void);
+extern int fifo_config_write (void);
+extern void fifo_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_FIFO_CONFIG_H */

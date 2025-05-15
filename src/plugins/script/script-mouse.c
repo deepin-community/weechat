@@ -1,7 +1,7 @@
 /*
  * script-mouse.c - mouse actions for script
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,7 +39,6 @@ script_mouse_focus_chat_cb (const void *pointer, void *data,
 {
     const char *buffer;
     int rc;
-    unsigned long value;
     struct t_gui_buffer *ptr_buffer;
     long x;
     char *error, str_date[64];
@@ -57,11 +56,9 @@ script_mouse_focus_chat_cb (const void *pointer, void *data,
     if (!buffer)
         return info;
 
-    rc = sscanf (buffer, "%lx", &value);
+    rc = sscanf (buffer, "%p", &ptr_buffer);
     if ((rc == EOF) || (rc == 0))
         return info;
-
-    ptr_buffer = (struct t_gui_buffer *)value;
 
     if (!ptr_buffer || (ptr_buffer != script_buffer))
         return info;
@@ -119,7 +116,7 @@ script_mouse_focus_chat_cb (const void *pointer, void *data,
  */
 
 int
-script_mouse_init ()
+script_mouse_init (void)
 {
     struct t_hashtable *keys;
 
@@ -163,6 +160,6 @@ script_mouse_init ()
  */
 
 void
-script_mouse_end ()
+script_mouse_end (void)
 {
 }

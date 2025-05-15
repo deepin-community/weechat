@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -50,7 +50,7 @@ extern struct t_hook *hook_fd (struct t_weechat_plugin *plugin, int fd,
                                t_hook_callback_fd *callback,
                                const void *callback_pointer,
                                void *callback_data);
-extern void hook_fd_exec ();
+extern void hook_fd_exec (void);
 extern void hook_fd_free_data (struct t_hook *hook);
 extern int hook_fd_add_to_infolist (struct t_infolist_item *item,
                                     struct t_hook *hook);

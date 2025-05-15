@@ -1,7 +1,7 @@
 /*
  * irc-batch.c - functions for managing batched events
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -418,7 +418,7 @@ irc_batch_process_multiline (struct t_irc_server *server,
                 if (tags && tags[0])
                     irc_tag_parse (tags, hash_tags, NULL);
             }
-            if (*result[0])
+            if ((*result)[0])
             {
                 if (!hash_tags
                     || !weechat_hashtable_has_key (hash_tags,

@@ -1,7 +1,7 @@
 /*
  * gui-completion.c - word completion according to context (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -411,7 +411,7 @@ gui_completion_nickncmp (const char *base_word, const char *nick, int max)
 }
 
 /*
- * Compares two strings (follows case sensitive flag in completion structure).
+ * Compares two strings (follows case-sensitive flag in completion structure).
  *
  * Returns:
  *   < 0: string1 < string2
@@ -431,7 +431,7 @@ gui_completion_strcmp (struct t_gui_completion *completion,
 }
 
 /*
- * Compares two strings with max length (follows case sensitive flag in
+ * Compares two strings with max length (follows case-sensitive flag in
  * completion structure).
  *
  * Returns:
@@ -453,6 +453,44 @@ gui_completion_strncmp (struct t_gui_completion *completion,
 }
 
 /*
+ * Checks if a nick is ignored from completion (no completion with this nick).
+ *
+ * Returns:
+ *   1: nick ignored
+ *   0: nick NOT ignored (can be used in completion)
+ */
+
+int
+gui_completion_nick_ignored (const char *nick)
+{
+    char *nick_lower;
+    int rc;
+
+    if (!config_hashtable_completion_nick_ignore_words
+        || (config_hashtable_completion_nick_ignore_words->items_count == 0))
+    {
+        return 0;
+    }
+
+    if (hashtable_has_key (config_hashtable_completion_nick_ignore_words, nick))
+        return 1;
+
+    rc = 0;
+    nick_lower = string_tolower (nick);
+    if (nick_lower)
+    {
+        if (hashtable_has_key (config_hashtable_completion_nick_ignore_words,
+                               nick_lower))
+        {
+            rc = 1;
+        }
+        free (nick_lower);
+    }
+
+    return rc;
+}
+
+/*
  * Adds a word to completion list.
  */
 
@@ -470,7 +508,8 @@ gui_completion_list_add (struct t_gui_completion *completion, const char *word,
     if (!completion->base_word || !completion->base_word[0]
         || (nick_completion
             && (gui_completion_nickncmp (completion->base_word, word,
-                                         utf8_strlen (completion->base_word)) == 0))
+                                         utf8_strlen (completion->base_word)) == 0)
+            && !gui_completion_nick_ignored (word))
         || (!nick_completion
             && (gui_completion_strncmp (completion,
                                         completion->base_word, word,
@@ -1562,6 +1601,23 @@ gui_completion_get_string (struct t_gui_completion *completion,
 }
 
 /*
+ * Sets a completion property.
+ */
+
+void
+gui_completion_set (struct t_gui_completion *completion,
+                    const char *property, const char *value)
+{
+    if (!completion || !property || !value)
+        return;
+
+    if (strcmp (property, "add_space") == 0)
+    {
+        completion->add_space = (strcmp (value, "1") == 0) ? 1 : 0;
+    }
+}
+
+/*
  * Returns hdata for completion.
  */
 
@@ -1658,7 +1714,7 @@ gui_completion_list_words_print_log (struct t_arraylist *list,
  */
 
 void
-gui_completion_print_log ()
+gui_completion_print_log (void)
 {
     struct t_gui_completion *ptr_completion;
 

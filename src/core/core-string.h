@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -147,7 +147,7 @@ extern int string_levenshtein (const char *string1, const char *string2,
 extern char *string_replace_with_callback (const char *string,
                                            const char *prefix,
                                            const char *suffix,
-                                           int allow_escpae,
+                                           int allow_escape,
                                            const char **list_prefix_no_replace,
                                            char *(*callback)(void *data,
                                                              const char *prefix,
@@ -166,7 +166,7 @@ extern int string_dyn_copy (char **string, const char *new_string);
 extern int string_dyn_concat (char **string, const char *add, int bytes);
 extern char *string_dyn_free (char **string, int free_string);
 extern const char *string_concat (const char *separator, ...);
-extern void string_init ();
-extern void string_end ();
+extern void string_init (void);
+extern void string_end (void);
 
 #endif /* WEECHAT_STRING_H */

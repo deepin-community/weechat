@@ -1,7 +1,7 @@
 /*
  * relay-api-protocol.c - API protocol for relay to client
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -95,6 +95,7 @@ relay_api_protocol_signal_buffer_cb (const void *pointer, void *data,
         || (strcmp (signal, "buffer_renamed") == 0)
         || (strcmp (signal, "buffer_title_changed") == 0)
         || (strcmp (signal, "buffer_modes_changed") == 0)
+        || (strcmp (signal, "buffer_time_for_each_line_changed") == 0)
         || (strncmp (signal, "buffer_localvar_", 16) == 0)
         || (strcmp (signal, "buffer_cleared") == 0)
         || (strcmp (signal, "buffer_closing") == 0)
@@ -175,6 +176,27 @@ relay_api_protocol_signal_buffer_cb (const void *pointer, void *data,
 
         ptr_line_data = weechat_hdata_pointer (relay_hdata_line,
                                                ptr_line, "data");
+        if (!ptr_line_data)
+            return WEECHAT_RC_OK;
+
+        ptr_buffer = weechat_hdata_pointer (relay_hdata_line_data,
+                                            ptr_line_data, "buffer");
+        if (!ptr_buffer || relay_buffer_is_relay (ptr_buffer))
+            return WEECHAT_RC_OK;
+
+        json = relay_api_msg_line_data_to_json (
+            ptr_line_data, RELAY_API_DATA(ptr_client, sync_colors));
+        if (json)
+        {
+            buffer_id = relay_api_get_buffer_id (ptr_buffer);
+            relay_api_msg_send_event (ptr_client, signal, buffer_id,
+                                      "line", json);
+            cJSON_Delete (json);
+        }
+    }
+    else if (strcmp (signal, "buffer_line_data_changed") == 0)
+    {
+        ptr_line_data = (struct t_gui_line_data *)signal_data;
         if (!ptr_line_data)
             return WEECHAT_RC_OK;
 
@@ -329,7 +351,8 @@ relay_api_protocol_signal_upgrade_cb (const void *pointer, void *data,
         return WEECHAT_RC_OK;
 
     if ((strcmp (signal, "upgrade") == 0)
-        || (strcmp (signal, "upgrade_ended") == 0))
+        || (strcmp (signal, "upgrade_ended") == 0)
+        || (strcmp (signal, "quit") == 0))
     {
         relay_api_msg_send_event (ptr_client, signal, -1, NULL, NULL);
     }
@@ -507,9 +530,14 @@ RELAY_API_PROTOCOL_CALLBACK(buffers)
 {
     cJSON *json;
     struct t_gui_buffer *ptr_buffer;
-    long lines, lines_free;
+    struct t_gui_line *ptr_line;
+    struct t_gui_line_data *ptr_line_data;
+    long lines, lines_free, line_id;
     int nicks;
+    char *error;
     enum t_relay_api_colors colors;
+
+    json = NULL;
 
     ptr_buffer = NULL;
     if (client->http_req->num_path_items > 2)
@@ -534,8 +562,38 @@ RELAY_API_PROTOCOL_CALLBACK(buffers)
         /* sub-resource of buffers */
         if (strcmp (client->http_req->path_items[3], "lines") == 0)
         {
-            lines = relay_http_get_param_long (client->http_req, "lines", LONG_MAX);
-            json = relay_api_msg_lines_to_json (ptr_buffer, lines, colors);
+            if (client->http_req->num_path_items > 4)
+            {
+                line_id = strtol (client->http_req->path_items[4], &error, 10);
+                ptr_line = (error && !error[0]) ?
+                    weechat_line_search_by_id (ptr_buffer, line_id) : NULL;
+                ptr_line_data = (ptr_line) ?
+                    weechat_hdata_pointer (relay_hdata_line, ptr_line, "data") : NULL;
+                if (!ptr_line_data)
+                {
+                    relay_api_msg_send_error_json (client, RELAY_HTTP_404_NOT_FOUND, NULL,
+                                                   "Line \"%s\" not found in buffer \"%s\"",
+                                                   client->http_req->path_items[4],
+                                                   client->http_req->path_items[2]);
+                    return RELAY_API_PROTOCOL_RC_OK;
+                }
+                json = relay_api_msg_line_data_to_json (ptr_line_data, colors);
+                if (json)
+                {
+                    relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL,
+                                             "line", json);
+                }
+            }
+            else
+            {
+                lines = relay_http_get_param_long (client->http_req, "lines", LONG_MAX);
+                json = relay_api_msg_lines_to_json (ptr_buffer, lines, colors);
+                if (json)
+                {
+                    relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL,
+                                             "lines", json);
+                }
+            }
         }
         else if (strcmp (client->http_req->path_items[3], "nicks") == 0)
         {
@@ -543,6 +601,11 @@ RELAY_API_PROTOCOL_CALLBACK(buffers)
                 weechat_hdata_pointer (relay_hdata_buffer,
                                        ptr_buffer, "nicklist_root"),
                 colors);
+            if (json)
+            {
+                relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL,
+                                         "nick_group", json);
+            }
         }
         else
         {
@@ -563,6 +626,11 @@ RELAY_API_PROTOCOL_CALLBACK(buffers)
         {
             json = relay_api_msg_buffer_to_json (ptr_buffer, lines, lines_free,
                                                  nicks, colors);
+            if (json)
+            {
+                relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL,
+                                         "buffer", json);
+            }
         }
         else
         {
@@ -579,14 +647,19 @@ RELAY_API_PROTOCOL_CALLBACK(buffers)
                                                   nicks, colors));
                 ptr_buffer = weechat_hdata_move (relay_hdata_buffer, ptr_buffer, 1);
             }
+            if (json)
+            {
+                relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL,
+                                         "buffers", json);
+            }
         }
     }
 
     if (!json)
         return RELAY_API_PROTOCOL_RC_MEMORY;
 
-    relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL, "buffer", json);
     cJSON_Delete (json);
+
     return RELAY_API_PROTOCOL_RC_OK;
 }
 
@@ -640,6 +713,7 @@ RELAY_API_PROTOCOL_CALLBACK(input)
     if (!json_body)
         return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
 
+    /* get buffer either by id or by name */
     ptr_buffer = NULL;
     json_buffer_id = cJSON_GetObjectItem (json_body, "buffer_id");
     if (json_buffer_id)
@@ -653,7 +727,7 @@ RELAY_API_PROTOCOL_CALLBACK(input)
             {
                 relay_api_msg_send_error_json (
                     client,
-                    RELAY_HTTP_404_NOT_FOUND, NULL,
+                    RELAY_HTTP_400_BAD_REQUEST, NULL,
                     "Buffer \"%lld\" not found",
                     (long long)cJSON_GetNumberValue (json_buffer_id));
                 cJSON_Delete (json_body);
@@ -674,7 +748,7 @@ RELAY_API_PROTOCOL_CALLBACK(input)
                 {
                     relay_api_msg_send_error_json (
                         client,
-                        RELAY_HTTP_404_NOT_FOUND, NULL,
+                        RELAY_HTTP_400_BAD_REQUEST, NULL,
                         "Buffer \"%s\" not found",
                         ptr_buffer_name);
                     cJSON_Delete (json_body);
@@ -742,6 +816,138 @@ RELAY_API_PROTOCOL_CALLBACK(input)
     cJSON_Delete (json_body);
 
     relay_api_msg_send_json (client, RELAY_HTTP_204_NO_CONTENT, NULL, NULL, NULL);
+
+    return RELAY_API_PROTOCOL_RC_OK;
+}
+
+/*
+ * Callback for resource "completion".
+ *
+ * Routes:
+ *   POST /api/completion
+ */
+
+RELAY_API_PROTOCOL_CALLBACK(completion)
+{
+    cJSON *json_response, *json_body;
+    cJSON *json_buffer_id, *json_buffer_name;
+    cJSON *json_command, *json_position;
+    const char *ptr_buffer_name, *ptr_command;
+    int position;
+    char str_id[64];
+    struct t_gui_completion *ptr_completion;
+    struct t_gui_buffer *ptr_buffer;
+
+    json_body = cJSON_Parse (client->http_req->body);
+    if (!json_body)
+        return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
+
+    /* get buffer either by id or by name */
+    ptr_buffer = NULL;
+    json_buffer_id = cJSON_GetObjectItem (json_body, "buffer_id");
+    if (json_buffer_id)
+    {
+        if (cJSON_IsNumber (json_buffer_id))
+        {
+            snprintf (str_id, sizeof(str_id),
+                      "%lld", (long long)cJSON_GetNumberValue (json_buffer_id));
+            ptr_buffer = weechat_buffer_search ("==id", str_id);
+            if (!ptr_buffer)
+            {
+                relay_api_msg_send_error_json (
+                    client,
+                    RELAY_HTTP_400_BAD_REQUEST, NULL,
+                    "Buffer \"%lld\" not found",
+                    (long long)cJSON_GetNumberValue (json_buffer_id));
+                cJSON_Delete (json_body);
+                return RELAY_API_PROTOCOL_RC_OK;
+            }
+        }
+    }
+    else
+    {
+        json_buffer_name = cJSON_GetObjectItem (json_body, "buffer_name");
+        if (json_buffer_name)
+        {
+            if (cJSON_IsString (json_buffer_name))
+            {
+                ptr_buffer_name = cJSON_GetStringValue (json_buffer_name);
+                ptr_buffer = weechat_buffer_search ("==", ptr_buffer_name);
+                if (!ptr_buffer)
+                {
+                    relay_api_msg_send_error_json (
+                        client,
+                        RELAY_HTTP_400_BAD_REQUEST, NULL,
+                        "Buffer \"%s\" not found",
+                        ptr_buffer_name);
+                    cJSON_Delete (json_body);
+                    return RELAY_API_PROTOCOL_RC_OK;
+                }
+            }
+        }
+        else
+        {
+            ptr_buffer = weechat_buffer_search_main ();
+        }
+    }
+    if (!ptr_buffer)
+    {
+        cJSON_Delete (json_body);
+        return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
+    }
+
+    /* get command and position (optional) from input json object */
+    json_command = cJSON_GetObjectItem (json_body, "command");
+    if (json_command && cJSON_IsString (json_command))
+    {
+        ptr_command = cJSON_GetStringValue (json_command);
+    }
+    else
+    {
+        cJSON_Delete (json_body);
+        return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
+    }
+    json_position = cJSON_GetObjectItem (json_body, "position");
+    if (json_position)
+    {
+        if (cJSON_IsNumber (json_position))
+        {
+            position = cJSON_GetNumberValue (json_position);
+        }
+        else
+        {
+            cJSON_Delete (json_body);
+            return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
+        }
+    }
+    else
+    {
+        position = strlen (ptr_command);
+    }
+
+    /* perform completion */
+    ptr_completion = weechat_completion_new (ptr_buffer);
+    if (!ptr_completion)
+    {
+        cJSON_Delete (json_body);
+        return RELAY_API_PROTOCOL_RC_MEMORY;
+    }
+
+    if (!weechat_completion_search (ptr_completion, ptr_command, position, 1))
+    {
+        weechat_completion_free (ptr_completion);
+        cJSON_Delete (json_body);
+        return RELAY_API_PROTOCOL_RC_BAD_REQUEST;
+    }
+
+    /* create response */
+    json_response = relay_api_msg_completion_to_json (ptr_completion);
+    relay_api_msg_send_json (client, RELAY_HTTP_200_OK, NULL, "completion",
+                             json_response);
+
+    cJSON_Delete (json_response);
+    cJSON_Delete (json_body);
+    weechat_completion_free (ptr_completion);
 
     return RELAY_API_PROTOCOL_RC_OK;
 }
@@ -844,48 +1050,35 @@ RELAY_API_PROTOCOL_CALLBACK(sync)
 }
 
 /*
- * Reads JSON string from a client: when connected via websocket (persistent
- * connection), the client is sending JSON data as a request, which is
- * converted to HTTP request by this function, before calling the function
- * relay_api_protocol_recv_http.
- *
- * Example of JSON received:
- *
- * {
- *     "request": "POST /api/input",
- *     "body": {
- *         "buffer": "irc.libera.#weechat",
- *         "command": "hello!"
- *     }
- * }
- *
- * It is converted to an HTTP request which could have been:
- *
- * POST /api/input HTTP/1.1
- * Content-Length: 53
- * Content-Type: application/json
- *
- * {"buffer": "irc.libera.#weechat","command": "hello!"}
+ * Reads one request from client.
  */
 
 void
-relay_api_protocol_recv_json (struct t_relay_client *client, const char *json)
+relay_api_protocol_recv_json_request (struct t_relay_client *client,
+                                      cJSON *json)
 {
-    cJSON *json_obj, *json_request, *json_body;
+    cJSON *json_request, *json_request_id, *json_body;
+    const char *ptr_request_id;
     char *string_body;
     int length;
 
     relay_http_request_reinit (client->http_req);
 
-    json_obj = cJSON_Parse (json);
-    if (!json_obj)
+    json_request_id = cJSON_GetObjectItem (json, "request_id");
+    if (json_request_id
+        && !cJSON_IsString (json_request_id)
+        && !cJSON_IsNull (json_request_id))
+    {
         goto error;
+    }
+    ptr_request_id = (json_request_id) ?
+        cJSON_GetStringValue (json_request_id) : NULL;
+    free (client->http_req->id);
+    client->http_req->id = NULL;
+    client->http_req->id = (ptr_request_id) ? strdup (ptr_request_id) : NULL;
 
-    json_request = cJSON_GetObjectItem (json_obj, "request");
-    if (!json_request)
-        goto error;
-
-    if (!cJSON_IsString (json_request))
+    json_request = cJSON_GetObjectItem (json, "request");
+    if (!json_request || !cJSON_IsString (json_request))
         goto error;
 
     if (!relay_http_parse_method_path (client->http_req,
@@ -894,9 +1087,11 @@ relay_api_protocol_recv_json (struct t_relay_client *client, const char *json)
         goto error;
     }
 
-    json_body = cJSON_GetObjectItem (json_obj, "body");
+    json_body = cJSON_GetObjectItem (json, "body");
     if (json_body)
     {
+        if (!cJSON_IsObject (json_body))
+            goto error;
         string_body = cJSON_PrintUnformatted (json_body);
         if (string_body)
         {
@@ -913,14 +1108,84 @@ relay_api_protocol_recv_json (struct t_relay_client *client, const char *json)
     }
 
     relay_api_protocol_recv_http (client);
-    goto end;
+
+    return;
 
 error:
-    relay_api_msg_send_json (client, RELAY_HTTP_400_BAD_REQUEST, NULL, NULL, NULL);
+    relay_api_msg_send_error_json (client, RELAY_HTTP_400_BAD_REQUEST,
+                                   NULL, RELAY_HTTP_ERROR_BAD_REQUEST);
+}
 
-end:
-    if (json_obj)
-        cJSON_Delete (json_obj);
+/*
+ * Reads JSON string from a client: when connected via websocket (persistent
+ * connection), the client is sending JSON data as a request, which is
+ * converted to HTTP request by this function, before calling the function
+ * relay_api_protocol_recv_http.
+ *
+ * Example of JSON received:
+ *
+ * {
+ *     "request": "POST /api/input",
+ *     "body": {
+ *         "buffer_name": "irc.libera.#weechat",
+ *         "command": "hello!"
+ *     }
+ * }
+ *
+ * It is converted to an HTTP request which could have been:
+ *
+ * POST /api/input HTTP/1.1
+ * Content-Length: 58
+ * Content-Type: application/json
+ *
+ * {"buffer_name": "irc.libera.#weechat","command": "hello!"}
+ *
+ * The JSON can also be an array of requests, for example to fetch all buffers
+ * data and synchronize at same time:
+ *
+ * [
+ *     {
+ *         "request": "GET /api/buffers?lines=-1000&nicks=true&colors=weechat",
+ *         "request_id": "initial_sync"
+ *     },
+ *     {
+ *         "request": "POST /api/sync",
+ *         "body": {
+ *             "colors":"weechat"
+ *         }
+ *     }
+ * ]
+ */
+
+void
+relay_api_protocol_recv_json (struct t_relay_client *client, const char *json)
+{
+    cJSON *json_obj, *json_request;
+
+    json_obj = cJSON_Parse (json);
+    if (!json_obj)
+    {
+        relay_api_msg_send_error_json (
+            client,
+            RELAY_HTTP_400_BAD_REQUEST,
+            NULL,
+            RELAY_HTTP_ERROR_BAD_REQUEST ": invalid JSON");
+        return;
+    }
+
+    if (cJSON_IsArray (json_obj))
+    {
+        cJSON_ArrayForEach (json_request, json_obj)
+        {
+            relay_api_protocol_recv_json_request (client, json_request);
+        }
+    }
+    else
+    {
+        relay_api_protocol_recv_json_request (client, json_obj);
+    }
+
+    cJSON_Delete (json_obj);
 }
 
 /*
@@ -931,18 +1196,21 @@ void
 relay_api_protocol_recv_http (struct t_relay_client *client)
 {
     int i, num_args;
+    char str_error[1024];
     enum t_relay_api_protocol_rc return_code;
     struct t_relay_api_protocol_cb protocol_cb[] = {
-        /* method, resource, auth, min args, max args, callback */
-        { "OPTIONS", "*",         0, 0, -1, &relay_api_protocol_cb_options   },
-        { "POST",    "handshake", 0, 0,  0, &relay_api_protocol_cb_handshake },
-        { "GET",     "version",   1, 0,  0, &relay_api_protocol_cb_version   },
-        { "GET",     "buffers",   1, 0,  3, &relay_api_protocol_cb_buffers   },
-        { "GET",     "hotlist",   1, 0,  3, &relay_api_protocol_cb_hotlist   },
-        { "POST",    "input",     1, 0,  0, &relay_api_protocol_cb_input     },
-        { "POST",    "ping",      1, 0,  0, &relay_api_protocol_cb_ping      },
-        { "POST",    "sync",      1, 0,  0, &relay_api_protocol_cb_sync      },
-        { NULL,      NULL,        0, 0,  0, NULL                             },
+        /* method,   resource,     auth, args,   callback                */
+        /*                               min,max                         */
+        { "OPTIONS", "*",          0,    0, -1,  RELAY_API_CB(options)    },
+        { "POST",    "handshake",  0,    0,  0,  RELAY_API_CB(handshake)  },
+        { "GET",     "version",    1,    0,  0,  RELAY_API_CB(version)    },
+        { "GET",     "buffers",    1,    0,  3,  RELAY_API_CB(buffers)    },
+        { "GET",     "hotlist",    1,    0,  3,  RELAY_API_CB(hotlist)    },
+        { "POST",    "input",      1,    0,  0,  RELAY_API_CB(input)      },
+        { "POST",    "completion", 1,    0,  0,  RELAY_API_CB(completion) },
+        { "POST",    "ping",       1,    0,  0,  RELAY_API_CB(ping)       },
+        { "POST",    "sync",       1,    0,  0,  RELAY_API_CB(sync)       },
+        { NULL,      NULL,         0,    0,  0,  NULL                     },
     };
 
     if (!client->http_req || RELAY_STATUS_HAS_ENDED(client->status))
@@ -962,14 +1230,14 @@ relay_api_protocol_recv_http (struct t_relay_client *client)
                         client->http_req->body);
     }
 
-    if ((client->http_req->num_path_items < 2) || !client->http_req->path_items
-        || !client->http_req->path_items[0] || !client->http_req->path_items[1])
+    if ((client->http_req->num_path_items < 2)
+        || !client->http_req->path_items
+        || !client->http_req->path_items[0]
+        || !client->http_req->path_items[1]
+        || (strcmp (client->http_req->path_items[0], "api") != 0))
     {
         goto error_not_found;
     }
-
-    if (strcmp (client->http_req->path_items[0], "api") != 0)
-        goto error_not_found;
 
     num_args = client->http_req->num_path_items - 2;
 
@@ -1008,7 +1276,13 @@ relay_api_protocol_recv_http (struct t_relay_client *client)
                     num_args,
                     protocol_cb[i].min_args);
             }
-            goto error_not_found;
+            snprintf (str_error, sizeof (str_error),
+                      "%s: not enough path parameters (min: %d)",
+                      RELAY_HTTP_ERROR_BAD_REQUEST,
+                      protocol_cb[i].min_args);
+            relay_api_msg_send_error_json (client, RELAY_HTTP_400_BAD_REQUEST,
+                                           NULL, str_error);
+            goto error;
         }
 
         if ((protocol_cb[i].max_args >= 0)
@@ -1030,7 +1304,13 @@ relay_api_protocol_recv_http (struct t_relay_client *client)
                     num_args,
                     protocol_cb[i].max_args);
             }
-            goto error_not_found;
+            snprintf (str_error, sizeof (str_error),
+                      "%s: too many path parameters (max: %d)",
+                      RELAY_HTTP_ERROR_BAD_REQUEST,
+                      protocol_cb[i].max_args);
+            relay_api_msg_send_error_json (client, RELAY_HTTP_400_BAD_REQUEST,
+                                           NULL, str_error);
+            goto error;
         }
 
         return_code = (protocol_cb[i].cmd_function) (client);
@@ -1052,11 +1332,13 @@ relay_api_protocol_recv_http (struct t_relay_client *client)
     goto error_not_found;
 
 error_bad_request:
-    relay_api_msg_send_json (client, RELAY_HTTP_400_BAD_REQUEST, NULL, NULL, NULL);
+    relay_api_msg_send_error_json (client, RELAY_HTTP_400_BAD_REQUEST,
+                                   NULL, RELAY_HTTP_ERROR_BAD_REQUEST);
     goto error;
 
 error_not_found:
-    relay_api_msg_send_json (client, RELAY_HTTP_404_NOT_FOUND, NULL, NULL, NULL);
+    relay_api_msg_send_error_json (client, RELAY_HTTP_404_NOT_FOUND,
+                                   NULL, RELAY_HTTP_ERROR_NOT_FOUND);
     goto error;
 
 error_memory:

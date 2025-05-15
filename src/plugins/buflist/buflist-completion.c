@@ -1,7 +1,7 @@
 /*
  * buflist-completion.c - completion for buflist command
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -88,7 +88,7 @@ buflist_completion_items_used_cb (const void *pointer, void *data,
  */
 
 void
-buflist_completion_init ()
+buflist_completion_init (void)
 {
     weechat_hook_completion ("buflist_items",
                              N_("buflist bar items"),

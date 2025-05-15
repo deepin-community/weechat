@@ -2,7 +2,7 @@
  * weechat-js-api.cpp - javascript API functions
  *
  * Copyright (C) 2013 Koka El Kiwi <kokakiwi@kokakiwi.net>
- * Copyright (C) 2015-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2015-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -3808,6 +3808,22 @@ API_FUNC(buffer_match_list)
     API_RETURN_INT(value);
 }
 
+API_FUNC(line_search_by_id)
+{
+    const char *result;
+    int id;
+
+    API_INIT_FUNC(1, "line_search_by_id", "si", API_RETURN_EMPTY);
+
+    v8::String::Utf8Value buffer(args[0]);
+    id = args[1]->IntegerValue();
+
+    result = API_PTR2STR(
+        weechat_line_search_by_id ((struct t_gui_buffer *)API_STR2PTR(*buffer), id));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(current_window)
 {
     const char *result;
@@ -4464,6 +4480,22 @@ API_FUNC(completion_get_string)
         *property);
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(completion_set)
+{
+    API_INIT_FUNC(1, "completion_set", "sss", API_RETURN_ERROR);
+
+    v8::String::Utf8Value completion(args[0]);
+    v8::String::Utf8Value property(args[1]);
+    v8::String::Utf8Value value(args[2]);
+
+    weechat_completion_set (
+        (struct t_gui_completion *)API_STR2PTR(*completion),
+        *property,
+        *value);
+
+    API_RETURN_OK;
 }
 
 API_FUNC(completion_list_add)
@@ -5487,6 +5519,7 @@ WeechatJsV8::loadLibs()
     API_DEF_FUNC(buffer_set);
     API_DEF_FUNC(buffer_string_replace_local_var);
     API_DEF_FUNC(buffer_match_list);
+    API_DEF_FUNC(line_search_by_id);
     API_DEF_FUNC(current_window);
     API_DEF_FUNC(window_search_with_buffer);
     API_DEF_FUNC(window_get_integer);
@@ -5522,6 +5555,7 @@ WeechatJsV8::loadLibs()
     API_DEF_FUNC(completion_new);
     API_DEF_FUNC(completion_search);
     API_DEF_FUNC(completion_get_string);
+    API_DEF_FUNC(completion_set);
     API_DEF_FUNC(completion_list_add);
     API_DEF_FUNC(completion_free);
     API_DEF_FUNC(info_get);

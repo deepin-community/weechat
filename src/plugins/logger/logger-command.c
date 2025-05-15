@@ -1,7 +1,7 @@
 /*
  * logger-command.c - logger commands
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -33,7 +33,7 @@
  */
 
 void
-logger_list ()
+logger_list (void)
 {
     struct t_infolist *ptr_infolist;
     struct t_logger_buffer *ptr_logger_buffer;
@@ -161,12 +161,12 @@ logger_command_cb (const void *pointer, void *data,
  */
 
 void
-logger_command_init ()
+logger_command_init (void)
 {
     weechat_hook_command (
         "logger",
         N_("logger plugin configuration"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("list"
            " || set <level>"
            " || flush"

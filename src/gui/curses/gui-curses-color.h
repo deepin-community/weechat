@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,6 +39,6 @@ extern int gui_color_buffer_refresh_needed;
 extern int gui_color_get_gui_attrs (int color);
 extern int gui_color_get_pair (int fg, int bg);
 extern int gui_color_weechat_get_pair (int weechat_color);
-extern void gui_color_alloc ();
+extern void gui_color_alloc (void);
 
 #endif /* WEECHAT_GUI_CURSES_COLOR_H */

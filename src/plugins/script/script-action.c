@@ -1,7 +1,7 @@
 /*
  * script-action.c - actions on scripts
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -46,7 +46,7 @@ void script_action_run_install (int quiet);
  */
 
 void
-script_action_run_list ()
+script_action_run_list (void)
 {
     int i, scripts_loaded;
     char hdata_name[128];
@@ -123,7 +123,7 @@ script_action_run_list_input (struct t_gui_buffer *buffer,
         ptr_script = weechat_hdata_get_list (hdata, "scripts");
         while (ptr_script)
         {
-            if (*output[0])
+            if ((*output)[0])
             {
                 weechat_string_dyn_concat (output, ", ", -1);
             }
@@ -152,7 +152,7 @@ script_action_run_list_input (struct t_gui_buffer *buffer,
         }
     }
 
-    if (!*output[0])
+    if (!(*output)[0])
     {
         weechat_string_dyn_concat (
             output,
@@ -442,7 +442,7 @@ script_action_run_autoload (const char *name, int quiet, int autoload)
 {
     struct t_script_repo *ptr_script;
     char *pos, str_signal[256], *weechat_data_dir, *filename;
-    int language, length, script_found, script_autoloaded;
+    int language, script_found, script_autoloaded;
     struct stat st;
 
     /* find script language */
@@ -465,27 +465,30 @@ script_action_run_autoload (const char *name, int quiet, int autoload)
     script_found = 0;
     script_autoloaded = 0;
     weechat_data_dir = weechat_info_get ("weechat_data_dir", NULL);
-    length = strlen (weechat_data_dir) + strlen (name) + 64;
-    filename = malloc (length);
-    if (filename)
+
+    if (weechat_asprintf (&filename,
+                          "%s/%s/%s",
+                          weechat_data_dir,
+                          script_language[language],
+                          name) >= 0)
     {
         /* check if script exists */
-        snprintf (filename, length, "%s/%s/%s",
-                  weechat_data_dir,
-                  script_language[language],
-                  name);
         if (stat (filename, &st) == 0)
             script_found = 1;
 
-        /* check if script is autoloaded */
-        snprintf (filename, length, "%s/%s/autoload/%s",
-                  weechat_data_dir,
-                  script_language[language],
-                  name);
-        if (stat (filename, &st) == 0)
-            script_autoloaded = 1;
-
         free (filename);
+
+        if (weechat_asprintf (&filename,
+                              "%s/%s/autoload/%s",
+                              weechat_data_dir,
+                              script_language[language],
+                              name) >= 0)
+        {
+            /* check if script is autoloaded */
+            if (stat (filename, &st) == 0)
+                script_autoloaded = 1;
+            free (filename);
+        }
     }
 
     free (weechat_data_dir);
@@ -506,15 +509,13 @@ script_action_run_autoload (const char *name, int quiet, int autoload)
         autoload = (script_autoloaded) ? 0 : 1;
 
     /* ask plugin to autoload (or not) script */
-    length = 16 + strlen (name) + 1;
-    filename = malloc (length);
-    if (filename)
+    if (weechat_asprintf (
+            &filename,
+            "%s%s%s",
+            (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
+            (autoload) ? "-a " : "",
+            name) >= 0)
     {
-        snprintf (filename, length,
-                  "%s%s%s",
-                  (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
-                  (autoload) ? "-a " : "",
-                  name);
         snprintf (str_signal, sizeof (str_signal),
                   "%s_script_autoload",
                   script_language[language]);
@@ -567,7 +568,7 @@ script_action_install_url_cb (const void *pointer, void *data,
 {
     const char *pos_name, *ptr_error;
     char *filename, *filename2, str_signal[256];
-    int quiet, auto_load, length;
+    int quiet, auto_load;
     struct t_script_repo *ptr_script;
 
     /* make C compiler happy */
@@ -606,23 +607,22 @@ script_action_install_url_cb (const void *pointer, void *data,
     if (!filename)
         return WEECHAT_RC_OK;
 
-    length = 16 + strlen (filename) + 1;
-    filename2 = malloc (length);
-    if (!filename2)
+    if (ptr_script->status & SCRIPT_STATUS_INSTALLED)
+        auto_load = (ptr_script->status & SCRIPT_STATUS_AUTOLOADED) ? 1 : 0;
+    else
+        auto_load = weechat_config_boolean (script_config_scripts_autoload);
+
+    if (weechat_asprintf (
+            &filename2,
+            "%s%s%s",
+            (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
+            (auto_load) ? "-a " : "",
+            filename) < 0)
     {
         free (filename);
         return WEECHAT_RC_OK;
     }
 
-    if (ptr_script->status & SCRIPT_STATUS_INSTALLED)
-        auto_load = (ptr_script->status & SCRIPT_STATUS_AUTOLOADED) ? 1 : 0;
-    else
-        auto_load = weechat_config_boolean (script_config_scripts_autoload);
-    snprintf (filename2, length,
-              "%s%s%s",
-              (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
-              (auto_load) ? "-a " : "",
-              filename);
     snprintf (str_signal, sizeof (str_signal),
               "%s_script_install",
               script_language[ptr_script->language]);
@@ -646,7 +646,7 @@ script_action_install_url_cb (const void *pointer, void *data,
  */
 
 struct t_script_repo *
-script_action_get_next_script_to_install ()
+script_action_get_next_script_to_install (void)
 {
     struct t_script_repo *ptr_script, *ptr_script_to_install;
 
@@ -697,7 +697,7 @@ script_action_run_install (int quiet)
 
         /* plugin not loaded for language of script: display error */
         weechat_printf (NULL,
-                        _("%s: script \"%s\" can not be installed because "
+                        _("%s: script \"%s\" cannot be installed because "
                           "plugin \"%s\" is not loaded"),
                         SCRIPT_PLUGIN_NAME,
                         ptr_script_to_install->name_with_extension,
@@ -751,7 +751,6 @@ script_action_run_remove (const char *name, int quiet)
 {
     struct t_script_repo *ptr_script;
     char str_signal[256], *filename;
-    int length;
 
     ptr_script = script_repo_search_by_name_ext (name);
     if (!ptr_script)
@@ -793,7 +792,7 @@ script_action_run_remove (const char *name, int quiet)
     if (!script_plugin_loaded[ptr_script->language])
     {
         weechat_printf (NULL,
-                        _("%s: script \"%s\" can not be removed "
+                        _("%s: script \"%s\" cannot be removed "
                           "because plugin \"%s\" is not loaded"),
                         SCRIPT_PLUGIN_NAME,
                         ptr_script->name_with_extension,
@@ -802,14 +801,12 @@ script_action_run_remove (const char *name, int quiet)
     }
 
     /* ask plugin to remove script */
-    length = 3 + strlen (ptr_script->name_with_extension) + 1;
-    filename = malloc (length);
-    if (filename)
+    if (weechat_asprintf (
+            &filename,
+            "%s%s",
+            (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
+            ptr_script->name_with_extension) >= 0)
     {
-        snprintf (filename, length,
-                  "%s%s",
-                  (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
-                  ptr_script->name_with_extension);
         snprintf (str_signal, sizeof (str_signal),
                   "%s_script_remove",
                   script_language[ptr_script->language]);
@@ -843,7 +840,7 @@ script_action_run_hold (const char *name, int quiet)
             {
                 weechat_printf (NULL,
                                 _("%s: script \"%s\" is not "
-                                  "held any more"),
+                                  "held anymore"),
                                 SCRIPT_PLUGIN_NAME, name);
             }
         }
@@ -1084,17 +1081,12 @@ script_action_show_source_url_cb (const void *pointer, void *data,
         filename_loaded = script_repo_get_filename_loaded (ptr_script);
         if (filename_loaded)
         {
-            length = strlen (ptr_diff_command) + 1
-                + strlen (filename_loaded) + 1
-                + strlen (filename) + 1;
-            diff_command = malloc (length);
-            if (diff_command)
+            if (weechat_asprintf (&diff_command,
+                                  "%s %s %s",
+                                  ptr_diff_command,
+                                  filename_loaded,
+                                  filename) >= 0)
             {
-                snprintf (diff_command, length,
-                          "%s %s %s",
-                          ptr_diff_command,
-                          filename_loaded,
-                          filename);
                 script_buffer_detail_script_last_line++;
                 script_buffer_detail_script_line_diff = script_buffer_detail_script_last_line;
                 weechat_printf_y (script_buffer,
@@ -1208,7 +1200,7 @@ script_action_run_show (const char *name, int quiet)
  */
 
 void
-script_action_run_showdiff ()
+script_action_run_showdiff (void)
 {
     char str_command[64];
     struct t_gui_window *window;
@@ -1257,7 +1249,7 @@ script_action_add (struct t_gui_buffer *buffer, const char *action)
             return;
     }
 
-    if (*script_actions[0])
+    if ((*script_actions)[0])
         weechat_string_dyn_concat (script_actions, "\n", -1);
 
     weechat_string_dyn_concat (
@@ -1271,7 +1263,7 @@ script_action_add (struct t_gui_buffer *buffer, const char *action)
  */
 
 void
-script_action_clear ()
+script_action_clear (void)
 {
     if (script_actions)
         weechat_string_dyn_copy (script_actions, NULL);
@@ -1286,7 +1278,7 @@ script_action_clear ()
  */
 
 int
-script_action_run_all ()
+script_action_run_all (void)
 {
     char **actions, **argv, **argv_eol, *ptr_action;
     int num_actions, argc, i, j, quiet, script_found;
@@ -1631,7 +1623,7 @@ script_action_schedule (struct t_gui_buffer *buffer,
  */
 
 void
-script_action_end ()
+script_action_end (void)
 {
     if (script_actions)
     {

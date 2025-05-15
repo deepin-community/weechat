@@ -1,7 +1,7 @@
 /*
  * gui-nicklist.c - nicklist functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -60,18 +60,14 @@ gui_nicklist_send_signal (const char *signal, struct t_gui_buffer *buffer,
                           const char *arguments)
 {
     char *str_args;
-    int length;
 
     if (buffer)
     {
-        length = 128 + ((arguments) ? strlen (arguments) : 0) + 1 + 1;
-        str_args = malloc (length);
-        if (str_args)
+        if (string_asprintf (&str_args,
+                             "0x%lx,%s",
+                             (unsigned long)buffer,
+                             (arguments) ? arguments : "") >= 0)
         {
-            snprintf (str_args, length,
-                      "%p,%s",
-                      buffer,
-                      (arguments) ? arguments : "");
             (void) hook_signal_send (signal,
                                      WEECHAT_HOOK_SIGNAL_STRING, str_args);
             free (str_args);
@@ -1545,7 +1541,7 @@ gui_nicklist_print_log (struct t_gui_nick_group *group, int indent)
  */
 
 void
-gui_nicklist_end ()
+gui_nicklist_end (void)
 {
     if (gui_nicklist_hsignal)
     {

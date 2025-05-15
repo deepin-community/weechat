@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,7 +29,7 @@ extern int fifo_quiet;
 extern int fifo_fd;
 extern char *fifo_filename;
 
-extern void fifo_create ();
-extern void fifo_remove ();
+extern void fifo_create (void);
+extern void fifo_remove (void);
 
 #endif /* WEECHAT_PLUGIN_FIFO_H */

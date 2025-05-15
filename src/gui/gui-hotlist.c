@@ -1,7 +1,7 @@
 /*
  * gui-hotlist.c - hotlist management (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -525,7 +525,7 @@ gui_hotlist_restore_buffer (struct t_gui_buffer *buffer)
  */
 
 void
-gui_hotlist_restore_all_buffers ()
+gui_hotlist_restore_all_buffers (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -541,7 +541,7 @@ gui_hotlist_restore_all_buffers ()
  */
 
 void
-gui_hotlist_resort ()
+gui_hotlist_resort (void)
 {
     struct t_gui_hotlist *new_hotlist, *last_new_hotlist;
     struct t_gui_hotlist *ptr_hotlist, *ptr_next_hotlist, *ptr_prev_hotlist;
@@ -841,7 +841,7 @@ gui_hotlist_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-gui_hotlist_print_log ()
+gui_hotlist_print_log (void)
 {
     struct t_gui_hotlist *ptr_hotlist;
     int i;
@@ -851,9 +851,9 @@ gui_hotlist_print_log ()
     {
         log_printf ("[hotlist (addr:%p)]", ptr_hotlist);
         log_printf ("  priority . . . . . . . : %d", ptr_hotlist->priority);
-        log_printf ("  creation_time. . . . . : tv_sec:%ld, tv_usec:%ld",
-                    ptr_hotlist->creation_time.tv_sec,
-                    ptr_hotlist->creation_time.tv_usec);
+        log_printf ("  creation_time. . . . . : tv_sec:%lld, tv_usec:%ld",
+                    (long long)(ptr_hotlist->creation_time.tv_sec),
+                    (long)(ptr_hotlist->creation_time.tv_usec));
         log_printf ("  buffer . . . . . . . . : %p", ptr_hotlist->buffer);
         for (i = 0; i < GUI_HOTLIST_NUM_PRIORITIES; i++)
         {
@@ -869,7 +869,7 @@ gui_hotlist_print_log ()
  */
 
 void
-gui_hotlist_end ()
+gui_hotlist_end (void)
 {
     if (gui_hotlist_hashtable_add_conditions_pointers)
     {

@@ -1,7 +1,7 @@
 /*
  * irc-msgbuffer.c - target buffer for IRC messages
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -112,10 +112,8 @@ irc_msgbuffer_get_target_buffer (struct t_irc_server *server, const char *nick,
     {
         case IRC_MSGBUFFER_TARGET_WEECHAT:
             return NULL;
-            break;
         case IRC_MSGBUFFER_TARGET_SERVER:
             return (server) ? server->buffer : NULL;
-            break;
         case IRC_MSGBUFFER_TARGET_CURRENT:
             break;
         case IRC_MSGBUFFER_TARGET_PRIVATE:
@@ -130,7 +128,6 @@ irc_msgbuffer_get_target_buffer (struct t_irc_server *server, const char *nick,
             break;
         default:
             return (server) ? server->buffer : NULL;
-            break;
     }
 
     ptr_buffer = weechat_current_buffer ();

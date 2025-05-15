@@ -1,7 +1,7 @@
 /*
  * gui-bar-item.c - bar item functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -71,6 +71,7 @@ char *gui_bar_item_names[GUI_BAR_NUM_ITEMS] =
 };
 struct t_gui_bar_item_hook *gui_bar_item_hooks = NULL;
 struct t_hook *gui_bar_item_timer = NULL;
+struct t_hook *gui_bar_item_timer_hotlist_resort = NULL;
 
 
 /*
@@ -434,7 +435,7 @@ gui_bar_item_get_value (struct t_gui_bar *bar, struct t_gui_window *window,
                 time_diff = util_timeval_diff (&start_time, &end_time);
                 if (time_diff >= debug_long_callbacks)
                 {
-                    str_diff = util_get_microseconds_string (time_diff);
+                    str_diff = util_get_microseconds_string ((unsigned long long)time_diff);
                     log_printf (
                         _("debug: long callback: bar: %s, item: %s, plugin: %s, "
                           "time elapsed: %s"),
@@ -738,7 +739,7 @@ gui_bar_item_free (struct t_gui_bar_item *item)
  */
 
 void
-gui_bar_item_free_all ()
+gui_bar_item_free_all (void)
 {
     while (gui_bar_items)
     {
@@ -913,7 +914,7 @@ gui_bar_item_input_text_cb (const void *pointer, void *data,
     char *ptr_input, *ptr_input2, str_buffer[128], str_start_input[16];
     char str_cursor[16], *buf, str_key_debug[1024], *str_lead_linebreak;
     const char *pos_cursor;
-    int length, length_cursor, length_start_input, length_lead_linebreak;
+    int length, length_cursor;
     int buf_pos, is_multiline;
 
     /* make C compiler happy */
@@ -935,7 +936,6 @@ gui_bar_item_input_text_cb (const void *pointer, void *data,
               GUI_COLOR_COLOR_CHAR,
               GUI_COLOR_BAR_CHAR,
               GUI_COLOR_BAR_START_INPUT_CHAR);
-    length_start_input = strlen (str_start_input);
 
     if (gui_key_debug)
     {
@@ -947,7 +947,7 @@ gui_bar_item_input_text_cb (const void *pointer, void *data,
     }
 
     /* for modifiers */
-    snprintf (str_buffer, sizeof (str_buffer), "%p", buffer);
+    snprintf (str_buffer, sizeof (str_buffer), "0x%lx", (unsigned long)buffer);
 
     /* execute modifier with basic string (without cursor tag) */
     ptr_input = NULL;
@@ -1015,17 +1015,12 @@ gui_bar_item_input_text_cb (const void *pointer, void *data,
     if ((buffer->text_search == GUI_BUFFER_SEARCH_HISTORY)
         && buffer->text_search_ptr_history)
     {
-        length = strlen (ptr_input) + 16
-            + ((buffer->text_search_ptr_history->text) ?
-               strlen (buffer->text_search_ptr_history->text) : 0);
-        buf = malloc (length);
-        if (buf)
+        if (string_asprintf (&buf,
+                             "%s  => %s",
+                             ptr_input,
+                             (buffer->text_search_ptr_history->text) ?
+                             buffer->text_search_ptr_history->text : "") >= 0)
         {
-            snprintf (buf, length,
-                      "%s  => %s",
-                      ptr_input,
-                      (buffer->text_search_ptr_history->text) ?
-                      buffer->text_search_ptr_history->text : "");
             free (ptr_input);
             ptr_input = buf;
         }
@@ -1049,29 +1044,23 @@ gui_bar_item_input_text_cb (const void *pointer, void *data,
 
     str_lead_linebreak = (is_multiline &&
         CONFIG_BOOLEAN(config_look_input_multiline_lead_linebreak)) ? "\r" : "";
-    length_lead_linebreak = strlen (str_lead_linebreak);
 
     /* insert "start input" at beginning of string */
     if (ptr_input)
     {
-        length = strlen (ptr_input) + length_start_input + length_lead_linebreak + 1;
-        buf = malloc (length);
-        if (buf)
+        if (string_asprintf (&buf,
+                             "%s%s%s",
+                             str_start_input,
+                             str_lead_linebreak,
+                             ptr_input) >= 0)
         {
-            snprintf (buf, length, "%s%s%s", str_start_input, str_lead_linebreak, ptr_input);
             free (ptr_input);
             ptr_input = buf;
         }
     }
     else
     {
-        length = length_start_input + length_cursor + 1;
-        ptr_input = malloc (length);
-        if (ptr_input)
-        {
-            strcpy (ptr_input, str_start_input);
-            strcat (ptr_input, str_cursor);
-        }
+        string_asprintf (&ptr_input, "%s%s", str_start_input, str_cursor);
     }
 
     return ptr_input;
@@ -1277,7 +1266,7 @@ gui_bar_item_buffer_short_name_cb (const void *pointer, void *data,
     snprintf (str_short_name, sizeof (str_short_name), "%s%s",
               gui_color_get_custom (
                   gui_color_get_name (CONFIG_COLOR(config_color_status_name))),
-              gui_buffer_get_short_name (buffer));
+              buffer->short_name);
 
     return strdup (str_short_name);
 }
@@ -1628,7 +1617,7 @@ gui_bar_item_hotlist_cb (const void *pointer, void *data,
                 strcat (str_hotlist, ":");
                 strcat (str_hotlist, GUI_COLOR_CUSTOM_BAR_FG);
                 ptr_buffer_name = (CONFIG_BOOLEAN(config_look_hotlist_short_names)) ?
-                    gui_buffer_get_short_name (ptr_hotlist->buffer) : ptr_hotlist->buffer->name;
+                    ptr_hotlist->buffer->short_name : ptr_hotlist->buffer->name;
                 if (CONFIG_INTEGER(config_look_hotlist_names_length) == 0)
                 {
                     buffer_name = strdup (ptr_buffer_name);
@@ -1874,7 +1863,7 @@ gui_bar_item_buffer_nicklist_cb (const void *pointer, void *data,
                 && buffer->nicklist_display_groups
                 && ptr_group->visible))
         {
-            if (*nicklist[0])
+            if ((*nicklist)[0])
                 string_dyn_concat (nicklist, "\n", -1);
 
             if (ptr_nick)
@@ -2087,7 +2076,6 @@ gui_bar_item_away_cb (const void *pointer, void *data,
 {
     const char *away;
     char *buf, *message;
-    int length;
 
     /* make C compiler happy */
     (void) pointer;
@@ -2108,14 +2096,11 @@ gui_bar_item_away_cb (const void *pointer, void *data,
         strdup (away) : strdup (_("away"));
     if (message)
     {
-        length = strlen (message) + 64 + 1;
-        buf = malloc (length);
-        if (buf)
-        {
-            snprintf (buf, length, "%s%s",
-                      gui_color_get_custom (gui_color_get_name (CONFIG_COLOR(config_color_item_away))),
-                      message);
-        }
+        string_asprintf (
+            &buf,
+            "%s%s",
+            gui_color_get_custom (gui_color_get_name (CONFIG_COLOR(config_color_item_away))),
+            message);
         free (message);
     }
 
@@ -2163,7 +2148,6 @@ gui_bar_item_focus_buffer_nicklist_cb (const void *pointer,
     struct t_gui_nick_group *ptr_group;
     struct t_gui_nick *ptr_nick;
     int i, rc, bar_item_line;
-    unsigned long value;
     const char *str_window, *str_buffer, *str_bar_item_line;
     struct t_gui_window *window;
     struct t_gui_buffer *buffer;
@@ -2181,10 +2165,9 @@ gui_bar_item_focus_buffer_nicklist_cb (const void *pointer,
     str_window = hashtable_get (info, "_window");
     if (str_window && str_window[0])
     {
-        rc = sscanf (str_window, "%lx", &value);
+        rc = sscanf (str_window, "%p", &window);
         if ((rc == EOF) || (rc == 0))
             return NULL;
-        window = (struct t_gui_window *)value;
     }
     else
     {
@@ -2199,10 +2182,9 @@ gui_bar_item_focus_buffer_nicklist_cb (const void *pointer,
     str_buffer = hashtable_get (info, "_buffer");
     if (str_buffer && str_buffer[0])
     {
-        rc = sscanf (str_buffer, "%lx", &value);
+        rc = sscanf (str_buffer, "%p", &buffer);
         if ((rc == EOF) || (rc == 0))
             return NULL;
-        buffer = (struct t_gui_buffer *)value;
     }
     if (!buffer)
         return NULL;
@@ -2279,6 +2261,25 @@ gui_bar_item_timer_cb (const void *pointer, void *data, int remaining_calls)
 }
 
 /*
+ * Timer callback for resorting hotlist.
+ */
+
+int
+gui_bar_item_timer_hotlist_resort_cb (const void *pointer, void *data,
+                                      int remaining_calls)
+{
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) remaining_calls;
+
+    gui_hotlist_resort ();
+
+    gui_bar_item_timer_hotlist_resort = NULL;
+
+    return WEECHAT_RC_OK;
+}
+/*
  * Callback when a signal is received: rebuilds an item.
  */
 
@@ -2301,7 +2302,13 @@ gui_bar_item_signal_cb (const void *pointer, void *data,
         if ((strcmp (item, "hotlist") == 0)
             && (strcmp (signal, "hotlist_changed") != 0))
         {
-            gui_hotlist_resort ();
+            if (!gui_bar_item_timer_hotlist_resort)
+            {
+                gui_bar_item_timer_hotlist_resort = hook_timer (
+                    NULL,
+                    1, 0, 1,
+                    &gui_bar_item_timer_hotlist_resort_cb, NULL, NULL);
+            }
         }
         gui_bar_item_update (item);
     }
@@ -2334,7 +2341,7 @@ gui_bar_item_hook_signal (const char *signal, const char *item)
  */
 
 void
-gui_bar_item_init ()
+gui_bar_item_init (void)
 {
     char name[128];
 
@@ -2546,7 +2553,7 @@ gui_bar_item_init ()
  */
 
 void
-gui_bar_item_end ()
+gui_bar_item_end (void)
 {
     struct t_gui_bar_item_hook *next_bar_item_hook;
 
@@ -2636,7 +2643,7 @@ gui_bar_item_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-gui_bar_item_print_log ()
+gui_bar_item_print_log (void)
 {
     struct t_gui_bar_item *ptr_item;
 

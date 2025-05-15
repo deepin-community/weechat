@@ -2,7 +2,7 @@
  * spell-speller.c - speller management for spell checker plugin
  *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -54,7 +54,7 @@ int
 spell_speller_dict_supported (const char *lang)
 {
 #ifdef USE_ENCHANT
-    return enchant_broker_dict_exists (broker, lang);
+    return enchant_broker_dict_exists (spell_enchant_broker, lang);
 #else
     struct AspellConfig *config;
     AspellDictInfoList *list;
@@ -65,6 +65,9 @@ spell_speller_dict_supported (const char *lang)
     rc = 0;
 
     config = new_aspell_config ();
+#ifdef ASPELL_DICT_DIR
+    aspell_config_replace (config, "dict-dir", ASPELL_DICT_DIR);
+#endif
     list = get_aspell_dict_info_list (config);
     elements = aspell_dict_info_list_elements (list);
 
@@ -161,7 +164,7 @@ spell_speller_new (const char *lang)
     }
 
 #ifdef USE_ENCHANT
-    new_speller = enchant_broker_request_dict (broker, lang);
+    new_speller = enchant_broker_request_dict (spell_enchant_broker, lang);
     if (!new_speller)
     {
         weechat_printf (NULL,
@@ -174,6 +177,9 @@ spell_speller_new (const char *lang)
     /* create a speller instance for the newly created cell */
     config = new_aspell_config ();
     aspell_config_replace (config, "lang", lang);
+#ifdef ASPELL_DICT_DIR
+    aspell_config_replace (config, "dict-dir", ASPELL_DICT_DIR);
+#endif
 #endif /* USE_ENCHANT */
 
     /* apply all options */
@@ -265,7 +271,7 @@ spell_speller_remove_unused_cb (void *data,
 
     used_spellers = (struct t_hashtable *)data;
 
-    /* if speller is not in "used_spellers", remove it (not used any more) */
+    /* if speller is not in "used_spellers", remove it (not used anymore) */
     if (!weechat_hashtable_has_key (used_spellers, key))
         weechat_hashtable_remove (hashtable, key);
 }
@@ -275,7 +281,7 @@ spell_speller_remove_unused_cb (void *data,
  */
 
 void
-spell_speller_remove_unused ()
+spell_speller_remove_unused (void)
 {
     struct t_hashtable *used_spellers;
     struct t_infolist *infolist;
@@ -347,7 +353,7 @@ spell_speller_free_value_cb (struct t_hashtable *hashtable,
     /* free speller */
 #ifdef USE_ENCHANT
     ptr_speller = (EnchantDict *)value;
-    enchant_broker_free_dict (broker, ptr_speller);
+    enchant_broker_free_dict (spell_enchant_broker, ptr_speller);
 #else
     ptr_speller = (AspellSpeller *)value;
     aspell_speller_save_all_word_lists (ptr_speller);
@@ -461,7 +467,7 @@ spell_speller_buffer_free_value_cb (struct t_hashtable *hashtable,
  */
 
 int
-spell_speller_init ()
+spell_speller_init (void)
 {
     spell_spellers = weechat_hashtable_new (32,
                                             WEECHAT_HASHTABLE_STRING,
@@ -494,7 +500,7 @@ spell_speller_init ()
  */
 
 void
-spell_speller_end ()
+spell_speller_end (void)
 {
     weechat_hashtable_free (spell_spellers);
     spell_spellers = NULL;

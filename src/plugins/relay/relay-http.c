@@ -1,7 +1,7 @@
 /*
  * relay-http.c - HTTP request parser for relay plugin
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -55,42 +55,26 @@ relay_http_request_reinit (struct t_relay_http_request *request)
 {
     request->status = RELAY_HTTP_METHOD;
     weechat_string_dyn_copy (request->raw, NULL);
-    if (request->method)
-    {
-        free (request->method);
-        request->method = NULL;
-    }
-    if (request->path)
-    {
-        free (request->path);
-        request->path = NULL;
-    }
-    if (request->path_items)
-    {
-        weechat_string_free_split (request->path_items);
-        request->path_items = NULL;
-    }
+    free (request->method);
+    request->method = NULL;
+    free (request->path);
+    request->path = NULL;
+    weechat_string_free_split (request->path_items);
+    request->path_items = NULL;
     request->num_path_items = 0;
     weechat_hashtable_remove_all (request->params);
-    if (request->http_version)
-    {
-        free (request->http_version);
-        request->http_version = NULL;
-    }
+    free (request->http_version);
+    request->http_version = NULL;
     weechat_hashtable_remove_all (request->headers);
     weechat_hashtable_remove_all (request->accept_encoding);
-    if (request->ws_deflate)
-    {
-        relay_websocket_deflate_free (request->ws_deflate);
-        request->ws_deflate = relay_websocket_deflate_alloc ();
-    }
+    relay_websocket_deflate_free (request->ws_deflate);
+    request->ws_deflate = relay_websocket_deflate_alloc ();
     request->content_length = 0;
     request->body_size = 0;
-    if (request->body)
-    {
-        free (request->body);
-        request->body = NULL;
-    }
+    free (request->body);
+    request->body = NULL;
+    free (request->id);
+    request->id = NULL;
 }
 
 /*
@@ -98,7 +82,7 @@ relay_http_request_reinit (struct t_relay_http_request *request)
  */
 
 struct t_relay_http_request *
-relay_http_request_alloc ()
+relay_http_request_alloc (void)
 {
     struct t_relay_http_request *new_request;
 
@@ -132,6 +116,7 @@ relay_http_request_alloc ()
     new_request->content_length = 0;
     new_request->body_size = 0;
     new_request->body = NULL;
+    new_request->id = NULL;
 
     return new_request;
 }
@@ -385,6 +370,10 @@ error:
 /*
  * Parses and saves a HTTP header in hashtable "headers".
  *
+ * The parameter "ws_deflate_allowed" controls whether the websocket extension
+ * "permessage-deflate" is allowed or not (it is allowed only with "api"
+ * protocol).
+ *
  * Returns:
  *   1: OK, header saved
  *   0: error: invalid format
@@ -392,10 +381,11 @@ error:
 
 int
 relay_http_parse_header (struct t_relay_http_request *request,
-                         const char *header)
+                         const char *header,
+                         int ws_deflate_allowed)
 {
     char *pos, *name, *name_lower, *error, **items;
-    const char *ptr_value;
+    const char *existing_value, *ptr_value;
     int i, num_items;
     long number;
 
@@ -434,6 +424,10 @@ relay_http_parse_header (struct t_relay_http_request *request,
         ptr_value++;
     }
 
+    existing_value = weechat_hashtable_get (request->headers, name_lower);
+    if (existing_value)
+        ptr_value = WEECHAT_STR_CONCAT(", ", existing_value, ptr_value);
+
     /* add header in the hashtable */
     weechat_hashtable_set (request->headers, name_lower, ptr_value);
 
@@ -465,7 +459,12 @@ relay_http_parse_header (struct t_relay_http_request *request,
      * extensions
      */
     if (strcmp (name_lower, "sec-websocket-extensions") == 0)
-        relay_websocket_parse_extensions (ptr_value, request->ws_deflate);
+    {
+        relay_websocket_parse_extensions (
+            ptr_value,
+            request->ws_deflate,
+            ws_deflate_allowed);
+    }
 
     free (name);
     free (name_lower);
@@ -565,15 +564,18 @@ relay_http_add_to_body (struct t_relay_http_request *request,
 int
 relay_http_get_auth_status (struct t_relay_client *client)
 {
-    const char *auth, *client_totp, *pos;
+    const char *auth, *sec_websocket_protocol, *client_totp, *pos;
     char *relay_password, *totp_secret, *info_totp_args, *info_totp;
     char *user_pass;
-    int rc, length, totp_ok;
+    char **protocol_array;
+    int rc, i, length, protocol_count, use_base64url, totp_ok;
 
     rc = 0;
     relay_password = NULL;
+    protocol_array = NULL;
     totp_secret = NULL;
     user_pass = NULL;
+    use_base64url = 0;
 
     relay_password = weechat_string_eval_expression (
         weechat_config_string (relay_config_network_password),
@@ -584,72 +586,116 @@ relay_http_get_auth_status (struct t_relay_client *client)
         goto end;
     }
 
-    auth = weechat_hashtable_get (client->http_req->headers, "authorization");
-    if (!auth || (weechat_strncasecmp (auth, "basic ", 6) != 0))
-    {
-        rc = -1;
-        goto end;
-    }
-
-    pos = auth + 6;
-    while (pos[0] == ' ')
-    {
-        pos++;
-    }
-
-    length = strlen (pos);
-    user_pass = malloc (length + 1);
-    if (!user_pass)
-    {
-        rc = -8;
-        goto end;
-    }
-    length = weechat_string_base_decode ("64", pos, user_pass);
-    if (length < 0)
+    if (!relay_password[0]
+        && !weechat_config_boolean (relay_config_network_allow_empty_password))
     {
         rc = -2;
         goto end;
     }
-    if (strncmp (user_pass, "plain:", 6) == 0)
+
+    if (relay_password[0])
     {
-        switch (relay_auth_check_password_plain (client, user_pass + 6, relay_password))
+        auth = weechat_hashtable_get (client->http_req->headers, "authorization");
+
+        if (auth)
         {
-            case 0: /* password OK */
-                break;
-            case -1: /* "plain" is not allowed */
-                rc = -5;
+            if (weechat_strncasecmp (auth, "basic ", 6) != 0)
+            {
+                rc = -1;
                 goto end;
-            case -2: /* invalid password */
-            default:
-                rc = -2;
-                goto end;
+            }
+
+            pos = auth + 6;
         }
-    }
-    else if (strncmp (user_pass, "hash:", 5) == 0)
-    {
-        switch (relay_auth_password_hash (client, user_pass + 5, relay_password))
+        else
         {
-            case 0: /* password OK */
-                break;
-            case -1: /* invalid hash algorithm */
-                rc = -5;
+            sec_websocket_protocol = weechat_hashtable_get (
+                client->http_req->headers, "sec-websocket-protocol");
+            protocol_array = weechat_string_split (sec_websocket_protocol,
+                                                   ",", " ", 0, 0, &protocol_count);
+
+            pos = NULL;
+            for (i = 0; i < protocol_count; i++)
+            {
+                if (strncmp (protocol_array[i],
+                             "base64url.bearer.authorization.weechat.", 39) == 0)
+                {
+                    pos = protocol_array[i] + 39;
+                    use_base64url = 1;
+                    break;
+                }
+            }
+
+            if (!pos)
+            {
+                rc = -1;
                 goto end;
-            case -2: /* invalid timestamp */
-                rc = -6;
-                goto end;
-            case -3: /* invalid iterations */
-                rc = -7;
-                goto end;
-            case -4: /* invalid password */
-            default:
-                rc = -2;
-                goto end;
+            }
         }
-    }
-    else
-    {
-        rc = -2;
-        goto end;
+
+        while (pos[0] == ' ')
+        {
+            pos++;
+        }
+
+        length = strlen (pos);
+        user_pass = malloc (length + 1);
+        if (!user_pass)
+        {
+            rc = -8;
+            goto end;
+        }
+        length = weechat_string_base_decode ((use_base64url) ? "64url" : "64",
+                                             pos, user_pass);
+        if (length < 0)
+        {
+            rc = -2;
+            goto end;
+        }
+        if (strncmp (user_pass, "plain:", 6) == 0)
+        {
+            switch (relay_auth_check_password_plain (client,
+                                                     user_pass + 6,
+                                                     relay_password))
+            {
+                case 0: /* password OK */
+                    break;
+                case -1: /* "plain" is not allowed */
+                    rc = -5;
+                    goto end;
+                case -2: /* invalid password */
+                default:
+                    rc = -2;
+                    goto end;
+            }
+        }
+        else if (strncmp (user_pass, "hash:", 5) == 0)
+        {
+            switch (relay_auth_password_hash (client, user_pass + 5,
+                                              relay_password))
+            {
+                case 0: /* password OK */
+                    break;
+                case -1: /* invalid hash algorithm */
+                    rc = -5;
+                    goto end;
+                case -2: /* invalid timestamp */
+                    rc = -6;
+                    goto end;
+                case -3: /* invalid iterations */
+                    rc = -7;
+                    goto end;
+                case -4: /* invalid password */
+                default:
+                    rc = -2;
+                    goto end;
+            }
+        }
+        else
+        {
+            rc = -2;
+            goto end;
+        }
     }
 
     totp_secret = weechat_string_eval_expression (
@@ -663,16 +709,14 @@ relay_http_get_auth_status (struct t_relay_client *client)
             rc = -3;
             goto end;
         }
-        length = strlen (totp_secret) + strlen (client_totp) + 16 + 1;
-        info_totp_args = malloc (length);
-        if (info_totp_args)
+        /* validate the TOTP received from the client */
+        if (weechat_asprintf (
+                &info_totp_args,
+                "%s,%s,0,%d",
+                totp_secret,  /* the shared secret */
+                client_totp,  /* the TOTP from client */
+                weechat_config_integer (relay_config_network_totp_window)) >= 0)
         {
-            /* validate the TOTP received from the client */
-            snprintf (info_totp_args, length,
-                      "%s,%s,0,%d",
-                      totp_secret,  /* the shared secret */
-                      client_totp,  /* the TOTP from client */
-                      weechat_config_integer (relay_config_network_totp_window));
             info_totp = weechat_info_get ("totp_validate", info_totp_args);
             totp_ok = (info_totp && (strcmp (info_totp, "1") == 0)) ?
                 1 : 0;
@@ -687,6 +731,7 @@ relay_http_get_auth_status (struct t_relay_client *client)
     }
 
 end:
+    weechat_string_free_split (protocol_array);
     free (relay_password);
     free (totp_secret);
     free (user_pass);
@@ -891,7 +936,7 @@ void
 relay_http_recv (struct t_relay_client *client, const char *data)
 {
     char *new_partial, *pos;
-    int length;
+    int length, ws_deflate_allowed;
 
     if (client->partial_message)
     {
@@ -924,8 +969,11 @@ relay_http_recv (struct t_relay_client *client, const char *data)
             }
             else
             {
+                ws_deflate_allowed = (client->protocol == RELAY_PROTOCOL_API) ?
+                    1 : 0;
                 relay_http_parse_header (client->http_req,
-                                         client->partial_message);
+                                         client->partial_message,
+                                         ws_deflate_allowed);
             }
             pos[0] = '\r';
             pos++;
@@ -975,7 +1023,7 @@ relay_http_recv (struct t_relay_client *client, const char *data)
 /*
  * Compresses body of HTTP request with gzip or zstd, if all conditions are met:
  *   - body is not empty
- *   - gzip or ztsd is allowed by client (header "Accept-Encoding")
+ *   - gzip or zstd is allowed by client (header "Accept-Encoding")
  *     (for zstd, WeeChat must be compiled with zstd support)
  *   - compression is enabled (option relay.network.compression > 0)
  *
@@ -1274,7 +1322,7 @@ relay_http_send_error_json (struct t_relay_client *client,
                             const char *headers,
                             const char *format, ...)
 {
-    int num_bytes, length;
+    int num_bytes;
     char *error_msg, *json;
 
     if (!client || !message || !format)
@@ -1292,11 +1340,8 @@ relay_http_send_error_json (struct t_relay_client *client,
     if (!error_msg)
         goto end;
 
-    length = strlen (error_msg) + 64;
-    json = malloc (length);
-    if (!json)
+    if (weechat_asprintf (&json, "{\"error\":\"%s\"}", error_msg) < 0)
         goto end;
-    snprintf (json, length, "{\"error\": \"%s\"}", error_msg);
 
     num_bytes = relay_http_send_json (client, return_code, message, headers,
                                       json);
@@ -1325,6 +1370,7 @@ relay_http_request_free (struct t_relay_http_request *request)
     weechat_hashtable_free (request->accept_encoding);
     relay_websocket_deflate_free (request->ws_deflate);
     free (request->body);
+    free (request->id);
 
     free (request);
 }
@@ -1334,7 +1380,7 @@ relay_http_request_free (struct t_relay_http_request *request)
  */
 
 struct t_relay_http_response *
-relay_http_response_alloc ()
+relay_http_response_alloc (void)
 {
     struct t_relay_http_response *new_response;
 
@@ -1614,6 +1660,7 @@ relay_http_print_log_request (struct t_relay_http_request *request)
     weechat_log_printf ("    content_length. . . . . : %d", request->content_length);
     weechat_log_printf ("    body_size . . . . . . . : %d", request->body_size);
     weechat_log_printf ("    body. . . . . . . . . . : '%s'", request->body);
+    weechat_log_printf ("    id. . . . . . . . . . . : '%s'", request->id);
 }
 
 /*
@@ -1628,7 +1675,7 @@ relay_http_print_log_response (struct t_relay_http_response *response)
     weechat_log_printf ("    http_version. . . . . . : '%s'", response->http_version);
     weechat_log_printf ("    return_code . . . . . . : %d", response->return_code);
     weechat_log_printf ("    message . . . . . . . . : '%s'", response->message);
-    weechat_log_printf ("    headers . . . . . . . . : 0x%lx (hashtable: '%s')",
+    weechat_log_printf ("    headers . . . . . . . . : %p (hashtable: '%s')",
                         response->headers,
                         weechat_hashtable_get_string (response->headers, "keys_values"));
     weechat_log_printf ("    content_length. . . . . : %d", response->content_length);
