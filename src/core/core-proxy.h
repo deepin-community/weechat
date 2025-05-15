@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -43,6 +43,15 @@ enum t_proxy_type
     PROXY_NUM_TYPES,
 };
 
+enum t_proxy_ipv6
+{
+    PROXY_IPV6_DISABLE = 0,
+    PROXY_IPV6_AUTO,
+    PROXY_IPV6_FORCE,
+    /* number of IPv6 options */
+    PROXY_NUM_IPV6,
+};
+
 struct t_proxy
 {
     char *name;                         /* proxy name                       */
@@ -56,6 +65,7 @@ struct t_proxy
 
 extern char *proxy_option_string[];
 extern char *proxy_type_string[];
+extern char *proxy_ipv6_string[];
 extern struct t_proxy *weechat_proxies;
 extern struct t_proxy *last_weechat_proxy;
 extern struct t_proxy *weechat_temp_proxies;
@@ -79,14 +89,14 @@ extern struct t_proxy *proxy_new (const char *name,
                                   const char *port,
                                   const char *username,
                                   const char *password);
-extern void proxy_use_temp_proxies ();
+extern void proxy_use_temp_proxies (void);
 extern void proxy_free (struct t_proxy *proxy);
-extern void proxy_free_all ();
+extern void proxy_free_all (void);
 extern struct t_hdata *proxy_hdata_proxy_cb (const void *pointer,
                                              void *data,
                                              const char *hdata_name);
 extern int proxy_add_to_infolist (struct t_infolist *infolist,
                                   struct t_proxy *proxy);
-extern void proxy_print_log ();
+extern void proxy_print_log (void);
 
 #endif /* WEECHAT_PROXY_H */

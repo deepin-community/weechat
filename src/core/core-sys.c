@@ -1,7 +1,7 @@
 /*
  * core-sys.c - system actions
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -176,7 +176,7 @@ sys_setrlimit_resource (const char *resource_name, long long limit)
  */
 
 void
-sys_setrlimit ()
+sys_setrlimit (void)
 {
 #ifdef HAVE_SYS_RESOURCE_H
     char **items, *pos, *error;
@@ -222,7 +222,7 @@ sys_setrlimit ()
  */
 
 void
-sys_display_rlimit ()
+sys_display_rlimit (void)
 {
 #ifdef HAVE_SYS_RESOURCE_H
     struct rlimit rlim;
@@ -280,19 +280,19 @@ sys_display_rlimit ()
  */
 
 void
-sys_display_rusage ()
+sys_display_rusage (void)
 {
 #ifdef HAVE_SYS_RESOURCE_H
     struct rusage usage;
     char *str_time;
-    long long microseconds;
+    unsigned long long microseconds;
 
     gui_chat_printf (NULL, "");
     gui_chat_printf (NULL, _("Resource usage (see \"man getrusage\" for help):"));
     getrusage (RUSAGE_SELF, &usage);
     /* ru_utime: user CPU time used */
-    microseconds = ((long long)usage.ru_utime.tv_sec * 1000000)
-        + (long long)usage.ru_utime.tv_usec;
+    microseconds = ((unsigned long long)usage.ru_utime.tv_sec * 1000000)
+        + (unsigned long long)usage.ru_utime.tv_usec;
     str_time = util_get_microseconds_string (microseconds);
     if (str_time)
     {
@@ -300,8 +300,8 @@ sys_display_rusage ()
         free (str_time);
     }
     /* ru_stime: system CPU time used */
-    microseconds = ((long long)usage.ru_stime.tv_sec * 1000000)
-        + (long long)usage.ru_stime.tv_usec;
+    microseconds = ((unsigned long long)usage.ru_stime.tv_sec * 1000000)
+        + (unsigned long long)usage.ru_stime.tv_usec;
     str_time = util_get_microseconds_string (microseconds);
     if (str_time)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,7 +37,7 @@ extern struct t_hdata *buflist_hdata_bar;
 extern struct t_hdata *buflist_hdata_bar_item;
 extern struct t_hdata *buflist_hdata_bar_window;
 
-extern void buflist_add_bar ();
+extern void buflist_add_bar (void);
 extern void buflist_buffer_get_irc_pointers (struct t_gui_buffer *buffer,
                                              void **irc_server,
                                              void **irc_channel);

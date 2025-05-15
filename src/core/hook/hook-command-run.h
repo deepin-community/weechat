@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,6 +34,10 @@ struct t_hook_command_run
 {
     t_hook_callback_command_run *callback; /* command_run callback          */
     char *command;                     /* name of command (without '/')     */
+
+    int keep_spaces_right;             /* if set to 1: don't strip trailing */
+                                       /* spaces in args when the command   */
+                                       /* is executed                       */
 };
 
 extern char *hook_command_run_get_description (struct t_hook *hook);

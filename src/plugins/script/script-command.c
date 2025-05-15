@@ -1,7 +1,7 @@
 /*
  * script-command.c - script command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -315,19 +315,19 @@ script_command_script (const void *pointer, void *data,
  */
 
 void
-script_command_init ()
+script_command_init (void)
 {
     weechat_hook_command (
         "script",
         N_("WeeChat script manager"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("enable"
            " || list [-o|-ol|-i|-il]"
            " || search <text>"
            " || show <script>"
-           " || load|unload|reload <script> [<script>...]"
-           " || autoload|noautoload|toggleautoload <script> [<script>...]"
-           " || install|remove|installremove|hold [-q] <script> [<script>...]"
+           " || load|unload|reload <script>..."
+           " || autoload|noautoload|toggleautoload <script>..."
+           " || install|remove|installremove|hold [-q] <script>..."
            " || upgrade"
            " || update"
            " || -up|-down [<number>]"
@@ -359,7 +359,7 @@ script_command_init ()
             N_("raw[installremove]: install or remove script(s), depending on current "
                "state"),
             N_("raw[hold]: hold/unhold script(s) (a script held will not be "
-               "upgraded any more and cannot be removed)"),
+               "upgraded anymore and cannot be removed)"),
             N_("raw[-q]: quiet mode: do not display messages"),
             N_("raw[upgrade]: upgrade all installed scripts which are obsolete "
                "(new version available)"),
@@ -380,7 +380,7 @@ script_command_init ()
             N_("  `N`: obsolete (new version available)"),
             "",
             N_("In output of /script list, this additional status can be displayed:"),
-            N_("  `?`: unknown script (can not be downloaded/updated)"),
+            N_("  `?`: unknown script (cannot be downloaded/updated)"),
             "",
             N_("In input of script buffer, word(s) are used to filter scripts "
                "on description, tags, ...). The input \"*\" removes the filter."),

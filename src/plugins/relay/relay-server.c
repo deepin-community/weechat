@@ -1,7 +1,7 @@
 /*
  * relay-server.c - server functions for relay plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -251,7 +251,7 @@ relay_server_close_socket (struct t_relay_server *server)
         server->sock = -1;
         if (server->unix_socket)
             unlink (server->path);
-        if (!relay_signal_upgrade_received)
+        if (!weechat_relay_plugin->unload_with_upgrade)
         {
             weechat_printf (NULL,
                             _("%s: socket closed for %s (%s: %s)"),
@@ -976,7 +976,7 @@ relay_server_free (struct t_relay_server *server)
  */
 
 void
-relay_server_free_all ()
+relay_server_free_all (void)
 {
     while (relay_servers)
     {
@@ -1040,7 +1040,7 @@ relay_server_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-relay_server_print_log ()
+relay_server_print_log (void)
 {
     struct t_relay_server *ptr_server;
 

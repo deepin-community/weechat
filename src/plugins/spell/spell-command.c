@@ -1,7 +1,7 @@
 /*
  * spell-command.c - spell checker commands
  *
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -135,7 +135,7 @@ spell_enchant_dict_describe_cb (const char *lang_tag,
  */
 
 void
-spell_command_speller_list_dicts ()
+spell_command_speller_list_dicts (void)
 {
 #ifndef USE_ENCHANT
     char *country, *lang, *pos, *iso;
@@ -153,10 +153,14 @@ spell_command_speller_list_dicts ()
                     SPELL_PLUGIN_NAME);
 
 #ifdef USE_ENCHANT
-    enchant_broker_list_dicts (broker, spell_enchant_dict_describe_cb,
+    enchant_broker_list_dicts (spell_enchant_broker,
+                               spell_enchant_dict_describe_cb,
                                NULL);
 #else
     config = new_aspell_config ();
+#ifdef ASPELL_DICT_DIR
+    aspell_config_replace (config, "dict-dir", ASPELL_DICT_DIR);
+#endif
     list = get_aspell_dict_info_list (config);
     elements = aspell_dict_info_list_elements (list);
 
@@ -267,11 +271,16 @@ spell_command_add_word (struct t_gui_buffer *buffer, const char *dict,
                                 _("%s: error: dictionary \"%s\" is not "
                                   "available on your system"),
                                 SPELL_PLUGIN_NAME, dict);
-                return;
+                goto end;
             }
             new_speller = spell_speller_new (dict);
             if (!new_speller)
-                return;
+            {
+                weechat_printf (NULL,
+                                _("%s%s: unable to create new speller"),
+                                weechat_prefix ("error"), SPELL_PLUGIN_NAME);
+                goto end;
+            }
             ptr_speller = new_speller;
         }
     }
@@ -282,7 +291,12 @@ spell_command_add_word (struct t_gui_buffer *buffer, const char *dict,
         if (!ptr_speller_buffer)
             ptr_speller_buffer = spell_speller_buffer_new (buffer);
         if (!ptr_speller_buffer)
-            goto error;
+        {
+            weechat_printf (NULL,
+                            _("%s%s: no speller found"),
+                            weechat_prefix ("error"), SPELL_PLUGIN_NAME);
+            goto end;
+        }
         if (!ptr_speller_buffer->spellers || !ptr_speller_buffer->spellers[0])
         {
             weechat_printf (NULL,
@@ -290,7 +304,7 @@ spell_command_add_word (struct t_gui_buffer *buffer, const char *dict,
                               "adding word"),
                             weechat_prefix ("error"),
                             SPELL_PLUGIN_NAME);
-            return;
+            goto end;
         }
         else if (ptr_speller_buffer->spellers[1])
         {
@@ -299,7 +313,7 @@ spell_command_add_word (struct t_gui_buffer *buffer, const char *dict,
                               "this buffer, please specify dictionary"),
                             weechat_prefix ("error"),
                             SPELL_PLUGIN_NAME);
-            return;
+            goto end;
         }
         ptr_speller = ptr_speller_buffer->spellers[0];
     }
@@ -316,16 +330,15 @@ spell_command_add_word (struct t_gui_buffer *buffer, const char *dict,
                         SPELL_PLUGIN_NAME, word);
     }
     else
-        goto error;
+    {
+        weechat_printf (NULL,
+                        _("%s%s: failed to add word to personal "
+                          "dictionary: %s"),
+                        weechat_prefix ("error"),
+                        SPELL_PLUGIN_NAME,
+                        aspell_speller_error_message (ptr_speller));
+    }
 #endif /* USE_ENCHANT */
-
-    goto end;
-
-error:
-    weechat_printf (NULL,
-                    _("%s%s: failed to add word to personal "
-                      "dictionary"),
-                    weechat_prefix ("error"), SPELL_PLUGIN_NAME);
 
 end:
     if (new_speller)
@@ -429,7 +442,7 @@ spell_command_cb (const void *pointer, void *data,
     /* set dictionary for current buffer */
     if (weechat_strcmp (argv[1], "setdict") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(3, "setdict");
+        WEECHAT_COMMAND_MIN_ARGS(3, argv[1]);
         dicts = weechat_string_replace (argv_eol[2], " ", "");
         spell_command_set_dict (buffer,
                                 (dicts) ? dicts : argv[2]);
@@ -447,7 +460,7 @@ spell_command_cb (const void *pointer, void *data,
     /* add word to personal dictionary */
     if (weechat_strcmp (argv[1], "addword") == 0)
     {
-        WEECHAT_COMMAND_MIN_ARGS(3, "addword");
+        WEECHAT_COMMAND_MIN_ARGS(3, argv[1]);
         if (argc > 3)
         {
             /* use a given dict */
@@ -469,12 +482,12 @@ spell_command_cb (const void *pointer, void *data,
  */
 
 void
-spell_command_init ()
+spell_command_init (void)
 {
     weechat_hook_command (
         "spell",
         N_("spell plugin configuration"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("enable|disable|toggle"
            " || listdict"
            " || setdict -|<dict>[,<dict>...]"

@@ -1,7 +1,7 @@
 /*
  * core-backtrace.c - backtrace after a segfault
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -149,7 +149,7 @@ weechat_backtrace_addr2line (int number, void *address, const char *symbol)
  */
 
 void
-weechat_backtrace ()
+weechat_backtrace (void)
 {
 #ifdef HAVE_BACKTRACE
     void *trace[BACKTRACE_MAX];

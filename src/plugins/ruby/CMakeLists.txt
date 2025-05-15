@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -28,8 +28,8 @@ if(RUBY_FOUND)
   # caused by Ruby headers (with Ruby ≥ 3.1.0)
   # see: https://github.com/ruby/ruby/pull/7085
   add_definitions(-Wno-unused-parameter)
-  include_directories(${RUBY_INCLUDE_DIRS})
-  target_link_libraries(ruby ${RUBY_LDFLAGS} weechat_plugins_scripts coverage_config)
+  include_directories(${Ruby_INCLUDE_DIRS})
+  target_link_libraries(ruby ${Ruby_LIBRARIES} weechat_plugins_scripts coverage_config)
 endif(RUBY_FOUND)
 
 install(TARGETS ruby LIBRARY DESTINATION "${WEECHAT_LIBDIR}/plugins")

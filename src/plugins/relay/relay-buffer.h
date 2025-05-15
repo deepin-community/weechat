@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -32,6 +32,6 @@ extern int relay_buffer_input_cb (const void *pointer, void *data,
                                   const char *input_data);
 extern int relay_buffer_close_cb (const void *pointer, void *data,
                                   struct t_gui_buffer *buffer);
-extern void relay_buffer_open ();
+extern void relay_buffer_open (void);
 
 #endif /* WEECHAT_PLUGIN_RELAY_BUFFER_H */

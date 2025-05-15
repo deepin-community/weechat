@@ -1,7 +1,7 @@
 /*
  * core-config.c - WeeChat configuration options (file weechat.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -217,8 +217,10 @@ struct t_config_option *config_look_scroll_page_percent = NULL;
 struct t_config_option *config_look_search_text_not_found_alert = NULL;
 struct t_config_option *config_look_separator_horizontal = NULL;
 struct t_config_option *config_look_separator_vertical = NULL;
+struct t_config_option *config_look_tab_whitespace_char = NULL;
 struct t_config_option *config_look_tab_width = NULL;
 struct t_config_option *config_look_time_format = NULL;
+struct t_config_option *config_look_whitespace_char = NULL;
 struct t_config_option *config_look_window_auto_zoom = NULL;
 struct t_config_option *config_look_window_separator_horizontal = NULL;
 struct t_config_option *config_look_window_separator_vertical = NULL;
@@ -307,6 +309,7 @@ struct t_config_option *config_completion_nick_case_sensitive = NULL;
 struct t_config_option *config_completion_nick_completer = NULL;
 struct t_config_option *config_completion_nick_first_only = NULL;
 struct t_config_option *config_completion_nick_ignore_chars = NULL;
+struct t_config_option *config_completion_nick_ignore_words = NULL;
 struct t_config_option *config_completion_partial_completion_alert = NULL;
 struct t_config_option *config_completion_partial_completion_command = NULL;
 struct t_config_option *config_completion_partial_completion_command_arg = NULL;
@@ -361,6 +364,7 @@ int config_num_highlight_tags = 0;
 char **config_plugin_extensions = NULL;
 int config_num_plugin_extensions = 0;
 char config_tab_spaces[TAB_MAX_WIDTH + 1];
+char config_tab_spaces_whitespace[(TAB_MAX_WIDTH * 4) + 1];
 struct t_config_look_word_char_item *config_word_chars_highlight = NULL;
 int config_word_chars_highlight_count = 0;
 struct t_config_look_word_char_item *config_word_chars_input = NULL;
@@ -372,6 +376,7 @@ char **config_eval_syntax_colors = NULL;
 int config_num_eval_syntax_colors = 0;
 char *config_item_time_evaluated = NULL;
 char *config_buffer_time_same_evaluated = NULL;
+struct t_hashtable *config_hashtable_completion_nick_ignore_words = NULL;
 struct t_hashtable *config_hashtable_completion_partial_templates = NULL;
 char **config_hotlist_sort_fields = NULL;
 int config_num_hotlist_sort_fields = 0;
@@ -428,7 +433,7 @@ config_check_config_permissions (const void *pointer, void *data,
  */
 
 void
-config_change_save_config_layout_on_exit ()
+config_change_save_config_layout_on_exit (void)
 {
     if (gui_init_ok && !CONFIG_BOOLEAN(config_look_save_config_on_exit)
         && (CONFIG_ENUM(config_look_save_layout_on_exit) != CONFIG_LOOK_SAVE_LAYOUT_ON_EXIT_NONE))
@@ -761,7 +766,7 @@ config_change_buffer_time_same (const void *pointer, void *data,
  */
 
 void
-config_compute_prefix_max_length_all_buffers ()
+config_compute_prefix_max_length_all_buffers (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -780,7 +785,7 @@ config_compute_prefix_max_length_all_buffers ()
  */
 
 void
-config_set_nick_colors ()
+config_set_nick_colors (void)
 {
     if (config_nick_colors)
     {
@@ -859,7 +864,7 @@ config_change_look_nick_color_force (const void *pointer, void *data,
  */
 
 void
-config_set_eval_syntax_colors ()
+config_set_eval_syntax_colors (void)
 {
     if (config_eval_syntax_colors)
     {
@@ -976,8 +981,7 @@ void
 config_change_emphasized_attributes (const void *pointer, void *data,
                                      struct t_config_option *option)
 {
-    int i;
-    const char *ptr_attr;
+    const char *ptr_attributes, *ptr_attr;
 
     /* make C compiler happy */
     (void) pointer;
@@ -986,12 +990,12 @@ config_change_emphasized_attributes (const void *pointer, void *data,
 
     config_emphasized_attributes = 0;
 
-    ptr_attr = CONFIG_STRING(config_look_emphasized_attributes);
-    if (ptr_attr)
+    ptr_attributes = CONFIG_STRING(config_look_emphasized_attributes);
+    if (ptr_attributes)
     {
-        for (i = 0; ptr_attr[i]; i++)
+        for (ptr_attr = ptr_attributes; *ptr_attr; ptr_attr++)
         {
-            config_emphasized_attributes |= gui_color_attr_get_flag (ptr_attr[i]);
+            config_emphasized_attributes |= gui_color_attr_get_flag (*ptr_attr);
         }
     }
 
@@ -1312,20 +1316,54 @@ config_check_separator (const void *pointer, void *data,
 }
 
 /*
- * Callback for changes on option "weechat.look.tab_width".
+ * Checks options "weechat.look.whitespace_char" and
+ * "weechat.look.tab_whitespace_char".
  */
 
-void
-config_change_tab_width (const void *pointer, void *data,
-                         struct t_config_option *option)
+int
+config_check_whitespace_char (const void *pointer, void *data,
+                              struct t_config_option *option,
+                              const char *value)
 {
     /* make C compiler happy */
     (void) pointer;
     (void) data;
     (void) option;
 
-    memset (config_tab_spaces, ' ', CONFIG_INTEGER(config_look_tab_width));
-    config_tab_spaces[CONFIG_INTEGER(config_look_tab_width)] = '\0';
+    return ((strlen (value) <= 4) && (utf8_strlen_screen (value) == 1)) ? 1 : 0;
+}
+
+/*
+ * Callback for changes on options "weechat.look.tab_width" and
+ * "weechat.look.tab_whitespace_char".
+ */
+
+void
+config_change_tab (const void *pointer, void *data,
+                   struct t_config_option *option)
+{
+    int tab_width, i;
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) option;
+
+    tab_width = CONFIG_INTEGER(config_look_tab_width);
+
+    /* build a string with spaces that replace Tab char */
+    memset (config_tab_spaces, ' ', tab_width);
+    config_tab_spaces[tab_width] = '\0';
+
+    /* replaces spaces in whitespace mode */
+    config_tab_spaces_whitespace[0] = '\0';
+    strcat (config_tab_spaces_whitespace,
+            CONFIG_STRING(config_look_tab_whitespace_char));
+    for (i = 1; i < tab_width; i++)
+    {
+        strcat (config_tab_spaces_whitespace,
+                CONFIG_STRING(config_look_whitespace_char));
+    }
 
     gui_window_ask_refresh (1);
 }
@@ -1382,6 +1420,56 @@ config_change_eval_syntax_colors (const void *pointer, void *data,
 
     config_set_eval_syntax_colors ();
     gui_color_buffer_display ();
+}
+
+/*
+ * Callback for changes on option "weechat.completion.nick_ignore_words".
+ */
+
+void
+config_change_completion_nick_ignore_words (const void *pointer,
+                                            void *data,
+                                            struct t_config_option *option)
+{
+    char **words;
+    int num_words, i;
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) option;
+
+    if (!config_hashtable_completion_nick_ignore_words)
+    {
+        config_hashtable_completion_nick_ignore_words = hashtable_new (
+            32,
+            WEECHAT_HASHTABLE_STRING,
+            WEECHAT_HASHTABLE_POINTER,
+            NULL, NULL);
+    }
+    else
+    {
+        hashtable_remove_all (config_hashtable_completion_nick_ignore_words);
+    }
+
+    words = string_split (
+        CONFIG_STRING(config_completion_nick_ignore_words),
+        ",",
+        NULL,
+        WEECHAT_STRING_SPLIT_STRIP_LEFT
+        | WEECHAT_STRING_SPLIT_STRIP_RIGHT
+        | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
+        0,
+        &num_words);
+    if (words)
+    {
+        for (i = 0; i < num_words; i++)
+        {
+            hashtable_set (config_hashtable_completion_nick_ignore_words,
+                           words[i], NULL);
+        }
+        string_free_split (words);
+    }
 }
 
 /*
@@ -1568,7 +1656,7 @@ config_day_change_timer_cb (const void *pointer, void *data,
  */
 
 void
-config_weechat_init_after_read ()
+config_weechat_init_after_read (void)
 {
     int context;
 
@@ -1652,7 +1740,7 @@ config_weechat_update_cb (const void *pointer, void *data,
         { "number_desc" "-buffer.number" },
         { NULL, NULL },
     };
-    char *new_option;
+    char *new_option, *new_value, *pos_option;
     int changes, i;
 
     /* make C compiler happy */
@@ -1806,6 +1894,47 @@ config_weechat_update_cb (const void *pointer, void *data,
         }
     }
 
+    if (version_read < 4)
+    {
+        /*
+         * changes in v4 (WeeChat 4.4.0):
+         *   - proxy option "ipv6" is converted from boolean to enum:
+         *       - "on"  -> "auto"
+         *       - "off" -> "disable"
+         *     (new possible value "force" is not set by this function)
+         */
+        ptr_config = hashtable_get (data_read, "config");
+        ptr_section = hashtable_get (data_read, "section");
+        ptr_option = hashtable_get (data_read, "option");
+        ptr_value = hashtable_get (data_read, "value");
+        if (ptr_section
+            && ptr_option
+            && (strcmp (ptr_section, "proxy") == 0)
+            && ptr_value)
+        {
+            pos_option = strrchr (ptr_option, '.');
+            if (pos_option && (strcmp (pos_option + 1, "ipv6") == 0))
+            {
+                new_value = (strcmp (ptr_value, "off") == 0) ?
+                    strdup ("disable") : strdup ("auto");
+                if (new_value)
+                {
+                    gui_chat_printf (
+                        NULL,
+                        _("Value of option \"%s.%s.%s\" has been converted: \"%s\" => \"%s\""),
+                        ptr_config,
+                        ptr_section,
+                        ptr_option,
+                        ptr_value,
+                        new_value);
+                    hashtable_set (data_read, "value", new_value);
+                    changes++;
+                    free (new_value);
+                }
+            }
+        }
+    }
+
     return (changes) ? data_read : NULL;
 }
 
@@ -1882,7 +2011,7 @@ config_weechat_debug_get (const char *plugin_name)
  */
 
 void
-config_weechat_debug_set_all ()
+config_weechat_debug_set_all (void)
 {
     struct t_config_option *ptr_option;
     struct t_weechat_plugin *ptr_plugin;
@@ -3102,7 +3231,7 @@ config_weechat_key_delete_option_cb (const void *pointer, void *data,
  */
 
 int
-config_weechat_init_options ()
+config_weechat_init_options (void)
 {
     int context;
     char section_name[128];
@@ -3304,7 +3433,7 @@ config_weechat_init_options ()
         config_look_buffer_search_case_sensitive = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "buffer_search_case_sensitive", "boolean",
-            N_("default text search in buffer: case sensitive or not"),
+            N_("default text search in buffer: case-sensitive or not"),
             NULL, 0, 0, "off", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         config_look_buffer_search_history = config_file_new_option (
@@ -3450,8 +3579,7 @@ config_weechat_init_options ()
         config_look_color_nick_offline = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "color_nick_offline", "boolean",
-            N_("use a different color for offline nicks (not in nicklist any "
-               "more)"),
+            N_("use a different color for offline nicks (not in nicklist anymore)"),
             NULL, 0, 0, "off", NULL, 0,
             NULL, NULL, NULL,
             &config_change_buffers, NULL, NULL,
@@ -3587,9 +3715,9 @@ config_weechat_init_options ()
         config_look_highlight = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "highlight", "string",
-            N_("comma separated list of words to highlight; case insensitive "
+            N_("comma separated list of words to highlight; case-insensitive "
                "comparison (use \"(?-i)\" at beginning of words to make them "
-               "case sensitive), words may begin or end with \"*\" for partial "
+               "case-sensitive), words may begin or end with \"*\" for partial "
                "match; example: \"test,(?-i)*toto*,flash*\""),
             NULL, 0, 0, "", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -3600,8 +3728,8 @@ config_weechat_init_options ()
                "from a message: this option has higher priority over other "
                "highlight options (if the string is found in the message, the "
                "highlight is disabled and the other options are ignored), "
-               "regular expression is case insensitive (use \"(?-i)\" at "
-               "beginning to make it case sensitive), examples: "
+               "regular expression is case-insensitive (use \"(?-i)\" at "
+               "beginning to make it case-sensitive), examples: "
                "\"<flash.*>\", \"(?-i)<Flash.*>\""),
             NULL, 0, 0, "", NULL, 0,
             NULL, NULL, NULL,
@@ -3622,8 +3750,8 @@ config_weechat_init_options ()
             N_("POSIX extended regular expression used to check if a message "
                "has highlight or not, at least one match in string must be "
                "surrounded by delimiters (chars different from: alphanumeric, "
-               "\"-\", \"_\" and \"|\"), regular expression is case insensitive "
-               "(use \"(?-i)\" at beginning to make it case sensitive), "
+               "\"-\", \"_\" and \"|\"), regular expression is case-insensitive "
+               "(use \"(?-i)\" at beginning to make it case-sensitive), "
                "examples: \"flashcode|flashy\", \"(?-i)FlashCode|flashy\""),
             NULL, 0, 0, "", NULL, 0,
             NULL, NULL, NULL,
@@ -3632,7 +3760,7 @@ config_weechat_init_options ()
         config_look_highlight_tags = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "highlight_tags", "string",
-            N_("comma separated list of tags to highlight; case insensitive "
+            N_("comma separated list of tags to highlight; case-insensitive "
                "comparison; wildcard \"*\" is allowed in each tag; many tags "
                "can be separated by \"+\" to make a logical \"and\" between "
                "tags; examples: \"nick_flashcode\" for messages from nick "
@@ -3754,11 +3882,11 @@ config_weechat_init_options ()
                "a hdata variable of hotlist (\"var\") or a hdata variable of "
                "buffer (\"buffer.var\"); "
                "char \"-\" can be used before field to reverse order, "
-               "char \"~\" can be used to do a case insensitive comparison; "
+               "char \"~\" can be used to do a case-insensitive comparison; "
                "examples: "
                "\"-priority,buffer.number\" for sort on hotlist priority then by "
                "buffer number, "
-               "\"-~buffer.full_name\" for case insensitive and reverse "
+               "\"-~buffer.full_name\" for case-insensitive and reverse "
                "sort on buffer full name"),
             NULL, 0, 0, "-priority,time,time_usec", NULL, 0,
             NULL, NULL, NULL,
@@ -4297,13 +4425,24 @@ config_weechat_init_options ()
             &config_check_separator, NULL, NULL,
             &config_change_buffers, NULL, NULL,
             NULL, NULL, NULL);
+        config_look_tab_whitespace_char = config_file_new_option (
+            weechat_config_file, weechat_config_section_look,
+            "tab_whitespace_char", "string",
+            N_("first char to display for tabulations when whitespace mode is "
+               "enabled with command `/debug whitespace`; width on screen must "
+               "be exactly one char; subsequent chars are set by option "
+               "weechat.look.whitespace_char"),
+            NULL, 0, 0, "→", NULL, 0,
+            &config_check_whitespace_char, NULL, NULL,
+            &config_change_tab, NULL, NULL,
+            NULL, NULL, NULL);
         config_look_tab_width = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "tab_width", "integer",
             N_("number of spaces used to display tabs in messages"),
             NULL, 1, TAB_MAX_WIDTH, "1", NULL, 0,
             NULL, NULL, NULL,
-            &config_change_tab_width, NULL, NULL,
+            &config_change_tab, NULL, NULL,
             NULL, NULL, NULL);
         config_look_time_format = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
@@ -4312,6 +4451,16 @@ config_weechat_init_options ()
                "messages (see man strftime for date/time specifiers)"),
             NULL, 0, 0, "%a, %d %b %Y %T", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        config_look_whitespace_char = config_file_new_option (
+            weechat_config_file, weechat_config_section_look,
+            "whitespace_char", "string",
+            N_("char to display for spaces when whitespace mode is enabled with "
+               "command `/debug whitespace`; width on screen must be exactly "
+               "one char; see also option weechat.look.tab_whitespace_char"),
+            NULL, 0, 0, "·", NULL, 0,
+            &config_check_whitespace_char, NULL, NULL,
+            &config_change_buffers, NULL, NULL,
+            NULL, NULL, NULL);
         config_look_window_auto_zoom = config_file_new_option (
             weechat_config_file, weechat_config_section_look,
             "window_auto_zoom", "boolean",
@@ -4531,7 +4680,7 @@ config_weechat_init_options ()
         config_color_chat_nick_offline = config_file_new_option (
             weechat_config_file, weechat_config_section_color,
             "chat_nick_offline", "color",
-            N_("text color for offline nick (not in nicklist any more); this "
+            N_("text color for offline nick (not in nicklist anymore); this "
                "color is used only if option weechat.look.color_nick_offline is "
                "enabled"),
             NULL, GUI_COLOR_CHAT_NICK_OFFLINE, 0, "242", NULL, 0,
@@ -5024,7 +5173,7 @@ config_weechat_init_options ()
         config_completion_case_sensitive = config_file_new_option (
             weechat_config_file, weechat_config_section_completion,
             "case_sensitive", "boolean",
-            N_("if enabled, the completion is case sensitive by default"),
+            N_("if enabled, the completion is case-sensitive by default"),
             NULL, 0, 0, "on", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         config_completion_command_inline = config_file_new_option (
@@ -5055,7 +5204,7 @@ config_weechat_init_options ()
         config_completion_nick_case_sensitive = config_file_new_option (
             weechat_config_file, weechat_config_section_completion,
             "nick_case_sensitive", "boolean",
-            N_("case sensitive completion for nicks"),
+            N_("case-sensitive completion for nicks"),
             NULL, 0, 0, "off", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         config_completion_nick_completer = config_file_new_option (
@@ -5077,6 +5226,19 @@ config_weechat_init_options ()
             N_("chars ignored for nick completion"),
             NULL, 0, 0, "[]`_-^", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        config_completion_nick_ignore_words = config_file_new_option (
+            weechat_config_file, weechat_config_section_completion,
+            "nick_ignore_words", "string",
+            N_("comma-separated list of nicks to ignore (not completed); "
+               "the whole nick must be set in this option even if chars are "
+               "ignored in completion with option "
+               "weechat.completion.nick_ignore_chars; look up for nicks is with "
+               "exact case then lower case, so it's possible to use only lower "
+               "case for nicks in this option"),
+            NULL, 0, 0, "", NULL, 0,
+            NULL, NULL, NULL,
+            &config_change_completion_nick_ignore_words, NULL, NULL,
+            NULL, NULL, NULL);
         config_completion_partial_completion_alert = config_file_new_option (
             weechat_config_file, weechat_config_section_completion,
             "partial_completion_alert", "boolean",
@@ -5430,7 +5592,7 @@ config_weechat_init_options ()
  */
 
 int
-config_weechat_init ()
+config_weechat_init (void)
 {
     int rc;
     struct timeval tv_time;
@@ -5438,6 +5600,8 @@ config_weechat_init ()
     time_t seconds;
 
     snprintf (config_tab_spaces, sizeof (config_tab_spaces), " ");
+    snprintf (config_tab_spaces_whitespace, sizeof (config_tab_spaces_whitespace),
+              "\u2192");
 
     rc = config_weechat_init_options ();
 
@@ -5473,6 +5637,8 @@ config_weechat_init ()
         config_change_word_chars_highlight (NULL, NULL, NULL);
     if (!config_word_chars_input)
         config_change_word_chars_input (NULL, NULL, NULL);
+    if (!config_hashtable_completion_nick_ignore_words)
+        config_change_completion_nick_ignore_words (NULL, NULL, NULL);
     if (!config_hashtable_completion_partial_templates)
         config_change_completion_partial_completion_templates (NULL, NULL, NULL);
 
@@ -5489,7 +5655,7 @@ config_weechat_init ()
  */
 
 int
-config_weechat_read ()
+config_weechat_read (void)
 {
     int rc;
 
@@ -5512,7 +5678,7 @@ config_weechat_read ()
  */
 
 int
-config_weechat_write ()
+config_weechat_write (void)
 {
     return config_file_write (weechat_config_file);
 }
@@ -5522,7 +5688,7 @@ config_weechat_write ()
  */
 
 void
-config_weechat_free ()
+config_weechat_free (void)
 {
     config_file_free (weechat_config_file);
 
@@ -5598,6 +5764,12 @@ config_weechat_free ()
     {
         free (config_buffer_time_same_evaluated);
         config_buffer_time_same_evaluated = NULL;
+    }
+
+    if (config_hashtable_completion_nick_ignore_words)
+    {
+        hashtable_free (config_hashtable_completion_nick_ignore_words);
+        config_hashtable_completion_nick_ignore_words = NULL;
     }
 
     if (config_hashtable_completion_partial_templates)

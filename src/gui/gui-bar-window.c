@@ -1,7 +1,7 @@
 /*
  * gui-bar-window.c - bar window functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -395,7 +395,7 @@ gui_bar_window_calculate_pos_size (struct t_gui_bar_window *bar_window,
             break;
     }
 
-    /* bar window can not be displayed? (not enough space left) */
+    /* bar window cannot be displayed? (not enough space left) */
     if ((bar_window->x < x1) || (bar_window->x > x2)
         || (bar_window->y < y1) || (bar_window->y > y2)
         || (bar_window->width < 1) || (bar_window->height < 1))
@@ -702,7 +702,7 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
     char **content, str_reinit_color[32];
     char str_reinit_color_space[32], str_reinit_color_space_start_line[32];
     char str_start_item[32];
-    char *item_value, *item_value2, ****split_items, **linear_items;
+    char *item_value, *item_value2, ****split_items, **linear_items, **ptr_item;
     int i, j, k, sub, index;
     int at_least_one_item, first_sub_item;
     int length_reinit_color, length_reinit_color_space, length_start_item;
@@ -856,15 +856,15 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
                                 | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
                                 0,
                                 NULL);
-                            for (j = 0; split_items[i][sub][j]; j++)
+                            for (ptr_item = split_items[i][sub]; *ptr_item; ptr_item++)
                             {
                                 total_items++;
 
-                                length = strlen (split_items[i][sub][j]);
+                                length = strlen (*ptr_item);
                                 if (length > max_length)
                                     max_length = length;
 
-                                length = gui_chat_strlen_screen (split_items[i][sub][j]);
+                                length = gui_chat_strlen_screen (*ptr_item);
                                 if (length > max_length_screen)
                                     max_length_screen = length;
                             }
@@ -911,9 +911,10 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
                         {
                             if (split_items[i][sub])
                             {
-                                for (j = 0; split_items[i][sub][j]; j++)
+                                for (ptr_item = split_items[i][sub]; *ptr_item;
+                                     ptr_item++)
                                 {
-                                    linear_items[index++] = split_items[i][sub][j];
+                                    linear_items[index++] = *ptr_item;
                                 }
                             }
                         }
@@ -976,7 +977,7 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
             break;
     }
 
-    if (!*content[0])
+    if (!(*content)[0])
     {
         string_dyn_free (content, 1);
         return NULL;
@@ -991,7 +992,7 @@ gui_bar_window_content_get_with_filling (struct t_gui_bar_window *bar_window,
  *
  * Returns:
  *   1: spacers can be used
- *   0: spacers can not be used
+ *   0: spacers cannot be used
  */
 
 int

@@ -1,7 +1,7 @@
 /*
  * test-core-list.cpp - test list functions
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -273,7 +273,7 @@ TEST(CoreList, Get)
 
     /* get string value of an element */
 
-    POINTERS_EQUAL(NULL, weelist_string (NULL));
+    STRCMP_EQUAL(NULL, weelist_string (NULL));
 
     ptr_item = weelist_get(list, 0);
     STRCMP_EQUAL(LIST_VALUE_TEST, weelist_string (ptr_item));

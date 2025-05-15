@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -64,6 +64,7 @@ set(LIB_WEECHAT_UNIT_TESTS_CORE_SRC
   unit/core/test-core-hdata.cpp
   unit/core/test-core-hook.cpp
   unit/core/test-core-infolist.cpp
+  unit/core/test-core-input.cpp
   unit/core/test-core-list.cpp
   unit/core/test-core-network.cpp
   unit/core/test-core-secure.cpp
@@ -158,7 +159,9 @@ endif()
 if (ENABLE_RELAY)
   list(APPEND LIB_WEECHAT_UNIT_TESTS_PLUGINS_SRC
     unit/plugins/relay/test-relay-auth.cpp
+    unit/plugins/relay/test-relay-bar-item.cpp
     unit/plugins/relay/test-relay-http.cpp
+    unit/plugins/relay/test-relay-raw.cpp
     unit/plugins/relay/test-relay-remote.cpp
     unit/plugins/relay/test-relay-websocket.cpp
     unit/plugins/relay/irc/test-relay-irc.cpp
@@ -200,7 +203,7 @@ if(ICONV_LIBRARY)
   list(APPEND EXTRA_LIBS ${ICONV_LIBRARY})
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD" OR ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
   list(APPEND EXTRA_LIBS "intl")
   if(HAVE_BACKTRACE)
     list(APPEND EXTRA_LIBS "execinfo")
@@ -224,10 +227,7 @@ target_link_libraries(tests
   weechat_gui_headless
   weechat_ncurses_fake
   weechat_unit_tests_core
-  # due to circular references, we must link two times with libweechat_core.a
-  weechat_core
   ${EXTRA_LIBS}
-  ${CURL_LIBRARIES}
   ${ZLIB_LIBRARY}
   ${LIBZSTD_LDFLAGS}
   ${CPPUTEST_LIBRARIES}

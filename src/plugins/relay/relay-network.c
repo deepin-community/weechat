@@ -1,7 +1,7 @@
 /*
  * relay-network.c - network functions for relay plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -138,7 +138,7 @@ relay_network_set_tls_cert_key (int verbose)
  */
 
 void
-relay_network_set_priority ()
+relay_network_set_priority (void)
 {
     if (gnutls_priority_init (relay_gnutls_priority_cache,
                               weechat_config_string (
@@ -158,7 +158,7 @@ relay_network_set_priority ()
  */
 
 void
-relay_network_init ()
+relay_network_init (void)
 {
     relay_network_init_ok = 0;
     relay_network_init_tls_cert_key_ok = 0;
@@ -180,7 +180,7 @@ relay_network_init ()
  */
 
 void
-relay_network_end ()
+relay_network_end (void)
 {
     if (relay_network_init_ok)
     {

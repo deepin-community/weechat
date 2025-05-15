@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2017-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ from unparse import (  # noqa: E402
     UnparseLua,
     UnparseTcl,
     UnparseGuile,
-    UnparseJavascript,
+    UnparseJavaScript,
     UnparsePhp,
 )
 
@@ -81,7 +81,7 @@ class WeechatScript(object):  # pylint: disable=too-many-instance-attributes
     """
     A generic WeeChat script.
 
-    This class must NOT be instanciated directly, use subclasses instead:
+    This class must NOT be instantiated directly, use subclasses instead:
     PythonScript, PerlScript, ...
     """
 
@@ -144,8 +144,8 @@ class WeechatScript(object):  # pylint: disable=too-many-instance-attributes
         }
         # replace variables
         for node in ast.walk(self.tree):
-            if isinstance(node, ast.Str) and node.s in variables:
-                node.s = variables[node.s]
+            if isinstance(node, ast.Constant) and node.value in variables:
+                node.value = variables[node.value]
 
     def write_header(self, output):
         """Generate script header (just comments by default)."""
@@ -279,12 +279,12 @@ class WeechatGuileScript(WeechatScript):
                      '(weechat_init)\n')
 
 
-class WeechatJavascriptScript(WeechatScript):
-    """A WeeChat script written in Javascript."""
+class WeechatJavaScriptScript(WeechatScript):
+    """A WeeChat script written in JavaScript."""
 
     def __init__(self, tree, source_script, output_dir):
-        super(WeechatJavascriptScript, self).__init__(
-            UnparseJavascript, tree, source_script, output_dir,
+        super(WeechatJavaScriptScript, self).__init__(
+            UnparseJavaScript, tree, source_script, output_dir,
             'javascript', 'js', comment_char='//')
 
     def write_footer(self, output):
@@ -336,8 +336,8 @@ def update_nodes(tree):
             output = StringIO()
             unparsed = UnparsePython(output=output)
             unparsed.add(node.args[0])
-            node.args.append(ast.Str(output.getvalue()))
-            node.args.append(ast.Str(str(node.func.lineno)))
+            node.args.append(ast.Constant(output.getvalue()))
+            node.args.append(ast.Constant(str(node.func.lineno)))
 
 
 def get_tests(path):

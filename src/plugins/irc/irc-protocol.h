@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -27,11 +27,8 @@
     irc_protocol_cb_##__command (                                       \
         struct t_irc_protocol_ctxt *ctxt)
 
-#define IRCB(__message, __decode_color, __keep_trailing_spaces,         \
-             __func_cb)                                                 \
+#define IRCB(__message, __func_cb)                                      \
     { #__message,                                                       \
-      __decode_color,                                                   \
-      __keep_trailing_spaces,                                           \
       &irc_protocol_cb_##__func_cb }
 
 #define IRC_PROTOCOL_MIN_PARAMS(__min_params)                           \
@@ -72,7 +69,7 @@ struct t_irc_protocol_ctxt
     char *host;                        /* host of sender                    */
     char *command;                     /* IRC command (eg: PRIVMSG)         */
     int ignore_remove;                 /* msg ignored (not displayed)       */
-    int ignore_tag;                    /* mse ignored (displayed with tag)  */
+    int ignore_tag;                    /* msg ignored (displayed with tag)  */
     char **params;                     /* IRC command parameters            */
     int num_params;                    /* number of IRC command parameters  */
 };
@@ -82,8 +79,6 @@ typedef int (t_irc_recv_func)(struct t_irc_protocol_ctxt *ctxt);
 struct t_irc_protocol_msg
 {
     char *name;                     /* IRC message name                      */
-    int decode_color;               /* decode color before calling function  */
-    int keep_trailing_spaces;       /* keep trailing spaces in message       */
     t_irc_recv_func *recv_function; /* function called when msg is received  */
 };
 

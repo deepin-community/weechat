@@ -1,7 +1,7 @@
 /*
  * script-completion.c - completions for script command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -287,7 +287,7 @@ script_completion_tags_cb (const void *pointer, void *data,
  */
 
 void
-script_completion_init ()
+script_completion_init (void)
 {
     weechat_hook_completion ("script_languages",
                              N_("list of script languages"),

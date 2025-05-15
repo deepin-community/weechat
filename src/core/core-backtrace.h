@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,11 +17,11 @@
  * along with WeeChat.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef WEECHAT_BACKTACE_H
-#define WEECHAT_BACKTACE_H
+#ifndef WEECHAT_BACKTRACE_H
+#define WEECHAT_BACKTRACE_H
 
 #define BACKTRACE_MAX 128
 
-extern void weechat_backtrace ();
+extern void weechat_backtrace (void);
 
-#endif /* WEECHAT_BACKTACE_H */
+#endif /* WEECHAT_BACKTRACE_H */

@@ -2,7 +2,7 @@
  * spell.c - spell checker plugin for WeeChat
  *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Nils Görs <weechatter@arcor.de>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -58,7 +58,7 @@ char *spell_nick_completer = NULL;
 int spell_len_nick_completer = 0;
 
 #ifdef USE_ENCHANT
-EnchantBroker *broker = NULL;
+EnchantBroker *spell_enchant_broker = NULL;
 #endif /* USE_ENCHANT */
 
 /*
@@ -190,7 +190,7 @@ char *spell_url_prefix[] =
  */
 
 void
-spell_warning_aspell_config ()
+spell_warning_aspell_config (void)
 {
     char *aspell_filename, *spell_filename;
 
@@ -231,7 +231,6 @@ spell_build_option_name (struct t_gui_buffer *buffer)
 {
     const char *plugin_name, *name;
     char *option_name;
-    int length;
 
     if (!buffer)
         return NULL;
@@ -239,12 +238,7 @@ spell_build_option_name (struct t_gui_buffer *buffer)
     plugin_name = weechat_buffer_get_string (buffer, "plugin");
     name = weechat_buffer_get_string (buffer, "name");
 
-    length = strlen (plugin_name) + 1 + strlen (name) + 1;
-    option_name = malloc (length);
-    if (!option_name)
-        return NULL;
-
-    snprintf (option_name, length, "%s.%s", plugin_name, name);
+    weechat_asprintf (&option_name, "%s.%s", plugin_name, name);
 
     return option_name;
 }
@@ -719,7 +713,6 @@ spell_modifier_cb (const void *pointer, void *data,
                    const char *modifier,
                    const char *modifier_data, const char *string)
 {
-    unsigned long value;
     struct t_gui_buffer *buffer;
     struct t_spell_speller_buffer *ptr_speller_buffer;
     char **result, *ptr_string, *ptr_string_orig, *pos_space;
@@ -742,11 +735,9 @@ spell_modifier_cb (const void *pointer, void *data,
     if (!string)
         return NULL;
 
-    rc = sscanf (modifier_data, "%lx", &value);
+    rc = sscanf (modifier_data, "%p", &buffer);
     if ((rc == EOF) || (rc == 0))
         return NULL;
-
-    buffer = (struct t_gui_buffer *)value;
 
     /* check text during search only if option is enabled */
     if (weechat_buffer_get_integer (buffer, "text_search")
@@ -992,14 +983,13 @@ spell_modifier_cb (const void *pointer, void *data,
                                                  misspelled_word);
             if (suggestions)
             {
-                length = strlen (misspelled_word) + 1 /* ":" */
-                    + strlen (suggestions) + 1;
-                word_and_suggestions = malloc (length);
-                if (word_and_suggestions)
+                if (weechat_asprintf (&word_and_suggestions,
+                                      "%s:%s",
+                                      misspelled_word,
+                                      suggestions) >= 0)
                 {
-                    snprintf (word_and_suggestions, length, "%s:%s",
-                              misspelled_word, suggestions);
-                    weechat_buffer_set (buffer, "localvar_set_spell_suggest",
+                    weechat_buffer_set (buffer,
+                                        "localvar_set_spell_suggest",
                                         word_and_suggestions);
                     free (word_and_suggestions);
                 }
@@ -1187,9 +1177,14 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
 #ifdef USE_ENCHANT
     /* acquire enchant broker */
-    broker = enchant_broker_init ();
-    if (!broker)
+    spell_enchant_broker = enchant_broker_init ();
+    if (!spell_enchant_broker)
         return WEECHAT_RC_ERROR;
+#ifdef ENCHANT_MYSPELL_DICT_DIR
+    enchant_broker_set_param(spell_enchant_broker,
+                             "enchant.myspell.dictionary.path",
+                             ENCHANT_MYSPELL_DICT_DIR);
+#endif
 #endif /* USE_ENCHANT */
 
     if (!spell_speller_init ())
@@ -1254,8 +1249,8 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
 #ifdef USE_ENCHANT
     /* release enchant broker */
-    enchant_broker_free (broker);
-    broker = NULL;
+    enchant_broker_free (spell_enchant_broker);
+    spell_enchant_broker = NULL;
 #endif /* USE_ENCHANT */
 
     if (spell_nick_completer)

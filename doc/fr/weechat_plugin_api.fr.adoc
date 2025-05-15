@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: fr
-:toc-title: Table des matières
+include::includes/attributes-fr.adoc[]
 
 Ce manuel documente le client de messagerie instantanée WeeChat, il fait
 partie de WeeChat.
@@ -170,9 +170,10 @@ _weechat-plugin.h_ est requis.
 
 Pour compiler l'extension qui n'a qu'un fichier "toto.c" (sous GNU/Linux) :
 
+[source,shell]
 ----
-$ gcc -fPIC -Wall -c toto.c
-$ gcc -shared -fPIC -o toto.so toto.o
+gcc -fPIC -Wall -c toto.c
+gcc -shared -fPIC -o toto.so toto.o
 ----
 
 [[load_plugin]]
@@ -2663,8 +2664,7 @@ str3 = weechat.string_input_for_buffer("//test")  # "/test"
 
 ==== string_eval_expression
 
-_WeeChat ≥ 0.4.0, mis à jour dans la 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8,
-2.0, 2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6, 3.8, 4.0.0, 4.2.0, 4.3.0._
+_WeeChat ≥ 0.4.0, mis à jour dans la 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6, 3.8, 4.0.0, 4.2.0, 4.3.0, 4.4.0._
 
 Évaluer l'expression et retourner le résultat sous forme de chaîne.
 Les variables spéciales avec le format `+${variable}+` sont étendues (voir le
@@ -3389,6 +3389,12 @@ première étendue à la dernière) :
   expression évaluée avec `+${nom}+`.
 | >> `+${define:len,${calc:5+3}}${len}x${len}+` +
   == `+8x8+`
+
+| `+${hdata_count:name[list]}+` +
+  `+${hdata_count:name[pointer]}+` | 4.4.0
+| Nombre d'éléments dans la liste hdata ou en démarrant à `pointer`.
+| >> `+${hdata_count:buffer[gui_buffers]}+` +
+  == `+15+`
 
 | `+${sec.data.nom}+` |
 | Valeur de la donnée sécurisée `nom`.
@@ -5898,7 +5904,7 @@ Fonctions pour les tables de hachage.
 
 ==== hashtable_new
 
-_WeeChat ≥ 0.3.3._
+_WeeChat ≥ 0.3.3, mis à jour dans la 4.4.0._
 
 Créer une nouvelle table de hachage.
 
@@ -5928,12 +5934,14 @@ Paramètres :
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _type_values_ : type pour les valeurs dans la table de hachage :
 ** _WEECHAT_HASHTABLE_INTEGER_
 ** _WEECHAT_HASHTABLE_STRING_
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _callback_hash_key_ : fonction appelée pour rendre le hachage d'une clé (la
   clé sous forme de nombre entier), peut être NULL si le type de clé n'est pas
   "buffer" (une fonction de hachage par défaut est utilisée), paramètres et
@@ -6301,12 +6309,14 @@ Paramètres :
 *** _pointer_ : pointeur
 *** _buffer_ : buffer
 *** _time_ : heure
+*** _longlong_: entier de type "long long"
 ** _type_values_ : type pour les valeurs :
 *** _integer_ : entier
 *** _string_ : chaîne
 *** _pointer_ : pointeur
 *** _buffer_ : buffer
 *** _time_ : heure
+*** _longlong_: entier de type "long long"
 ** _keys_ : chaîne avec la liste des clés (format : "clé1,clé2,clé3")
 ** _keys_sorted_ : chaîne avec la liste triée des clés (format :
    "clé1,clé2,clé3")
@@ -8246,7 +8256,7 @@ def config_boolean_inherited(option: str) -> int: ...
 
 # exemple
 option = weechat.config_get("irc.server.libera.autoconnect")
-autoconect = weechat.config_boolean_inherited(option)
+autoconnect = weechat.config_boolean_inherited(option)
 ----
 
 ==== config_integer
@@ -9558,7 +9568,7 @@ _WeeChat ≥ 0.3.6, mis à jour dans la 2.0._
 
 Supprimer une/des association(s) de touche(s).
 
-[WARNING]
+[CAUTION]
 Lors de l'appel à cette fonction, assurez-vous que vous n'allez pas supprimer
 une touche définie par l'utilisateur.
 
@@ -11175,6 +11185,11 @@ _WeeChat ≥ 4.1.0._
 
 Transfert d'URL.
 
+Cette fonction est similaire à <<_hook_process,hook_process>> et
+<<_hook_process_hashtable,hook_process_hashtable>> avec la commande "url:..."
+mais elle utilise un thread au lieu d'un nouveau processus, la rendant plus
+légère et donc recommandée pour cet usage.
+
 Prototype :
 
 [source,c]
@@ -11328,7 +11343,7 @@ hook2 = weechat.hook_url("http://localhost:8080/", options, 20000, "my_url_cb", 
 
 ==== hook_connect
 
-_Mis à jour dans la 1.5, 2.0._
+_Mis à jour dans la 1.5, 2.0, 4.4.0._
 
 Accrocher une connexion (connexion à une machine distante en tâche de fond).
 
@@ -11363,8 +11378,10 @@ Paramètres :
   une connexion sans proxy)
 * _address_ : nom ou adresse IP de la machine à laquelle se connecter
 * _port_ : numéro de port
-* _ipv6_ : 1 pour utiliser IPv6 (avec repli sur IPv4), 0 pour utiliser seulement
-  IPv4
+* _ipv6_:
+** `WEECHAT_HOOK_CONNECT_IPV6_DISABLE` ^(1)^ : désactiver IPv6 (utiliser seulement IPv4)
+** `WEECHAT_HOOK_CONNECT_IPV6_AUTO` ^(1)^ : utiliser IPv6 avec repli sur IPv4
+** `WEECHAT_HOOK_CONNECT_IPV6_FORCE` ^(1)^ : forcer IPv6 (ne pas utiliser IPv4) _(WeeChat ≥ 4.4.0)_
 * _retry_ : numéro de nouvelle tentative, utilisé pour se rabattre sur les
   adresses IPv4 si la connexion IPv6 échoue
 * _gnutls_sess_ : session GnuTLS (optionnel)
@@ -11386,7 +11403,7 @@ Paramètres :
   paramètres et valeur de retour :
 ** _const void *pointer_ : pointeur
 ** _void *data_ : pointeur
-** _int status_ : statut de connexion :
+** _int status_ : statut de connexion ^(2)^ :
 *** _WEECHAT_HOOK_CONNECT_OK_ : connexion ok
 *** _WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND_ : adresse non trouvée
 *** _WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND_ : adresse IP non trouvée
@@ -11399,8 +11416,8 @@ Paramètres :
 *** _WEECHAT_HOOK_CONNECT_MEMORY_ERROR_ : mémoire insuffisante
 *** _WEECHAT_HOOK_CONNECT_TIMEOUT_ : temps maximum dépassé
 *** _WEECHAT_HOOK_CONNECT_SOCKET_ERROR_ : erreur de création socket
-** _gnutls_rc_ : valeur retour de _gnutls_handshake()_
-** _sock_ : socket utilisé pour la connexion
+** _gnutls_rc_ : valeur retour de _gnutls_handshake()_ ^(2)^
+** _sock_ : socket utilisé pour la connexion ^(2)^
 ** _const char *error_ : valeur retour de _gnutls_strerror(gnutls_rc)_
 ** _const char *ip_address_ : adresse IP trouvée
 ** valeur de retour :
@@ -11413,16 +11430,20 @@ Paramètres :
   fonction similaire) et est automatiquement libéré (par free) lorsque le
   "hook" est supprimé
 
-Valeur de retour :
-
-* pointeur vers le nouveau "hook", NULL en cas d'erreur
-
-[IMPORTANT]
-Dans les scripts, avec WeeChat ≥ 2.0, les paramètres de la fonction de rappel
+[NOTE]
+^(1)^ Les constantes pour le paramètre _ipv6_ sont disponibles à partir de
+WeeChat 4.4.0. +
+Pour les versions plus anciennes, les valeurs autorisées sont `1` (utiliser IPv6
+avec repli sur IPv4) et `0` (désactiver IPv6, utiliser seulement IPv4). +
+^(2)^ Dans les scripts, avec WeeChat ≥ 2.0, les paramètres de la fonction de rappel
 _status_, _gnutls_rc_ et _sock_ sont des entiers (avec WeeChat ≤ 1.9, ils étaient
 des chaînes). +
 Pour être compatible avec toutes les versions, il est recommandé de convertir
 le paramètre avant de l'utiliser, par exemple en Python: `int(sock)`.
+
+Valeur de retour :
+
+* pointeur vers le nouveau "hook", NULL en cas d'erreur
 
 Exemple en C :
 
@@ -11473,7 +11494,8 @@ my_connect_cb (const void *pointer, void *data, int status, int gnutls_rc,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       1, 0,
+                                                       WEECHAT_HOOK_CONNECT_IPV6_AUTO,
+                                                       0,
                                                        NULL, NULL, 0,  /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL, NULL);
@@ -11489,31 +11511,32 @@ def hook_connect(proxy: str, address: str, port: int, ipv6: int, retry: int, loc
 
 # exemple
 def my_connect_cb(data: str, status: int, gnutls_rc: int, sock: int, error: str, ip_address: str) -> int:
-    if status == WEECHAT_HOOK_CONNECT_OK:
+    if status == weechat.WEECHAT_HOOK_CONNECT_OK:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_PROXY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_PROXY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_TIMEOUT:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234,
+                            weechat.WEECHAT_HOOK_CONNECT_IPV6_AUTO, 0, "",
                             "my_connect_cb", "")
 ----
 
@@ -11790,7 +11813,7 @@ Exemple en C :
 [source,c]
 ----
 int
-my_line_cb (const void *pointer, void *data, struct t_hasbtable *line)
+my_line_cb (const void *pointer, void *data, struct t_hashtable *line)
 {
     struct t_hashtable *hashtable;
 
@@ -12357,6 +12380,10 @@ Liste des signaux envoyés par WeeChat et les extensions :
 | Pointeur : ligne.
 | Ligne ajoutée dans un tampon.
 
+| weechat | [[hook_signal_buffer_line_data_changed]] buffer_line_data_changed | 4.4.0
+| Pointeur : données de la ligne.
+| Les données de la ligne ont changé dans un tampon.
+
 | weechat | [[hook_signal_buffer_lines_hidden]] buffer_lines_hidden |
 | Pointeur : tampon.
 | Lignes cachées dans le tampon.
@@ -12400,6 +12427,10 @@ Liste des signaux envoyés par WeeChat et les extensions :
 | weechat | [[hook_signal_buffer_modes_changed]] buffer_modes_changed | 4.3.0
 | Pointeur : tampon.
 | Modes du tampon changés.
+
+| weechat | [[hook_signal_buffer_time_for_each_line_changed]] buffer_time_for_each_line_changed | 4.4.0
+| Pointeur : tampon.
+| Affichage de l'heure pour chaque ligne changé.
 
 | weechat | [[hook_signal_buffer_type_changed]] buffer_type_changed |
 | Pointeur : tampon.
@@ -12512,6 +12543,14 @@ Liste des signaux envoyés par WeeChat et les extensions :
 | weechat | [[hook_signal_key_combo_cursor]] key_combo_cursor | 1.0
 | Chaîne : combinaison de touches.
 | Combinaison de touches dans le contexte _cursor_.
+
+| weechat | [[hook_signal_layout_buffers_applied]] layout_buffers_applied | 4.4.0
+| Chaîne : nom de la disposition.
+| Disposition appliquée pour les tampons.
+
+| weechat | [[hook_signal_layout_windows_applied]] layout_windows_applied | 4.4.0
+| Chaîne : nom de la disposition.
+| Disposition appliquée pour les fenêtres.
 
 | weechat | [[hook_signal_mouse_enabled]] mouse_enabled | 1.1
 | -
@@ -12706,7 +12745,7 @@ hook = weechat.hook_signal("quit;upgrade", "my_signal_cb", "")
 
 ==== hook_signal_send
 
-_Mis à jour dans la 1.0._
+_Mis à jour dans la 1.0, 4.5.0._
 
 Envoyer un signal.
 
@@ -12720,10 +12759,22 @@ int weechat_hook_signal_send (const char *signal, const char *type_data,
 
 Paramètres :
 
-* _signal_ : signal à envoyer
+* _signal_ : signal à envoyer ; des drapeaux sont autorisés avant le nom du signal
+  (voir ci-dessous) _(WeeChat ≥ 4.5.0)_
 * _type_data_ : type de données à envoyer avec le signal (voir
   <<_hook_signal,hook_signal>>)
 * _signal_data_ : données envoyées avec le signal
+
+Le nom du signal peut contenir des drapeaux avec le format suivant : `[flags:xxx,yyy]signal`
+où `xxx` et `yyy` sont des noms de drapeaux et `signal` le nom du signal. +
+Les drapeaux suivants sont supportés :
+
+* _stop_on_error_ : sortir immédiatement si une fonction de rappel retourne
+  WEECHAT_RC_ERROR (les autres fonctions de rappel ne sont donc PAS exécutées)
+  _(WeeChat ≥ 4.5.0)_
+* _ignore_eat_ : considérer que toute fonction de rappel renvoyant WEECHAT_RC_OK_EAT
+  est en fait WEECHAT_RC_OK et exécuter les fonctions de rappel restantes
+  _(WeeChat ≥ 4.5.0)_
 
 Valeur de retour _(WeeChat ≥ 1.0)_ :
 
@@ -12738,6 +12789,8 @@ Exemple en C :
 [source,c]
 ----
 int rc = weechat_hook_signal_send ("mon_signal", WEECHAT_HOOK_SIGNAL_STRING, ma_chaine);
+int rc2 = weechat_hook_signal_send ("[flags:stop_on_error,ignore_eat]my_signal2",
+                                    WEECHAT_HOOK_SIGNAL_STRING, my_string);
 ----
 
 Script (Python) :
@@ -12747,8 +12800,10 @@ Script (Python) :
 # prototype
 def hook_signal_send(signal: str, type_data: str, signal_data: str) -> int: ...
 
-# exemple
+# exemples
 rc = weechat.hook_signal_send("mon_signal", weechat.WEECHAT_HOOK_SIGNAL_STRING, ma_chaine)
+rc2 = weechat.hook_signal_send("[flags:stop_on_error,ignore_eat]my_signal2",
+                               weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
 ----
 
 [[signal_logger_backlog]]
@@ -13042,7 +13097,7 @@ hook = weechat.hook_hsignal("test", "my_hsignal_cb", "")
 
 ==== hook_hsignal_send
 
-_WeeChat ≥ 0.3.4, mis à jour dans la 1.0._
+_WeeChat ≥ 0.3.4, mis à jour dans la 1.0, 4.5.0._
 
 Envoyer un hsignal (signal avec table de hachage).
 
@@ -13055,7 +13110,8 @@ int weechat_hook_hsignal_send (const char *signal, struct t_hashtable *hashtable
 
 Paramètres :
 
-* _signal_ : signal à envoyer
+* _signal_ : signal à envoyer ; des drapeaux sont autorisés avant le nom du signal
+  (voir la fonction <<_hook_signal_send,hook_signal_send>>) _(WeeChat ≥ 4.5.0)_
 * _hashtable_ : table de hachage
 
 Valeur de retour _(WeeChat ≥ 1.0)_ :
@@ -13070,7 +13126,7 @@ Exemple en C :
 
 [source,c]
 ----
-int rc;
+int rc, rc2;
 struct t_hashtable *hashtable = weechat_hashtable_new (8,
                                                        WEECHAT_HASHTABLE_STRING,
                                                        WEECHAT_HASHTABLE_STRING,
@@ -13080,6 +13136,7 @@ if (hashtable)
 {
     weechat_hashtable_set (hashtable, "clé", "valeur");
     rc = weechat_hook_hsignal_send ("my_hsignal", hashtable);
+    rc2 = weechat_hook_hsignal_send ("[flags:stop_on_error,ignore_eat]my_hsignal2", hashtable);
     weechat_hashtable_free (hashtable);
 }
 ----
@@ -13091,8 +13148,9 @@ Script (Python) :
 # prototype
 def hook_hsignal_send(signal: str, hashtable: Dict[str, str]) -> int: ...
 
-# exemple
+# exemples
 rc = weechat.hook_hsignal_send("my_hsignal", {"clé": "valeur"})
+rc2 = weechat.hook_hsignal_send("[flags:stop_on_error,ignore_eat]my_hsignal2", {"key": "value"})
 ----
 
 [[hsignal_irc_redirect_command]]
@@ -14274,6 +14332,10 @@ Propriétés :
 | Nom de la sous-extension (couramment un nom de script, qui est affiché dans
   `/help commande` pour un hook de type _command_).
 
+| keep_spaces_right | 4.6.0 | _command_, _command_run_
+| "0" ou "1"
+| Garder les espaces à la fin des paramètres de la commande quand elle est exécutée.
+
 | stdin | 0.4.3 | _process_, _process_hashtable_ | toute chaîne
 | Envoyer les données sur l'entrée standard (_stdin_) du processus fils.
 
@@ -14925,7 +14987,6 @@ Paramètres :
 ** _number_ : numéro du tampon (commence à 1)
 ** _layout_number_ : numéro du tampon sauvegardé dans le "layout"
 ** _layout_number_merge_order_ : ordre du tampon mélangé pour le "layout"
-** _short_name_is_set_ : 1 si le nom court est défini, 0 si non défini
 ** _type_ : type de tampon (0 : formaté, 1 : contenu libre)
 ** _notify_ : niveau de notification du tampon
 ** _num_displayed_ : nombre de fenêtres affichant ce tampon
@@ -15097,7 +15158,7 @@ Exemple en C :
 
 [source,c]
 ----
-weechat_printf (NULL, "pointeur vers l'extension de mon tampon : %lx",
+weechat_printf (NULL, "pointeur vers l'extension de mon tampon : %p",
                 weechat_buffer_get_pointer (mon_tampon, "plugin"));
 ----
 
@@ -15146,6 +15207,12 @@ Propriétés :
   (les conditions définies dans l'option _weechat.look.hotlist_add_conditions_
   ne sont *PAS* vérifiées) +
   "-1" : supprimer ce tampon de la hotlist _(WeeChat ≥ 1.0)_.
+
+| hotlist_conditions | 4.5.0 | WEECHAT_HOTLIST_LOW, WEECHAT_HOTLIST_MESSAGE,
+  WEECHAT_HOTLIST_PRIVATE, WEECHAT_HOTLIST_HIGHLIGHT
+| priorité : ajouter ce tampon dans la hotlist avec cette priorité
+  (les conditions définies dans l'option _weechat.look.hotlist_add_conditions_
+  sont vérifiées).
 
 | completion_freeze | | "0" ou "1"
 | "0" : pas de gel de la complétion (valeur par défaut)
@@ -15523,6 +15590,46 @@ if buffer:
     weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.oftc.*,python.*"))  # 0
 ----
 
+[[buffer_lines]]
+=== Lignes de tampons
+
+Fonctions pour les lignes de tampons.
+
+==== line_search_by_id
+
+_WeeChat ≥ 4.4.0._
+
+Rechercher une ligne du tampon par son identifiant.
+
+Prototype :
+
+[source,c]
+----
+struct t_gui_line *weechat_line_search_by_id (struct t_gui_buffer *buffer, int id);
+----
+
+Valeur de retour :
+
+* pointeur vers la ligne trouvée, NULL si non trouvée
+
+Exemple en C :
+
+[source,c]
+----
+struct t_gui_line *line = weechat_line_search_by_id (buffer, 123);
+----
+
+Script (Python) :
+
+[source,python]
+----
+# prototype
+def line_search_by_id(buffer: str, line_id: int) -> str: ...
+
+# exemple
+line = weechat.line_search_by_id(buffer, 123)
+----
+
 [[windows]]
 === Fenêtres
 
@@ -15588,7 +15695,7 @@ Exemple en C :
 [source,c]
 ----
 weechat_printf (NULL,
-                "fenêtre affichant le tampon core : %lx",
+                "fenêtre affichant le tampon core : %p",
                 weechat_window_search_with_buffer (weechat_buffer_search_main ()));
 ----
 
@@ -15733,7 +15840,7 @@ Exemple en C :
 [source,c]
 ----
 weechat_printf (NULL,
-                "tampon affiché dans la fenêtre courante : %lx",
+                "tampon affiché dans la fenêtre courante : %p",
                 weechat_window_get_pointer (weechat_current_window (), "buffer"));
 ----
 
@@ -17137,7 +17244,7 @@ rc = weechat.command(weechat.buffer_search("irc", "libera.#weechat"), "/whois Fl
 
 ==== command_options
 
-_WeeChat ≥ 2.5, mis à jour dans la 4.0.0._
+_WeeChat ≥ 2.5, mis à jour dans la 4.0.0, 4.5.0._
 
 Exécuter une commande ou envoyer du texte au tampon avec des options.
 
@@ -17153,13 +17260,15 @@ Paramètres :
 
 * _buffer_ : pointeur vers le tampon (la commande est exécutée sur ce tampon,
   NULL pour le tampon courant)
-* _command_ : commande à exécuter (si elle commence par "/"), ou texte à
-  envoyer au tampon
+* _command_ : commande à exécuter (si elle commence par `/` ou un caractère de
+  commande), ou texte à envoyer au tampon
 * _options_ : table de hachage avec des options (les clés et valeurs doivent
   être des chaînes) (peut être NULL) :
 ** _commands_ : une liste de commandes autorisées pendant l'appel, séparées par
-   des virgules ; voir la fonction <<_string_match_list,string_match_list>>
-   pour le format
+   des virgules (voir la fonction <<_string_match_list,string_match_list>>
+   pour le format) ; la valeur spéciale `-` (moins) désactive l'exécution des
+   commandes et la chaîne dans _command_ est envoyée telle quelle au tampon
+   (_WeeChat ≥ 4.5.0_)
 ** _delay_ : délai pour exécuter la commande, en millisecondes
 ** _split_newline_ : `1` pour découper les commandes sur le caractère de retour
    à la ligne (`\n`) (_WeeChat ≥ 4.0.0_)
@@ -17193,7 +17302,7 @@ Script (Python) :
 def command_options(buffer: str, command: str, options: Dict[str, str]) -> int: ...
 
 # exemple : autoriser toute commande sauf /exec
-rc = weechat.command_options("", "/une_commande paramètres", {"commands": "*,!exec"})
+rc = weechat.command_options("", "/une_commande paramètres", {"commands": "*,!exec", "delay": "2000"})
 ----
 
 [[completion]]
@@ -17343,6 +17452,71 @@ def my_completion_cb(data: str, completion_item: str, buffer: str, completion: s
     # récupère les paramètres de la commande
     args = weechat.completion_get_string(completion, "args")
     # complétion selon les paramètres
+    # ...
+    return weechat.WEECHAT_RC_OK
+----
+
+==== completion_set
+
+_WeeChat ≥ 4.6.0._
+
+Affecter une valeur à une propriété d'une complétion.
+
+Prototype :
+
+[source,c]
+----
+void weechat_completion_get_string (struct t_gui_completion *completion,
+                                    const char *property,
+                                    const char *value);
+----
+
+Paramètres :
+
+* _completion_ : pointeur vers la complétion
+* _property_ : nom de la propriété (voir le tableau ci-dessous)
+* _value_ : nouvelle valeur pour la propriété
+
+Properties:
+
+[width="100%",cols="^2,^1,4,8",options="header"]
+|===
+| Name | Min WeeChat | Value | Description
+
+| add_space | 4.6.0 | "0" or "1"
+| "0": do not add space after completion +
+  "1": add space after completion (default).
+|===
+
+Exemple en C :
+
+[source,c]
+----
+int
+my_completion_cb (const void *pointer, void *data, const char *completion_item,
+                  struct t_gui_buffer *buffer,
+                  struct t_gui_completion *completion)
+{
+    /* ne pas ajouter d'espace après la complétion */
+    weechat_completion_set (completion, "add_space", "0");
+
+    /* ... */
+
+    return WEECHAT_RC_OK;
+}
+----
+
+Script (Python) :
+
+[source,python]
+----
+# prototype
+def completion_set(completion: str, property: str, value: str) -> int: ...
+
+# exemple
+def my_completion_cb(data: str, completion_item: str, buffer: str, completion: str) -> int:
+    # ne pas ajouter d'espace après la complétion
+    weechat.completion_set(completion, "add_space", "0")
     # ...
     return weechat.WEECHAT_RC_OK
 ----
@@ -19664,7 +19838,7 @@ Exemple en C :
 ----
 struct t_hdata *hdata = weechat_hdata_get ("buffer");
 struct t_gui_buffer *buffer = weechat_buffer_search_main ();
-weechat_printf (NULL, "lines = %lx", weechat_hdata_pointer (hdata, buffer, "lines"));
+weechat_printf (NULL, "lines = %p", weechat_hdata_pointer (hdata, buffer, "lines"));
 ----
 
 Script (Python) :

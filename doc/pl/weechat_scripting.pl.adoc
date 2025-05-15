@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: pl
-:toc-title: Spis treści
+include::includes/attributes-pl.adoc[]
 
 Tłumaczenie:
 
@@ -72,7 +72,7 @@ link:weechat_plugin_api.en.html#_hook_process[Opisu API wtyczek WeeChat ^↗^^]
 
 WeeChat definiuje moduł `weechat`, który należy zaimportowac poprzez `import weechat`. +
 Szkielet API WeeChat dla języka Python dostępny jest w repozytorium:
-https://raw.githubusercontent.com/weechat/weechat/master/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
+https://raw.githubusercontent.com/weechat/weechat/main/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
 
 [[python_functions]]
 ===== Funkcje
@@ -370,9 +370,10 @@ Możesz zrobić dowiązanie w katalogu _język/autoload_ jeśli chcesz automatyc
 
 Na przykład dla Pythona:
 
+[source,shell]
 ----
-$ cd ~/.local/share/weechat/python/autoload
-$ ln -s ../skrypt.py
+cd ~/.local/share/weechat/python/autoload
+ln -s ../skrypt.py
 ----
 
 [NOTE]

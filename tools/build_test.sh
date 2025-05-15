@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -54,13 +54,9 @@ cd "${build_dir}"
 run cmake .. -DENABLE_MAN=ON -DENABLE_DOC=ON -DENABLE_TESTS=ON "${BUILDARGS}"
 if [ -f "build.ninja" ]; then
     ninja -v
-    ninja -v changelog
-    ninja -v rn
     sudo ninja install
 else
-    make VERBOSE=1 --jobs="$(nproc)"
-    make VERBOSE=1 changelog
-    make VERBOSE=1 rn
+    make VERBOSE=1 -j "$(nproc)"
     sudo make install
 fi
 ctest -V

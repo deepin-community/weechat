@@ -1,7 +1,7 @@
 /*
  * core-secure-config.c - secured data configuration options (file sec.conf)
  *
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -177,7 +177,7 @@ secure_config_reload_cb (const void *pointer, void *data,
 }
 
 /*
- * Callback for changes on some options "weechat.crypt.*" (that can not be
+ * Callback for changes on some options "weechat.crypt.*" (that cannot be
  * changed if there are encrypted data.
  */
 
@@ -200,7 +200,7 @@ secure_config_check_crypt_option_cb (const void *pointer, void *data,
         return 1;
 
     gui_chat_printf (NULL,
-                     _("%sOption %s.%s.%s can not be changed because there "
+                     _("%sOption %s.%s.%s cannot be changed because there "
                        "are still encrypted data"),
                      gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
                      option->config_file->name,
@@ -282,7 +282,7 @@ secure_config_data_read_cb (const void *pointer, void *data,
         gui_chat_printf (
             NULL,
             _("%sFailed to decrypt data \"%s\": hash algorithm \"%s\" is not "
-              "available (ligbcrypt version is too old?)"),
+              "available (libgcrypt version is too old?)"),
             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
             option_name,
             config_file_option_string (secure_config_crypt_hash_algo));
@@ -298,7 +298,7 @@ secure_config_data_read_cb (const void *pointer, void *data,
         gui_chat_printf (
             NULL,
             _("%sFailed to decrypt data \"%s\": cipher \"%s\" is not "
-              "available (ligbcrypt version is too old?)"),
+              "available (libgcrypt version is too old?)"),
             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
             option_name,
             config_file_option_string (secure_config_crypt_cipher));
@@ -393,7 +393,7 @@ secure_config_data_write_map_cb (void *data,
         gui_chat_printf (
             NULL,
             _("%sFailed to encrypt data \"%s\": hash algorithm \"%s\" is not "
-              "available (ligbcrypt version is too old?)"),
+              "available (libgcrypt version is too old?)"),
             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
             key,
             config_file_option_string (secure_config_crypt_hash_algo));
@@ -407,7 +407,7 @@ secure_config_data_write_map_cb (void *data,
         gui_chat_printf (
             NULL,
             _("%sFailed to encrypt data \"%s\": cipher \"%s\" is not "
-              "available (ligbcrypt version is too old?)"),
+              "available (libgcrypt version is too old?)"),
             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
             key,
             config_file_option_string (secure_config_crypt_cipher));
@@ -542,7 +542,7 @@ secure_config_data_write_cb (const void *pointer, void *data,
  */
 
 int
-secure_config_init_options ()
+secure_config_init_options (void)
 {
     secure_config_file = config_file_new (NULL, SECURE_CONFIG_PRIO_NAME,
                                           &secure_config_reload_cb, NULL, NULL);
@@ -638,7 +638,7 @@ secure_config_init_options ()
  */
 
 int
-secure_config_read ()
+secure_config_read (void)
 {
     int rc;
 
@@ -661,7 +661,7 @@ secure_config_read ()
  */
 
 int
-secure_config_write ()
+secure_config_write (void)
 {
     return config_file_write (secure_config_file);
 }
@@ -675,7 +675,7 @@ secure_config_write ()
  */
 
 int
-secure_config_init ()
+secure_config_init (void)
 {
     int rc;
 
@@ -695,7 +695,7 @@ secure_config_init ()
  */
 
 void
-secure_config_free ()
+secure_config_free (void)
 {
     config_file_free (secure_config_file);
     secure_config_file = NULL;

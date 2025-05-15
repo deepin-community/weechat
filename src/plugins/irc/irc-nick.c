@@ -1,7 +1,7 @@
 /*
  * irc-nick.c - nick management for IRC plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -255,10 +255,10 @@ irc_nick_set_host (struct t_irc_nick *nick, const char *host)
 }
 
 /*
- * Checks if nick is "op" or higher than "op", like channel admin/owner.
+ * Checks if nick is "op" or above "op", like channel admin/owner.
  *
  * Returns:
- *   1: nick is "op" or higher
+ *   1: nick is "op" or above
  *   0: nick is not op
  */
 
@@ -465,7 +465,7 @@ irc_nick_nicklist_set (struct t_irc_channel *channel,
  */
 
 void
-irc_nick_nicklist_set_prefix_color_all ()
+irc_nick_nicklist_set_prefix_color_all (void)
 {
     struct t_irc_server *ptr_server;
     struct t_irc_channel *ptr_channel;
@@ -493,7 +493,7 @@ irc_nick_nicklist_set_prefix_color_all ()
  */
 
 void
-irc_nick_nicklist_set_color_all ()
+irc_nick_nicklist_set_color_all (void)
 {
     struct t_irc_server *ptr_server;
     struct t_irc_channel *ptr_channel;

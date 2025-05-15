@@ -1,7 +1,7 @@
 /*
  * hook-timer.c - WeeChat timer hook
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -182,7 +182,7 @@ hook_timer (struct t_weechat_plugin *plugin, long interval, int align_second,
  */
 
 void
-hook_timer_check_system_clock ()
+hook_timer_check_system_clock (void)
 {
     time_t now;
     long diff_time;
@@ -222,7 +222,7 @@ hook_timer_check_system_clock ()
  */
 
 int
-hook_timer_get_time_to_next ()
+hook_timer_get_time_to_next (void)
 {
     struct t_hook *ptr_hook;
     int found, timeout;
@@ -300,7 +300,7 @@ end:
  */
 
 void
-hook_timer_exec ()
+hook_timer_exec (void)
 {
     struct t_hook *ptr_hook, *next_hook;
     struct t_hook_exec_cb hook_exec_cb;
@@ -431,12 +431,12 @@ hook_timer_print_log (struct t_hook *hook)
     log_printf ("      tv_sec. . . . . . . : %lld",
                 (long long)(HOOK_TIMER(hook, last_exec.tv_sec)));
     log_printf ("      tv_usec. . . .  . . : %ld",
-                HOOK_TIMER(hook, last_exec.tv_usec));
+                (long)(HOOK_TIMER(hook, last_exec.tv_usec)));
     util_strftimeval (text_time, sizeof (text_time),
                       "%Y-%m-%dT%H:%M:%S.%f", &(HOOK_TIMER(hook, next_exec)));
     log_printf ("    last_exec . . . . . . : %s", text_time);
     log_printf ("      tv_sec. . . . . . . : %lld",
                 (long long)(HOOK_TIMER(hook, next_exec.tv_sec)));
     log_printf ("      tv_usec. . . .  . . : %ld",
-                HOOK_TIMER(hook, next_exec.tv_usec));
+                (long)(HOOK_TIMER(hook, next_exec.tv_usec)));
 }

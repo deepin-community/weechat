@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,6 @@
 #ifndef WEECHAT_PLUGIN_SPELL_COMMAND_H
 #define WEECHAT_PLUGIN_SPELL_COMMAND_H
 
-extern void spell_command_init ();
+extern void spell_command_init (void);
 
 #endif /* WEECHAT_PLUGIN_SPELL_COMMAND_H */

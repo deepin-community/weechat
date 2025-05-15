@@ -1,7 +1,7 @@
 /*
  * irc-ignore.c - ignore (nicks/hosts) management for IRC plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -339,7 +339,7 @@ irc_ignore_free (struct t_irc_ignore *ignore)
  */
 
 void
-irc_ignore_free_all ()
+irc_ignore_free_all (void)
 {
     while (irc_ignore_list)
     {
@@ -414,7 +414,7 @@ irc_ignore_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-irc_ignore_print_log ()
+irc_ignore_print_log (void)
 {
     struct t_irc_ignore *ptr_ignore;
 

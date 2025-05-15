@@ -1,7 +1,7 @@
 /*
  * gui-curses-bar-window.c - bar window functions for Curses GUI
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -351,7 +351,14 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
                 if (utf_char[0] == '\t')
                 {
                     /* expand tabulation with spaces */
-                    ptr_char = config_tab_spaces;
+                    ptr_char = (gui_chat_whitespace_mode) ?
+                        config_tab_spaces_whitespace : config_tab_spaces;
+                }
+                else if ((utf_char[0] == ' ') && gui_chat_whitespace_mode)
+                {
+                    /* replace space in whitespace mode */
+                    snprintf (utf_char, sizeof (utf_char),
+                              "%s", CONFIG_STRING(config_look_whitespace_char));
                 }
                 else if (((unsigned char)utf_char[0]) < 32)
                 {

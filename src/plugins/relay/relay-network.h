@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,8 +30,8 @@ extern gnutls_priority_t *relay_gnutls_priority_cache;
 extern gnutls_dh_params_t *relay_gnutls_dh_params;
 
 extern void relay_network_set_tls_cert_key (int verbose);
-extern void relay_network_set_priority ();
-extern void relay_network_init ();
-extern void relay_network_end ();
+extern void relay_network_set_priority (void);
+extern void relay_network_init (void);
+extern void relay_network_end (void);
 
 #endif /* WEECHAT_PLUGIN_RELAY_NETWORK_H */

@@ -1,7 +1,7 @@
 /*
  * gui-line.c - line functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -55,7 +55,7 @@
  */
 
 struct t_gui_lines *
-gui_line_lines_alloc ()
+gui_line_lines_alloc (void)
 {
     struct t_gui_lines *new_lines;
 
@@ -329,7 +329,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
     {
         if ((CONFIG_ENUM(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
             && (CONFIG_ENUM(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE))
-            length_buffer = gui_chat_strlen_screen (gui_buffer_get_short_name (line->data->buffer)) + 1;
+            length_buffer = gui_chat_strlen_screen (line->data->buffer->short_name) + 1;
         else
         {
             if (CONFIG_ENUM(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
@@ -603,6 +603,31 @@ gui_line_get_next_displayed (struct t_gui_line *line)
 }
 
 /*
+ * Searches a line by id.
+ *
+ * Returns pointer to line found, NULL if not found.
+ */
+
+struct t_gui_line *
+gui_line_search_by_id (struct t_gui_buffer *buffer, int id)
+{
+    struct t_gui_line *ptr_line;
+
+    if (!buffer || !buffer->own_lines)
+        return NULL;
+
+    for (ptr_line = buffer->own_lines->last_line; ptr_line;
+         ptr_line = ptr_line->prev_line)
+    {
+        if (ptr_line->data && (ptr_line->data->id == id))
+            return ptr_line;
+    }
+
+    /* line not found */
+    return NULL;
+}
+
+/*
  * Searches for text in a line.
  *
  * Returns:
@@ -788,8 +813,9 @@ int
 gui_line_match_tags (struct t_gui_line_data *line_data,
                      int tags_count, char ***tags_array)
 {
-    int i, j, k, match, tag_found, tag_negated;
+    int i, j, match, tag_found, tag_negated;
     const char *ptr_tag;
+    char **ptr;
 
     if (!line_data)
         return 0;
@@ -797,9 +823,9 @@ gui_line_match_tags (struct t_gui_line_data *line_data,
     for (i = 0; i < tags_count; i++)
     {
         match = 1;
-        for (j = 0; tags_array[i][j]; j++)
+        for (ptr = tags_array[i]; *ptr; ptr++)
         {
-            ptr_tag = tags_array[i][j];
+            ptr_tag = *ptr;
             tag_found = 0;
             tag_negated = 0;
 
@@ -816,9 +842,9 @@ gui_line_match_tags (struct t_gui_line_data *line_data,
             }
             else
             {
-                for (k = 0; k < line_data->tags_count; k++)
+                for (j = 0; j < line_data->tags_count; j++)
                 {
-                    if (string_match (line_data->tags_array[k], ptr_tag, 0))
+                    if (string_match (line_data->tags_array[j], ptr_tag, 0))
                     {
                         tag_found = 1;
                         break;
@@ -1085,7 +1111,7 @@ end:
 }
 
 /*
- * Checks if nick of line is offline (not in nicklist any more).
+ * Checks if nick of line is offline (not in nicklist anymore).
  *
  * Returns:
  *   1: nick is offline
@@ -1149,17 +1175,15 @@ gui_line_compute_buffer_max_length (struct t_gui_buffer *buffer,
 {
     struct t_gui_buffer *ptr_buffer;
     int length;
-    const char *short_name;
 
     lines->buffer_max_length = 0;
 
     for (ptr_buffer = gui_buffers; ptr_buffer;
          ptr_buffer = ptr_buffer->next_buffer)
     {
-        short_name = gui_buffer_get_short_name (ptr_buffer);
         if (ptr_buffer->number == buffer->number)
         {
-            length = gui_chat_strlen_screen (short_name);
+            length = gui_chat_strlen_screen (ptr_buffer->short_name);
             if (length > lines->buffer_max_length)
                 lines->buffer_max_length = length;
         }
@@ -1288,6 +1312,7 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
                     ptr_scroll->lines_after = 0;
                     gui_window_ask_refresh (1);
                 }
+                ptr_win->scroll_changed = 1;
             }
 
             if (ptr_scroll->text_search_start_line == line)
@@ -1441,9 +1466,27 @@ gui_line_free (struct t_gui_buffer *buffer, struct t_gui_line *line)
 void
 gui_line_free_all (struct t_gui_buffer *buffer)
 {
+    struct t_gui_window *ptr_win;
+
+    for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
+    {
+        ptr_win->scroll_changed = 0;
+    }
+
     while (buffer->own_lines->first_line)
     {
         gui_line_free (buffer, buffer->own_lines->first_line);
+    }
+
+    for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
+    {
+        if (ptr_win->scroll_changed)
+        {
+            ptr_win->scroll_changed = 0;
+            (void) hook_signal_send ("window_scrolled",
+                                     WEECHAT_HOOK_SIGNAL_POINTER,
+                                     ptr_win);
+        }
     }
 }
 
@@ -1628,7 +1671,6 @@ gui_line_hook_update (struct t_gui_line *line,
 {
     const char *ptr_value, *ptr_value2;
     struct t_gui_buffer *ptr_buffer;
-    unsigned long value_pointer;
     long value;
     char *error, *new_message, *pos_newline;
     int rc, tags_updated, notify_level_updated, highlight_updated;
@@ -1662,8 +1704,7 @@ gui_line_hook_update (struct t_gui_line *line,
             {
                 if ((ptr_value2[0] == '0') && (ptr_value2[1] == 'x'))
                 {
-                    rc = sscanf (ptr_value2 + 2, "%lx", &value_pointer);
-                    ptr_buffer = (struct t_gui_buffer *)value_pointer;
+                    rc = sscanf (ptr_value2, "%p", &ptr_buffer);
                     if ((rc != EOF) && (rc >= 1)
                         && gui_chat_buffer_valid (ptr_buffer, line->data->buffer->type))
                     {
@@ -2356,6 +2397,9 @@ gui_line_hdata_line_data_update_cb (void *data,
         }
         gui_filter_buffer (line_data->buffer, line_data);
         gui_buffer_ask_chat_refresh (line_data->buffer, 1);
+        (void) gui_buffer_send_signal (line_data->buffer,
+                                       "buffer_line_data_changed",
+                                       WEECHAT_HOOK_SIGNAL_POINTER, line_data);
     }
 
     return rc;

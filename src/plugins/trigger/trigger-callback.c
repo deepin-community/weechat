@@ -1,7 +1,7 @@
 /*
  * trigger-callback.c - callbacks for triggers
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -733,7 +733,10 @@ trigger_callback_signal_cb (const void *pointer, void *data,
     {
         str_data[0] = '\0';
         if (signal_data)
-            snprintf (str_data, sizeof (str_data), "%p", signal_data);
+        {
+            snprintf (str_data, sizeof (str_data),
+                      "0x%lx", (unsigned long)signal_data);
+        }
         ptr_signal_data = str_data;
     }
     weechat_hashtable_set (ctx.extra_vars, "tg_signal_data", ptr_signal_data);
@@ -808,7 +811,7 @@ trigger_callback_modifier_cb (const void *pointer, void *data,
     const char *ptr_string;
     char *string_modified, *pos, *buffer_pointer;
     char *str_tags, **tags, *prefix, *string_no_color;
-    int length, num_tags, rc;
+    int num_tags, rc;
     void *ptr_irc_server, *ptr_irc_channel;
     struct t_gui_buffer *ptr_buffer;
 
@@ -947,11 +950,8 @@ trigger_callback_modifier_cb (const void *pointer, void *data,
                             | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
                             0,
                             &num_tags);
-                        length = 1 + strlen (pos) + 1 + 1;
-                        str_tags = malloc (length);
-                        if (str_tags)
+                        if (weechat_asprintf (&str_tags, ",%s,", pos) >= 0)
                         {
-                            snprintf (str_tags, length, ",%s,", pos);
                             weechat_hashtable_set (ctx.extra_vars, "tg_tags",
                                                    str_tags);
                             free (str_tags);
@@ -997,10 +997,10 @@ trigger_callback_line_cb (const void *pointer, void *data,
 {
     struct t_hashtable *hashtable;
     struct t_weelist_item *ptr_item;
-    unsigned long value;
+    void *ptr;
     const char *ptr_key, *ptr_value;
     char **tags, *str_tags, *string_no_color;
-    int rc, num_tags, length;
+    int rc, num_tags;
 
     TRIGGER_CALLBACK_CB_INIT(NULL);
 
@@ -1021,10 +1021,10 @@ trigger_callback_line_cb (const void *pointer, void *data,
     ptr_value = weechat_hashtable_get (line, "buffer");
     if (!ptr_value || (ptr_value[0] != '0') || (ptr_value[1] != 'x'))
         goto end;
-    rc = sscanf (ptr_value + 2, "%lx", &value);
+    rc = sscanf (ptr_value, "%p", &ptr);
     if ((rc == EOF) || (rc < 1))
         goto end;
-    ctx.buffer = (void *)value;
+    ctx.buffer = ptr;
 
     weechat_hashtable_set (ctx.pointers, "buffer", ctx.buffer);
     ptr_value = weechat_hashtable_get (line, "tags");
@@ -1038,12 +1038,10 @@ trigger_callback_line_cb (const void *pointer, void *data,
                                  &num_tags);
 
     /* build string with tags and commas around: ",tag1,tag2,tag3," */
-    length = 1 + strlen ((ptr_value) ? ptr_value : "") + 1 + 1;
-    str_tags = malloc (length);
-    if (str_tags)
+    if (weechat_asprintf (&str_tags,
+                          ",%s,",
+                          (ptr_value) ? ptr_value : "") >= 0)
     {
-        snprintf (str_tags, length, ",%s,",
-                  (ptr_value) ? ptr_value : "");
         weechat_hashtable_set (ctx.extra_vars, "tags", str_tags);
         free (str_tags);
     }
@@ -1137,7 +1135,6 @@ trigger_callback_print_cb  (const void *pointer, void *data,
                             const char *message)
 {
     char *str_tags, *str_tags2, str_temp[128], *str_no_color;
-    int length;
     struct timeval tv;
 
     TRIGGER_CALLBACK_CB_INIT(WEECHAT_RC_OK);
@@ -1182,11 +1179,8 @@ trigger_callback_print_cb  (const void *pointer, void *data,
     if (str_tags)
     {
         /* build string with tags and commas around: ",tag1,tag2,tag3," */
-        length = 1 + strlen (str_tags) + 1 + 1;
-        str_tags2 = malloc (length);
-        if (str_tags2)
+        if (weechat_asprintf (&str_tags2, ",%s,", str_tags) >= 0)
         {
-            snprintf (str_tags2, length, ",%s,", str_tags);
             weechat_hashtable_set (ctx.extra_vars, "tg_tags", str_tags2);
             free (str_tags2);
         }
@@ -1367,7 +1361,7 @@ trigger_callback_focus_cb (const void *pointer, void *data,
                            struct t_hashtable *info)
 {
     const char *ptr_value;
-    unsigned long value;
+    void *ptr;
     int rc;
 
     TRIGGER_CALLBACK_CB_INIT(info);
@@ -1381,16 +1375,16 @@ trigger_callback_focus_cb (const void *pointer, void *data,
     ptr_value = weechat_hashtable_get (info, "_window");
     if (ptr_value && ptr_value[0] && (strncmp (ptr_value, "0x", 2) == 0))
     {
-        rc = sscanf (ptr_value + 2, "%lx", &value);
+        rc = sscanf (ptr_value, "%p", &ptr);
         if ((rc != EOF) && (rc >= 1))
-            weechat_hashtable_set (ctx.pointers, "window", (void *)value);
+            weechat_hashtable_set (ctx.pointers, "window", ptr);
     }
     ptr_value = weechat_hashtable_get (info, "_buffer");
     if (ptr_value && ptr_value[0] && (strncmp (ptr_value, "0x", 2) == 0))
     {
-        rc = sscanf (ptr_value + 2, "%lx", &value);
+        rc = sscanf (ptr_value, "%p", &ptr);
         if ((rc != EOF) && (rc >= 1))
-            weechat_hashtable_set (ctx.pointers, "buffer", (void *)value);
+            weechat_hashtable_set (ctx.pointers, "buffer", ptr);
     }
 
     /* execute the trigger (conditions, regex, command) */
@@ -1490,7 +1484,7 @@ end:
  */
 
 void
-trigger_callback_init ()
+trigger_callback_init (void)
 {
     trigger_callback_hashtable_options_conditions = weechat_hashtable_new (
         32,
@@ -1509,7 +1503,7 @@ trigger_callback_init ()
  */
 
 void
-trigger_callback_end ()
+trigger_callback_end (void)
 {
     if (trigger_callback_hashtable_options_conditions)
     {

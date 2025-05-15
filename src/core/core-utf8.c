@@ -1,7 +1,7 @@
 /*
  * core-utf8.c - UTF-8 string functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -20,12 +20,16 @@
  * along with WeeChat.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* for wcwidth in wchar.h */
+#define _XOPEN_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include <wctype.h>
 
 #include "weechat.h"
@@ -42,7 +46,7 @@ int local_utf8 = 0;
  */
 
 void
-utf8_init ()
+utf8_init (void)
 {
     local_utf8 = (string_strcasecmp (weechat_local_charset, "utf-8") == 0);
 }

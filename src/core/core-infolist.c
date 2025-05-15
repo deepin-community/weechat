@@ -1,7 +1,7 @@
 /*
  * core-infolist.c - info lists management
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -247,17 +247,27 @@ infolist_new_var_buffer (struct t_infolist_item *item,
 {
     struct t_infolist_var *new_var;
 
-    if (!item || !name || !name[0] || (size <= 0))
+    if (!item || !name || !name[0])
         return NULL;
+
+    if (size < 0)
+        size = 0;
 
     new_var = malloc (sizeof (*new_var));
     if (new_var)
     {
         new_var->name = strdup (name);
         new_var->type = INFOLIST_BUFFER;
-        new_var->value = malloc (size);
-        if (new_var->value)
-            memcpy (new_var->value, pointer, size);
+        if (pointer && (size > 0))
+        {
+            new_var->value = malloc (size);
+            if (new_var->value)
+                memcpy (new_var->value, pointer, size);
+        }
+        else
+        {
+            new_var->value = NULL;
+        }
         new_var->size = size;
 
         new_var->prev_var = item->last_var;
@@ -410,7 +420,7 @@ infolist_fields (struct t_infolist *infolist)
 
     for (ptr_var = infolist->ptr_item->vars; ptr_var; ptr_var = ptr_var->next_var)
     {
-        if (*fields[0])
+        if ((*fields)[0])
             string_dyn_concat (fields, ",", -1);
         string_dyn_concat (fields, infolist_type_char_string[ptr_var->type], -1);
         string_dyn_concat (fields, ":", -1);
@@ -710,7 +720,7 @@ infolist_free_all_plugin (struct t_weechat_plugin *plugin)
  */
 
 void
-infolist_print_log ()
+infolist_print_log (void)
 {
     struct t_infolist *ptr_infolist;
     struct t_infolist_item *ptr_item;

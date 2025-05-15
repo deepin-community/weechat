@@ -2,16 +2,16 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: sr
-:toc-title: Садржај
+include::includes/attributes-sr.adoc[]
 
 Превод:
 
-* Иван Пешић (<ivan.pesic@gmail.com>), 2021.
+* Иван Пешић (<ivan.pesic@gmail.com>), 2025.
 
 [[introduction]]
 == Увод
 
-Овај документ је спецификација WeeChat Релеј протокола: протокола који се користи за прослеђивање WeeChat података клојентима, који су углавном удаљени интерфејси.
+Овај документ је спецификација _weechat_ релеј протокола: протокола који се користи за прослеђивање WeeChat података клојентима, који су углавном удаљени интерфејси.
 
 [[terminology]]
 === Терминологија
@@ -26,26 +26,11 @@
 
 _клијенти_ су повезани са _релејем_ као што је приказано на следећем дијаграму:
 
-....
-                                              ┌───────────┐ Радна станица
- ┌────────┐                               ┌───┤ клијент 1 │ (Linux, Windows,
- │  irc   │◄──┐  ╔═══════════╤═══════╗    │   └───────────┘ BSD, macOS...)
- └────────┘   └──╢           │       ║◄───┘   ┌───────────┐
-   ......        ║  WeeChat  │ Релеј ║◄───────┤ клијент 2 │ Мобилни уређај
- ┌────────┐   ┌──╢           │       ║◄───┐   └───────────┘ (Android, iPhone...)
- │ jabber │◄──┘  ╚═══════════╧═══════╝    │      ......
- └────────┘                               │   ┌───────────┐
-   ......                                 └───┤ клијент N │ Остали уређаји
-                                              └───────────┘
-
-
-└────────────┘   └───────────────────┘╘══════╛└────────────────────────────────┘
-мрежни сервери     ncurses интерфејс    релеј         удаљени интерфејси
-                                      протокол
-....
+include::includes/relay.sr.adoc[tag=diagram]
 
 [NOTE]
-Сви клијенти овде су клијенти који користе _weechat_ протокол у _релеј_ додатку. _релеј_ додатак такође дозвољава IRC клијенте, па се онда _релеј_ додатак понаша као _IRC прокси_ (није описан у овом документу).
+Сви клијенти овде су клијенти који користе _weechat_ протокол у _релеј_ додатку. +
+_релеј_ додатак такође подржава _api_ и _irc_ протоколе (који нису описани у овом документу).
 
 [[protocol_generalities]]
 == Уопштено о протоколу
@@ -1417,6 +1402,9 @@ WeeChat резервисани идентификатори:
 | _buffer_line_added | buffer | hdata: line
 | У бафер је додата линија. | Приказ линије у баферу.
 
+| _buffer_line_data_changed | buffer | hdata: line
+| У баферу је променњена линија. | Ажурирање линије приказане у баферу.
+
 | _nicklist | nicklist | hdata: nicklist_item
 | Листа надимака за бафер. | Замена листе надимака.
 
@@ -1955,6 +1943,7 @@ hda:
 |===
 | Име               | Тип              | Опис
 | buffer            | показивач        | Показивач на бафер.
+| id                | цео број         | Идентификатор линије.
 | date              | време            | Датум поруке.
 | date_usec         | цео број         | Микросекунде датума.
 | date_printed      | време            | Датум када је програм WeeChat приказао поруку.
@@ -1975,6 +1964,7 @@ id: '_buffer_line_added'
 hda:
     keys: {
         'buffer': 'ptr',
+        'id': 'int',
         'date': 'tim',
         'date_usec': 'int',
         'date_printed': 'tim',
@@ -1990,6 +1980,57 @@ hda:
     item 1:
         __path: ['0x4a49600']
         buffer: '0x4a715d0'
+        id: 12
+        date: 1362728993
+        date_usec: 902765
+        date_printed: 1362728993
+        date_usec_printed: 902765
+        displayed: 1
+        notify_level: 1
+        highlight: 0
+        tags_array: [
+            'irc_privmsg',
+            'notify_message',
+            'prefix_nick_142',
+            'nick_FlashCode',
+            'log1',
+        ]
+        prefix: 'F06@F@00142FlashCode'
+        message: 'здраво!'
+----
+
+[[message_buffer_line_data_changed]]
+==== _buffer_line_data_changed
+
+Ова порука се шаље клијенту онда када WeeChat пошаље сигнал „buffer_line_data_changed”.
+
+Подаци се шаљу као hdata: исти подаци као <<message_buffer_line_added,_buffer_line_added>>.
+
+Пример: порука _hello!_ од надимка _FlashCode_ у баферу _irc.libera.#weechat_ је ажурирана:
+
+[source,python]
+----
+id: '_buffer_line_data_changed'
+hda:
+    keys: {
+        'buffer': 'ptr',
+        'id': 'int',
+        'date': 'tim',
+        'date_usec': 'int',
+        'date_printed': 'tim',
+        'date_usec_printed': 'int',
+        'displayed': 'chr',
+        'notify_level': 'chr',
+        'highlight': 'chr',
+        'tags_array': 'arr',
+        'prefix': 'str',
+        'message': 'str',
+    }
+    path: ['line_data']
+    item 1:
+        __path: ['0x4a49600']
+        buffer: '0x4a715d0'
+        id: 12
         date: 1362728993
         date_usec: 902765
         date_printed: 1362728993

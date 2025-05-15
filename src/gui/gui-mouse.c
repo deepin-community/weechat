@@ -1,7 +1,7 @@
 /*
  * gui-mouse.c - functions for mouse (used by all GUI)
  *
- * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -67,7 +67,7 @@ gui_mouse_debug_set (int debug)
  */
 
 void
-gui_mouse_event_reset ()
+gui_mouse_event_reset (void)
 {
     gui_mouse_event_index = 0;
     gui_mouse_event_x[0] = 0;

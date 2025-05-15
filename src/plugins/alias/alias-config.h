@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,8 +35,8 @@ extern void alias_config_cmd_new_option (const char *name,
                                          const char *command);
 extern void alias_config_completion_new_option (const char *name,
                                                 const char *completion);
-extern int alias_config_init ();
-extern int alias_config_read ();
-extern int alias_config_write ();
+extern int alias_config_init (void);
+extern int alias_config_read (void);
+extern int alias_config_write (void);
 
 #endif /* WEECHAT_PLUGIN_ALIAS_CONFIG_H */

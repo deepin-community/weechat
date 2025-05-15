@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -20,6 +20,7 @@
 set(RELAY_SRC
   relay.c relay.h
   relay-auth.c relay-auth.h
+  relay-bar-item.c relay-bar-item.h
   relay-buffer.c relay-buffer.h
   relay-client.c relay-client.h
   relay-command.c relay-command.h
@@ -60,8 +61,7 @@ set_target_properties(relay PROPERTIES PREFIX "")
 
 set(LINK_LIBS)
 
-include_directories(${GNUTLS_INCLUDE_PATH})
-list(APPEND LINK_LIBS ${GNUTLS_LIBRARY})
+list(APPEND LINK_LIBS ${GNUTLS_LDFLAGS})
 
 list(APPEND LINK_LIBS ${LIBGCRYPT_LDFLAGS})
 

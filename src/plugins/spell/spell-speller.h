@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -43,9 +43,9 @@ extern EnchantDict *spell_speller_new (const char *lang);
 #else
 extern AspellSpeller *spell_speller_new (const char *lang);
 #endif /* USE_ENCHANT */
-extern void spell_speller_remove_unused ();
+extern void spell_speller_remove_unused (void);
 extern struct t_spell_speller_buffer *spell_speller_buffer_new (struct t_gui_buffer *buffer);
-extern int spell_speller_init ();
-extern void spell_speller_end ();
+extern int spell_speller_init (void);
+extern void spell_speller_end (void);
 
 #endif /* WEECHAT_PLUGIN_SPELL_SPELLER_H */

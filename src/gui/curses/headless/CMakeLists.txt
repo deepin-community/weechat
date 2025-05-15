@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -55,13 +55,13 @@ add_dependencies(${EXECUTABLE}
   weechat_ncurses_fake
 )
 
-# Due to circular references, we must link two times with libweechat_core.a and libweechat_gui_common.a
 target_link_libraries(${EXECUTABLE}
-  ${STATIC_LIBS}
+  weechat_core
+  weechat_plugins
+  weechat_gui_common
   weechat_gui_headless
   weechat_ncurses_fake
   ${EXTRA_LIBS}
-  ${STATIC_LIBS}
   coverage_config
 )
 

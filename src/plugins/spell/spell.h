@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -38,7 +38,7 @@ struct t_spell_code
 };
 
 #ifdef USE_ENCHANT
-extern EnchantBroker *broker;
+extern EnchantBroker *spell_enchant_broker;
 #endif /* USE_ENCHANT */
 
 extern struct t_weechat_plugin *weechat_spell_plugin;

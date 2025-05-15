@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -23,7 +23,7 @@
 #define IRC_CONFIG_NAME "irc"
 #define IRC_CONFIG_PRIO_NAME (TO_STR(IRC_PLUGIN_PRIORITY) "|" IRC_CONFIG_NAME)
 
-#define IRC_CONFIG_VERSION 4
+#define IRC_CONFIG_VERSION 5
 
 enum t_irc_config_look_server_buffer
 {
@@ -130,6 +130,7 @@ extern struct t_config_option *irc_config_look_item_nick_modes;
 extern struct t_config_option *irc_config_look_item_nick_prefix;
 extern struct t_config_option *irc_config_look_join_auto_add_chantype;
 extern struct t_config_option *irc_config_look_list_buffer;
+extern struct t_config_option *irc_config_look_list_buffer_format_export;
 extern struct t_config_option *irc_config_look_list_buffer_scroll_horizontal;
 extern struct t_config_option *irc_config_look_list_buffer_sort;
 extern struct t_config_option *irc_config_look_list_buffer_topic_strip_colors;
@@ -218,6 +219,7 @@ extern char **irc_config_nicks_hide_password;
 extern int irc_config_num_nicks_hide_password;
 
 extern int irc_config_display_channel_modes_arguments (const char *modes);
+extern int irc_config_notice_nick_notify (const char *nick);
 extern int irc_config_check_autojoin (const char *autojoin);
 extern int irc_config_server_check_value_cb (const void *pointer, void *data,
                                              struct t_config_option *option,
@@ -242,9 +244,9 @@ struct t_config_option *irc_config_server_new_option (struct t_config_file *conf
                                                                               struct t_config_option *option),
                                                       const void *callback_change_pointer,
                                                       void *callback_change_data);
-extern int irc_config_init ();
-extern int irc_config_read ();
+extern int irc_config_init (void);
+extern int irc_config_read (void);
 extern int irc_config_write (int write_temp_servers);
-extern void irc_config_free ();
+extern void irc_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_CONFIG_H */

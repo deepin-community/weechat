@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,6 +22,6 @@
 
 #define TYPING_BAR_ITEM_NAME "typing"
 
-extern void typing_bar_item_init ();
+extern void typing_bar_item_init (void);
 
 #endif /* WEECHAT_PLUGIN_TYPING_BAR_ITEM_H */

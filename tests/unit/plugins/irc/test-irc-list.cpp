@@ -1,7 +1,7 @@
 /*
  * test-irc-list.cpp - test IRC list functions
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -264,6 +264,16 @@ TEST(IrcList, HsignalRedirectListCb)
 
 /*
  * Tests functions:
+ *   irc_list_export
+ */
+
+TEST(IrcList, Export)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
  *   irc_list_alloc
  */
 
@@ -277,8 +287,8 @@ TEST(IrcList, Alloc)
     POINTERS_EQUAL(NULL, list->channels);
     POINTERS_EQUAL(NULL, list->filter_channels);
     LONGS_EQUAL(0, list->name_max_length);
-    POINTERS_EQUAL(NULL, list->filter);
-    POINTERS_EQUAL(NULL, list->sort);
+    STRCMP_EQUAL(NULL, list->filter);
+    STRCMP_EQUAL(NULL, list->sort);
     POINTERS_EQUAL(NULL, list->sort_fields);
     LONGS_EQUAL(0, list->sort_fields_count);
     LONGS_EQUAL(0, list->selected_line);

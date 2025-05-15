@@ -1,7 +1,7 @@
 /*
  * hook-print.c - WeeChat print hook
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -248,6 +248,7 @@ hook_print_add_to_infolist (struct t_infolist_item *item,
 void
 hook_print_print_log (struct t_hook *hook)
 {
+    char **ptr_tag;
     int i, j;
 
     if (!hook || !hook->hook_data)
@@ -262,12 +263,10 @@ hook_print_print_log (struct t_hook *hook)
     {
         for (i = 0; i < HOOK_PRINT(hook, tags_count); i++)
         {
-            for (j = 0; HOOK_PRINT(hook, tags_array)[i][j]; j++)
+            for (ptr_tag = HOOK_PRINT(hook, tags_array)[i], j = 0; *ptr_tag;
+                 ptr_tag++, j++)
             {
-                log_printf ("      tags_array[%03d][%03d]: '%s'",
-                            i,
-                            j,
-                            HOOK_PRINT(hook, tags_array)[i][j]);
+                log_printf ("      tags_array[%03d][%03d]: '%s'", i, j, *ptr_tag);
             }
         }
     }

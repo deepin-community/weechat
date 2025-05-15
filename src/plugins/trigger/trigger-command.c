@@ -1,7 +1,7 @@
 /*
  * trigger-command.c - trigger command
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,7 +35,7 @@
  */
 
 void
-trigger_command_display_status ()
+trigger_command_display_status (void)
 {
     weechat_printf_date_tags (NULL, 0, "no_trigger",
                               (trigger_enabled) ?
@@ -64,7 +64,7 @@ trigger_command_display_trigger_internal (const char *name,
                                           int verbose)
 {
     char str_conditions[64], str_regex[64], str_command[64], str_rc[64];
-    char str_post_action[64], spaces[256];
+    char str_post_action[64], spaces[256], **ptr_command;
     int i, length;
 
     if (verbose >= 1)
@@ -133,7 +133,7 @@ trigger_command_display_trigger_internal (const char *name,
         }
         if (commands)
         {
-            for (i = 0; commands[i]; i++)
+            for (ptr_command = commands, i = 0; *ptr_command; ptr_command++, i++)
             {
                 weechat_printf_date_tags (
                     NULL, 0, "no_trigger",
@@ -143,7 +143,7 @@ trigger_command_display_trigger_internal (const char *name,
                     i + 1,
                     weechat_color ("chat_delimiters"),
                     weechat_color ("reset"),
-                    commands[i],
+                    *ptr_command,
                     weechat_color ("chat_delimiters"));
             }
         }
@@ -447,7 +447,7 @@ void
 trigger_command_error_running (struct t_trigger *trigger, const char *action)
 {
     weechat_printf_date_tags (NULL, 0, "no_trigger",
-                              _("%s%s: action \"%s\" can not be executed on "
+                              _("%s%s: action \"%s\" cannot be executed on "
                                 "trigger \"%s\" because it is currently "
                                 "running"),
                               weechat_prefix ("error"), TRIGGER_PLUGIN_NAME,
@@ -487,7 +487,7 @@ trigger_command_set_enabled (struct t_trigger *trigger,
         else if (display_error)
         {
             weechat_printf_date_tags (NULL, 0, "no_trigger",
-                                      _("%s%s: a disabled trigger can not be "
+                                      _("%s%s: a disabled trigger cannot be "
                                         "restarted"),
                                       weechat_prefix ("error"),
                                       TRIGGER_PLUGIN_NAME);
@@ -1252,12 +1252,12 @@ end:
  */
 
 void
-trigger_command_init ()
+trigger_command_init (void)
 {
     weechat_hook_command (
         "trigger",
         N_("manage triggers, the Swiss Army knife for WeeChat"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("list [-o|-ol|-i|-il]"
            " || listfull"
            " || listdefault"
@@ -1268,11 +1268,11 @@ trigger_command_init ()
            " || input|output|recreate <name>"
            " || set <name> <option> <value>"
            " || rename|copy <name> <new_name>"
-           " || enable|disable|toggle [<name>|<mask> [<name>|<mask>...]]"
-           " || restart <name>|<mask> [<name>|<mask>...]"
+           " || enable|disable|toggle [<name>|<mask>...]"
+           " || restart <name>|<mask>..."
            " || show <name>"
-           " || del <name>|<mask> [<name>|<mask>...]"
-           " || restore <name>|<mask> [<name>|<mask>...]"
+           " || del <name>|<mask>..."
+           " || restore <name>|<mask>..."
            " || default -yes"
            " || monitor [<filter>]"),
         WEECHAT_CMD_ARGS_DESC(

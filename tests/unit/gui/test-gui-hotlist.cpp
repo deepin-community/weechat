@@ -1,7 +1,7 @@
 /*
  * test-gui-hotlist.cpp - test hotlist functions
  *
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -377,14 +377,14 @@ TEST(GuiHotlist, Resort)
     POINTERS_EQUAL(buffer_test[0], gui_hotlist->next_hotlist->next_hotlist->buffer);
     POINTERS_EQUAL(NULL, gui_hotlist->next_hotlist->next_hotlist->next_hotlist);
 
-    /* sort by buffer name (case sensitive) */
+    /* sort by buffer name (case-sensitive) */
     config_file_option_set (config_look_hotlist_sort, "buffer.name", 1);
     POINTERS_EQUAL(buffer_test[2], gui_hotlist->buffer);
     POINTERS_EQUAL(buffer_test[0], gui_hotlist->next_hotlist->buffer);
     POINTERS_EQUAL(buffer_test[1], gui_hotlist->next_hotlist->next_hotlist->buffer);
     POINTERS_EQUAL(NULL, gui_hotlist->next_hotlist->next_hotlist->next_hotlist);
 
-    /* sort by buffer name (case insensitive) */
+    /* sort by buffer name (case-insensitive) */
     config_file_option_set (config_look_hotlist_sort, "~buffer.name", 1);
     POINTERS_EQUAL(buffer_test[0], gui_hotlist->buffer);
     POINTERS_EQUAL(buffer_test[1], gui_hotlist->next_hotlist->buffer);

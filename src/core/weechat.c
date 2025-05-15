@@ -17,7 +17,7 @@
  *
  * weechat.c - WeeChat main functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -142,7 +142,7 @@ int weechat_auto_load_scripts = 1;     /* auto-load scripts                 */
  */
 
 void
-weechat_display_copyright ()
+weechat_display_copyright (void)
 {
     string_fprintf (stdout, "\n");
     string_fprintf (
@@ -164,7 +164,7 @@ weechat_display_copyright ()
  */
 
 void
-weechat_display_usage ()
+weechat_display_usage (void)
 {
     weechat_display_copyright ();
     string_fprintf (stdout, "\n");
@@ -187,6 +187,7 @@ weechat_display_usage ()
           "directory and delete it on exit\n"
           "                           (incompatible with option \"-d\")\n"
           "  -h, --help               display this help and exit\n"
+          "  -i, --build-info         display build information and exit\n"
           "  -l, --license            display WeeChat license and exit\n"
           "  -p, --no-plugin          don't load any plugin at startup\n"
           "  -P, --plugins <plugins>  load only these plugins at startup\n"
@@ -258,6 +259,7 @@ weechat_parse_args (int argc, char *argv[])
         { "dir",         required_argument, NULL, 'd'               },
         { "temp-dir",    no_argument,       NULL, 't'               },
         { "help",        no_argument,       NULL, 'h'               },
+        { "build-info",  no_argument,       NULL, 'i'               },
         { "license",     no_argument,       NULL, 'l'               },
         { "no-plugin",   no_argument,       NULL, 'p'               },
         { "plugins",     required_argument, NULL, 'P'               },
@@ -287,7 +289,7 @@ weechat_parse_args (int argc, char *argv[])
     opterr = 0;
 
     while ((opt = getopt_long (argc, argv,
-                               ":acd:thlpP:r:sv",
+                               ":acd:thilpP:r:sv",
                                long_options, NULL)) != -1)
     {
         switch (opt)
@@ -314,6 +316,10 @@ weechat_parse_args (int argc, char *argv[])
                 break;
             case 'h': /* -h / --help */
                 weechat_display_usage ();
+                weechat_shutdown (EXIT_SUCCESS, 0);
+                break;
+            case 'i': /* -i / --build-info */
+                debug_build_info ();
                 weechat_shutdown (EXIT_SUCCESS, 0);
                 break;
             case 'l': /* -l / --license */
@@ -404,7 +410,7 @@ weechat_parse_args (int argc, char *argv[])
  */
 
 void
-weechat_startup_message ()
+weechat_startup_message (void)
 {
     if (weechat_headless)
     {
@@ -431,7 +437,12 @@ weechat_startup_message ()
     }
     if (CONFIG_BOOLEAN(config_startup_display_version))
     {
-        command_version_display (NULL, 0, 0, 0);
+        command_version_display (
+            NULL,  /* buffer */
+            0,  /* send_to_buffer_as_input */
+            0,  /* translated_string */
+            0,  /* display_git_version */
+            (weechat_upgrade_count > 0) ? 1 : 0);  /* display_upgrades */
     }
     if (CONFIG_BOOLEAN(config_startup_display_logo) ||
         CONFIG_BOOLEAN(config_startup_display_version))
@@ -474,7 +485,7 @@ weechat_startup_message ()
  */
 
 void
-weechat_term_check ()
+weechat_term_check (void)
 {
     char *term, *sty, *tmux;
     const char *screen_terms = "screen-256color, screen";
@@ -542,7 +553,7 @@ weechat_term_check ()
  */
 
 void
-weechat_locale_check ()
+weechat_locale_check (void)
 {
     if (!weechat_locale_ok)
     {
@@ -598,14 +609,14 @@ weechat_shutdown (int return_code, int crash)
  */
 
 void
-weechat_init_gettext ()
+weechat_init_gettext (void)
 {
     weechat_locale_ok = (setlocale (LC_ALL, "") != NULL);   /* init gettext */
-#ifdef ENABLE_NLS
+#if ENABLE_NLS == 1
     bindtextdomain (PACKAGE, LOCALEDIR);
     bind_textdomain_codeset (PACKAGE, "UTF-8");
     textdomain (PACKAGE);
-#endif /* ENABLE_NLS */
+#endif /* ENABLE_NLS == 1 */
 
 #ifdef HAVE_LANGINFO_CODESET
     weechat_local_charset = strdup (nl_langinfo (CODESET));
@@ -620,7 +631,7 @@ weechat_init_gettext ()
  */
 
 void
-weechat_init (int argc, char *argv[], void (*gui_init_cb)())
+weechat_init (int argc, char *argv[], void (*gui_init_cb)(void))
 {
     weechat_first_start_time = time (NULL); /* initialize start time        */
     gettimeofday (&weechat_current_start_timeval, NULL);

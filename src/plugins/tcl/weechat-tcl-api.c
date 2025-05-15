@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008-2010 Dmitry Kobylin <fnfal@academ.tsc.ru>
  * Copyright (C) 2008 Julien Louis <ptitlouis@sysif.net>
- * Copyright (C) 2008-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2008-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -4043,6 +4043,25 @@ API_FUNC(buffer_match_list)
     API_RETURN_INT(result);
 }
 
+API_FUNC(line_search_by_id)
+{
+    char *buffer;
+    int id;
+    const char *result;
+
+    API_INIT_FUNC(1, "line_search_by_id", API_RETURN_EMPTY);
+    if (objc < 3)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    buffer = Tcl_GetString (objv[1]);
+    if (Tcl_GetIntFromObj (interp, objv[2], &id) != TCL_OK)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    result = API_PTR2STR(weechat_line_search_by_id (API_STR2PTR(buffer), id));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(current_window)
 {
     const char *result;
@@ -4759,6 +4778,23 @@ API_FUNC(completion_get_string)
                                             property);
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(completion_set)
+{
+    char *completion, *property, *value;
+
+    API_INIT_FUNC(1, "completion_set", API_RETURN_ERROR);
+    if (objc < 4)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    completion = Tcl_GetString (objv[1]);
+    property = Tcl_GetString (objv[2]);
+    value = Tcl_GetString (objv[3]);
+
+    weechat_completion_set (API_STR2PTR(completion), property, value);
+
+    API_RETURN_OK;
 }
 
 API_FUNC(completion_list_add)
@@ -5821,6 +5857,7 @@ void weechat_tcl_api_init (Tcl_Interp *interp)
     API_DEF_FUNC(buffer_set);
     API_DEF_FUNC(buffer_string_replace_local_var);
     API_DEF_FUNC(buffer_match_list);
+    API_DEF_FUNC(line_search_by_id);
     API_DEF_FUNC(current_window);
     API_DEF_FUNC(window_search_with_buffer);
     API_DEF_FUNC(window_get_integer);
@@ -5856,6 +5893,7 @@ void weechat_tcl_api_init (Tcl_Interp *interp)
     API_DEF_FUNC(completion_new);
     API_DEF_FUNC(completion_search);
     API_DEF_FUNC(completion_get_string);
+    API_DEF_FUNC(completion_set);
     API_DEF_FUNC(completion_list_add);
     API_DEF_FUNC(info_get);
     API_DEF_FUNC(info_get_hashtable);

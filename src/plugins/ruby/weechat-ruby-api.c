@@ -1,7 +1,7 @@
 /*
  * weechat-ruby-api.c - ruby API functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -4823,6 +4823,29 @@ weechat_ruby_api_buffer_match_list (VALUE class, VALUE buffer, VALUE string)
 }
 
 static VALUE
+weechat_ruby_api_line_search_by_id (VALUE class, VALUE buffer, VALUE id)
+{
+    char *c_buffer;
+    int c_id;
+    const char *result;
+
+    API_INIT_FUNC(1, "line_search_by_id", API_RETURN_EMPTY);
+    if (NIL_P (buffer) || NIL_P (id))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    Check_Type (buffer, T_STRING);
+    CHECK_INTEGER(id);
+
+    c_buffer = StringValuePtr (buffer);
+    c_id = NUM2INT (id);
+
+    result = API_PTR2STR(weechat_line_search_by_id (API_STR2PTR(c_buffer),
+                                                    c_id));
+
+    API_RETURN_STRING(result);
+}
+
+static VALUE
 weechat_ruby_api_current_window (VALUE class)
 {
     const char *result;
@@ -5760,6 +5783,31 @@ weechat_ruby_api_completion_get_string (VALUE class, VALUE completion,
                                             c_property);
 
     API_RETURN_STRING(result);
+}
+
+static VALUE
+weechat_ruby_api_completion_set (VALUE class, VALUE completion, VALUE property,
+                                 VALUE value)
+{
+    char *c_completion, *c_property, *c_value;
+
+    API_INIT_FUNC(1, "completion_set", API_RETURN_ERROR);
+    if (NIL_P (completion) || NIL_P (property) || NIL_P (value))
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    Check_Type (completion, T_STRING);
+    Check_Type (property, T_STRING);
+    Check_Type (value, T_STRING);
+
+    c_completion = StringValuePtr (completion);
+    c_property = StringValuePtr (property);
+    c_value = StringValuePtr (value);
+
+    weechat_completion_set (API_STR2PTR(c_completion),
+                            c_property,
+                            c_value);
+
+    API_RETURN_OK;
 }
 
 static VALUE
@@ -7081,6 +7129,7 @@ weechat_ruby_api_init (VALUE ruby_mWeechat)
     API_DEF_FUNC(buffer_set, 3);
     API_DEF_FUNC(buffer_string_replace_local_var, 2);
     API_DEF_FUNC(buffer_match_list, 2);
+    API_DEF_FUNC(line_search_by_id, 2);
     API_DEF_FUNC(current_window, 0);
     API_DEF_FUNC(window_search_with_buffer, 1);
     API_DEF_FUNC(window_get_integer, 2);
@@ -7116,6 +7165,7 @@ weechat_ruby_api_init (VALUE ruby_mWeechat)
     API_DEF_FUNC(completion_new, 1);
     API_DEF_FUNC(completion_search, 4);
     API_DEF_FUNC(completion_get_string, 2);
+    API_DEF_FUNC(completion_set, 3);
     API_DEF_FUNC(completion_list_add, 4);
     API_DEF_FUNC(completion_free, 1);
     API_DEF_FUNC(info_get, 2);

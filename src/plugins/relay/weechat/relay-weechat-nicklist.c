@@ -1,7 +1,7 @@
 /*
  * relay-weechat-nicklist.c - nicklist functions for WeeChat protocol
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,7 +35,7 @@
  */
 
 struct t_relay_weechat_nicklist *
-relay_weechat_nicklist_new ()
+relay_weechat_nicklist_new (void)
 {
     struct t_relay_weechat_nicklist *new_nicklist;
 

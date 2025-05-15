@@ -1,7 +1,7 @@
 /*
  * irc-message.c - functions for IRC messages
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -82,7 +82,7 @@ irc_message_parse_params (const char *parameters,
         *params = malloc ((alloc_params + 1) * sizeof ((*params)[0]));
         if (!*params)
             return;
-        *params[0] = NULL;
+        (*params)[0] = NULL;
     }
 
     ptr_params = parameters;
@@ -943,23 +943,22 @@ irc_message_split_add (struct t_irc_message_split_context *context,
 
     if (message)
     {
-        length = ((tags) ? strlen (tags) : 0) + strlen (message) + 1;
-        buf = malloc (length);
-        if (buf)
+        snprintf (key, sizeof (key), "msg%d", context->number);
+        if (weechat_asprintf (&buf,
+                              "%s%s",
+                              (tags) ? tags : "",
+                              message) >= 0)
         {
-            snprintf (key, sizeof (key), "msg%d", context->number);
-            snprintf (buf, length, "%s%s",
-                      (tags) ? tags : "",
-                      message);
+            length = strlen (buf);
             weechat_hashtable_set (context->hashtable, key, buf);
             if (weechat_irc_plugin->debug >= 2)
             {
                 weechat_printf (NULL,
                                 "irc_message_split_add >> %s='%s' (%d bytes)",
-                                key, buf, length - 1);
+                                key, buf, length);
             }
             free (buf);
-            context->total_bytes += length;
+            context->total_bytes += length + 1;
         }
     }
     if (arguments)
@@ -991,14 +990,14 @@ irc_message_split_add (struct t_irc_message_split_context *context,
  *     arguments: "Hello world!"
  *     suffix   : ""
  *
- *   message..: :nick!user@host.com PRIVMSG #channel :\01ACTION is eating\01
+ *   message..: :nick!user@host.com PRIVMSG #channel :\001ACTION is eating\001
  *   arguments:
  *     host     : ":nick!user@host.com"
  *     command  : "PRIVMSG"
  *     target   : "#channel"
- *     prefix   : ":\01ACTION "
+ *     prefix   : ":\001ACTION "
  *     arguments: "is eating"
- *     suffix   : "\01"
+ *     suffix   : "\001"
  *
  * Messages added to hashtable are:
  *   host + command + target + prefix + XXX + suffix
@@ -1330,7 +1329,7 @@ irc_message_end_batch (struct t_irc_message_split_context *context,
 }
 
 /*
- * Splits a PRIVMSG or NOTICE message, taking care of keeping the '\01' char
+ * Splits a PRIVMSG or NOTICE message, taking care of keeping the '\001' char
  * used in CTCP messages.
  *
  * If multiline == 1, the message is split on newline chars ('\n') and is sent
@@ -1457,13 +1456,13 @@ irc_message_split_privmsg_notice (struct t_irc_message_split_context *context,
         {
             for (i = 0; i < count_lines; i++)
             {
-                /* for CTCP, prefix is ":\01xxxx " and suffix "\01" */
+                /* for CTCP, prefix is ":\001xxxx " and suffix "\001" */
                 prefix[0] = '\0';
                 suffix[0] = '\0';
                 ptr_args = list_lines[i];
                 length = strlen (list_lines[i]);
-                if ((list_lines[i][0] == '\01')
-                    && (list_lines[i][length - 1] == '\01'))
+                if ((list_lines[i][0] == '\001')
+                    && (list_lines[i][length - 1] == '\001'))
                 {
                     pos = strchr (list_lines[i], ' ');
                     if (pos)
@@ -1482,7 +1481,7 @@ irc_message_split_privmsg_notice (struct t_irc_message_split_context *context,
                         snprintf (prefix, sizeof (prefix), ":%s", list_lines[i]);
                         ptr_args = "";
                     }
-                    suffix[0] = '\01';
+                    suffix[0] = '\001';
                     suffix[1] = '\0';
                 }
                 if (!prefix[0])
@@ -1673,8 +1672,8 @@ irc_message_split (struct t_irc_server *server, const char *message)
         && message
         && strchr (message, '\n')
         && (index_args + 1 <= argc - 1)
-        && (weechat_strncmp (argv[index_args + 1], "\01", 1) != 0)
-        && (weechat_strncmp (argv[index_args + 1], ":\01", 2) != 0)
+        && (weechat_strncmp (argv[index_args + 1], "\001", 1) != 0)
+        && (weechat_strncmp (argv[index_args + 1], ":\001", 2) != 0)
         && weechat_hashtable_has_key (server->cap_list, "batch")
         && weechat_hashtable_has_key (server->cap_list, "draft/multiline"));
 

@@ -1,7 +1,7 @@
 /*
  * charset.c - charset plugin for WeeChat: encode/decode strings
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -193,7 +193,7 @@ charset_config_create_option (const void *pointer, void *data,
  */
 
 int
-charset_config_init ()
+charset_config_init (void)
 {
     struct t_config_section *ptr_section;
 
@@ -281,7 +281,7 @@ charset_config_init ()
  */
 
 int
-charset_config_read ()
+charset_config_read (void)
 {
     return weechat_config_read (charset_config_file);
 }
@@ -291,7 +291,7 @@ charset_config_read ()
  */
 
 int
-charset_config_write ()
+charset_config_write (void)
 {
     return weechat_config_write (charset_config_file);
 }
@@ -465,7 +465,7 @@ charset_set (struct t_config_section *section, const char *type,
  */
 
 void
-charset_display_charsets ()
+charset_display_charsets (void)
 {
     weechat_printf (NULL,
                     _("%s: terminal: %s, internal: %s"),
@@ -482,7 +482,6 @@ charset_command_cb (const void *pointer, void *data,
                     char **argv, char **argv_eol)
 {
     struct t_config_section *ptr_section;
-    int length;
     char *ptr_charset, *option_name;
     const char *plugin_name, *name, *charset_modifier;
 
@@ -504,15 +503,13 @@ charset_command_cb (const void *pointer, void *data,
     charset_modifier = weechat_buffer_get_string (buffer,
                                                   "localvar_charset_modifier");
     if (charset_modifier)
+    {
         option_name = strdup (charset_modifier);
+    }
     else
     {
-        length = strlen (plugin_name) + 1 + strlen (name) + 1;
-        option_name = malloc (length);
-        if (!option_name)
+        if (weechat_asprintf (&option_name, "%s.%s", plugin_name, name) < 0)
             WEECHAT_COMMAND_ERROR;
-
-        snprintf (option_name, length, "%s.%s", plugin_name, name);
     }
 
     if (weechat_strcmp (argv[1], "reset") == 0)
@@ -606,7 +603,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     weechat_hook_command (
         "charset",
         N_("change charset for current buffer"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("decode|encode <charset>"
            " || reset"),
         WEECHAT_CMD_ARGS_DESC(

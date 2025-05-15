@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -30,6 +30,15 @@
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 256
 #endif /* NI_MAXHOST */
+
+enum t_irc_server_ipv6
+{
+    IRC_SERVER_IPV6_DISABLE = 0,
+    IRC_SERVER_IPV6_AUTO,
+    IRC_SERVER_IPV6_FORCE,
+    /* number of IPv6 options */
+    IRC_SERVER_NUM_IPV6,
+};
 
 enum t_irc_server_sasl_fail
 {
@@ -324,6 +333,7 @@ extern struct t_irc_server *irc_servers;
 extern const int gnutls_cert_type_prio[];
 extern const int gnutls_prot_prio[];
 extern struct t_irc_message *irc_recv_msgq, *irc_msgq_last_msg;
+extern char *irc_server_ipv6_string[];
 extern char *irc_server_sasl_fail_string[];
 extern char *irc_server_options[][2];
 
@@ -390,7 +400,7 @@ extern struct t_irc_server *irc_server_alloc (const char *name);
 extern struct t_irc_server *irc_server_alloc_with_url (const char *irc_url);
 extern void irc_server_apply_command_line_options (struct t_irc_server *server,
                                                    int argc, char **argv);
-extern void irc_server_free_all ();
+extern void irc_server_free_all (void);
 extern struct t_irc_server *irc_server_copy (struct t_irc_server *server,
                                              const char *new_name);
 extern int irc_server_rename (struct t_irc_server *server, const char *new_name);
@@ -408,10 +418,10 @@ extern struct t_arraylist *irc_server_sendf (struct t_irc_server *server,
                                              const char *format, ...);
 extern void irc_server_msgq_add_buffer (struct t_irc_server *server,
                                         const char *buffer);
-extern void irc_server_msgq_flush ();
+extern void irc_server_msgq_flush (void);
 extern void irc_server_set_buffer_title (struct t_irc_server *server);
 extern struct t_gui_buffer *irc_server_create_buffer (struct t_irc_server *server);
-char *irc_server_fingerprint_str_sizes ();
+char *irc_server_fingerprint_str_sizes (void);
 extern int irc_server_connect (struct t_irc_server *server);
 extern void irc_server_auto_connect (int auto_connect);
 extern void irc_server_autojoin_channels (struct t_irc_server *server);
@@ -432,7 +442,7 @@ extern void irc_server_switch_address (struct t_irc_server *server,
                                        int connection);
 extern void irc_server_disconnect (struct t_irc_server *server,
                                    int switch_address, int reconnect);
-extern void irc_server_disconnect_all ();
+extern void irc_server_disconnect_all (void);
 extern void irc_server_execute_command (struct t_irc_server *server);
 extern void irc_server_free_sasl_data (struct t_irc_server *server);
 extern void irc_server_free (struct t_irc_server *server);
@@ -455,6 +465,6 @@ extern struct t_hdata *irc_server_hdata_server_cb (const void *pointer,
 extern int irc_server_add_to_infolist (struct t_infolist *infolist,
                                        struct t_irc_server *server,
                                        int force_disconnected_state);
-extern void irc_server_print_log ();
+extern void irc_server_print_log (void);
 
 #endif /* WEECHAT_PLUGIN_IRC_SERVER_H */

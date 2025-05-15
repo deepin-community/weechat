@@ -1,7 +1,7 @@
 /*
  * relay.c - network communication between WeeChat and remote client
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,10 +20,12 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "../weechat-plugin.h"
 #include "relay.h"
+#include "relay-bar-item.h"
 #include "relay-buffer.h"
 #include "relay-client.h"
 #include "relay-command.h"
@@ -71,8 +73,6 @@ struct t_hdata *relay_hdata_nick = NULL;
 struct t_hdata *relay_hdata_completion = NULL;
 struct t_hdata *relay_hdata_completion_word = NULL;
 struct t_hdata *relay_hdata_hotlist = NULL;
-
-int relay_signal_upgrade_received = 0; /* signal "upgrade" received ?       */
 
 struct t_hook *relay_hook_timer = NULL;
 
@@ -150,11 +150,16 @@ relay_signal_upgrade_cb (const void *pointer, void *data,
     if (signal_data && (strcmp (signal_data, "save") == 0))
     {
         /* save session with a disconnected state in clients */
-        relay_upgrade_save (1);
+        if (!relay_upgrade_save (1))
+        {
+            weechat_printf (
+                NULL,
+                _("%s%s: failed to save upgrade data"),
+                weechat_prefix ("error"), RELAY_PLUGIN_NAME);
+            return WEECHAT_RC_ERROR;
+        }
         return WEECHAT_RC_OK;
     }
-
-    relay_signal_upgrade_received = 1;
 
     /* close socket for relay servers */
     for (ptr_server = relay_servers; ptr_server;
@@ -202,6 +207,15 @@ relay_signal_upgrade_cb (const void *pointer, void *data,
                         NG_("client", "clients", tls_disconnected));
     }
 
+    if (!relay_upgrade_save (0))
+    {
+        weechat_printf (
+            NULL,
+            _("%s%s: failed to save upgrade data"),
+            weechat_prefix ("error"), RELAY_PLUGIN_NAME);
+        return WEECHAT_RC_ERROR;
+    }
+
     return WEECHAT_RC_OK;
 }
 
@@ -239,6 +253,94 @@ relay_debug_dump_cb (const void *pointer, void *data,
 }
 
 /*
+ * Updates input text by adding local/remote command indicator, only on
+ * buffers with remote (relay api).
+ */
+
+char *
+relay_modifier_input_text_display_cb (const void *pointer,
+                                      void *data,
+                                      const char *modifier,
+                                      const char *modifier_data,
+                                      const char *string)
+{
+    struct t_gui_buffer *ptr_buffer;
+    struct t_relay_remote *ptr_remote;
+    const char *ptr_input, *ptr_text_local, *ptr_text_remote;
+    char *text, *new_input;
+    int rc, input_get_any_user_data;
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) modifier;
+
+    if (!string)
+        return NULL;
+
+    if (!relay_remotes)
+        return NULL;
+
+    rc = sscanf (modifier_data, "%p", &ptr_buffer);
+    if ((rc == EOF) || (rc == 0))
+        return NULL;
+
+    if (weechat_buffer_get_pointer (ptr_buffer, "plugin") != weechat_plugin)
+        return NULL;
+
+    ptr_text_local = weechat_config_string (relay_config_api_remote_input_cmd_local);
+    ptr_text_remote = weechat_config_string (relay_config_api_remote_input_cmd_remote);
+
+    if ((!ptr_text_local || !ptr_text_local[0])
+        && (!ptr_text_remote || !ptr_text_remote[0]))
+        return NULL;
+
+    ptr_remote = relay_remote_search (
+        weechat_buffer_get_string (ptr_buffer, "localvar_relay_remote"));
+    if (!ptr_remote)
+        return NULL;
+
+    ptr_input = weechat_string_input_for_buffer (
+        weechat_buffer_get_string (ptr_buffer, "input"));
+
+    /* if input is not a command, we don't change the input */
+    if (ptr_input)
+        return NULL;
+
+    input_get_any_user_data = weechat_buffer_get_integer (
+        ptr_buffer, "input_get_any_user_data");
+
+    text = weechat_string_eval_expression (
+        (input_get_any_user_data) ? ptr_text_remote : ptr_text_local,
+        NULL, NULL, NULL);
+
+    weechat_asprintf (&new_input, "%s%s%s",
+                      string, weechat_color ("reset"), text);
+
+    free (text);
+
+    return new_input;
+}
+
+/*
+ * Timer callback, called each second.
+ */
+
+int
+relay_timer_cb (const void *pointer, void *data, int remaining_calls)
+{
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) remaining_calls;
+
+    relay_client_timer ();
+    relay_remote_timer ();
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Initializes relay plugin.
  */
 
@@ -265,8 +367,6 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     relay_hdata_completion_word = weechat_hdata_get ("completion_word");
     relay_hdata_hotlist = weechat_hdata_get ("hotlist");
 
-    relay_signal_upgrade_received = 0;
-
     if (!relay_config_init ())
         return WEECHAT_RC_ERROR;
 
@@ -279,28 +379,35 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     /* hook completions */
     relay_completion_init ();
 
+    relay_bar_item_init ();
+
     weechat_hook_signal ("upgrade", &relay_signal_upgrade_cb, NULL, NULL);
     weechat_hook_signal ("debug_dump", &relay_debug_dump_cb, NULL, NULL);
 
     relay_info_init ();
 
+    /*
+     * callback for adding local/remote command status (buffer api remote),
+     * we use a low priority here, so that other modifiers "input_text_display"
+     * (from other plugins) will be called before this one
+     */
+    weechat_hook_modifier ("100|input_text_display",
+                           &relay_modifier_input_text_display_cb, NULL, NULL);
+
     if (weechat_relay_plugin->upgrading)
-    {
         relay_upgrade_load ();
-    }
-    else
-    {
-        /* check if auto-connect is enabled */
-        info_auto_connect = weechat_info_get ("auto_connect", NULL);
-        auto_connect = (info_auto_connect && (strcmp (info_auto_connect, "1") == 0)) ?
-            1 : 0;
-        free (info_auto_connect);
-        if (auto_connect)
-            relay_remote_auto_connect ();
-    }
+
+    /* check if auto-connect is enabled */
+    info_auto_connect = weechat_info_get ("auto_connect", NULL);
+    auto_connect = (info_auto_connect && (strcmp (info_auto_connect, "1") == 0)) ?
+        1 : 0;
+    free (info_auto_connect);
+
+    if (weechat_relay_plugin->upgrading || auto_connect)
+        relay_remote_auto_connect ();
 
     relay_hook_timer = weechat_hook_timer (1 * 1000, 0, 0,
-                                           &relay_client_timer_cb, NULL, NULL);
+                                           &relay_timer_cb, NULL, NULL);
 
     return WEECHAT_RC_OK;
 }
@@ -323,9 +430,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
     relay_config_write ();
 
-    if (relay_signal_upgrade_received)
-        relay_upgrade_save (0);
-    else
+    if (!weechat_relay_plugin->unload_with_upgrade)
         relay_client_disconnect_all ();
 
     relay_raw_message_free_all ();

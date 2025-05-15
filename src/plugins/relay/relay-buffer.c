@@ -1,7 +1,7 @@
 /*
  * relay-buffer.c - display clients list on relay buffer
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,6 +29,7 @@
 #include "relay-buffer.h"
 #include "relay-client.h"
 #include "relay-config.h"
+#include "relay-remote.h"
 #include "relay-raw.h"
 
 
@@ -78,15 +79,15 @@ relay_buffer_refresh (const char *hotlist)
                       /* disconnect */
                       (client_selected
                        && !RELAY_STATUS_HAS_ENDED(client_selected->status)) ?
-                      _("  [D] Disconnect") : "",
+                      _("  [d] Disconnect") : "",
                       /* remove */
                       (client_selected
                        && RELAY_STATUS_HAS_ENDED(client_selected->status)) ?
-                      _("  [R] Remove") : "",
+                      _("  [r] Remove") : "",
                       /* purge old */
-                      _("  [P] Purge finished"),
+                      _("  [p] Purge finished"),
                       /* quit */
-                      _("  [Q] Close this buffer"));
+                      _("  [q] Close this buffer"));
     for (ptr_client = relay_clients; ptr_client;
          ptr_client = ptr_client->next_client)
     {
@@ -159,7 +160,7 @@ relay_buffer_refresh (const char *hotlist)
         line++;
     }
     if (hotlist)
-        weechat_buffer_set (relay_buffer, "hotlist", hotlist);
+        weechat_buffer_set (relay_buffer, "hotlist_conditions", hotlist);
 }
 
 /*
@@ -172,6 +173,8 @@ relay_buffer_input_cb (const void *pointer, void *data,
                        const char *input_data)
 {
     struct t_relay_client *client, *ptr_client, *next_client;
+    const char *ptr_remote_name, *ptr_remote_id;
+    int refresh;
 
     /* make C compiler happy */
     (void) pointer;
@@ -198,15 +201,20 @@ relay_buffer_input_cb (const void *pointer, void *data,
         /* purge old clients */
         else if (weechat_strcmp (input_data, "p") == 0)
         {
+            refresh = 0;
             ptr_client = relay_clients;
             while (ptr_client)
             {
                 next_client = ptr_client->next_client;
                 if (RELAY_STATUS_HAS_ENDED(ptr_client->status))
+                {
                     relay_client_free (ptr_client);
+                    refresh = 1;
+                }
                 ptr_client = next_client;
             }
-            relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
+            if (refresh)
+                relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
         }
         /* quit relay buffer (close it) */
         else if (weechat_strcmp (input_data, "q") == 0)
@@ -221,6 +229,18 @@ relay_buffer_input_cb (const void *pointer, void *data,
                 relay_client_free (client);
                 relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
             }
+        }
+    }
+    else
+    {
+        ptr_remote_name = weechat_buffer_get_string (buffer,
+                                                     "localvar_relay_remote");
+        ptr_remote_id = weechat_buffer_get_string (buffer,
+                                                   "localvar_relay_remote_id");
+        if (ptr_remote_name && ptr_remote_name[0]
+            && ptr_remote_id && ptr_remote_id[0])
+        {
+            relay_remote_buffer_input (buffer, input_data);
         }
     }
 
@@ -256,7 +276,7 @@ relay_buffer_close_cb (const void *pointer, void *data,
  */
 
 void
-relay_buffer_open ()
+relay_buffer_open (void)
 {
     struct t_hashtable *buffer_props;
 

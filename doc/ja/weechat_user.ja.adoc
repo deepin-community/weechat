@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: ja-jp
-:toc-title: 目次
+include::includes/attributes-ja.adoc[]
 
 翻訳者:
 
@@ -125,7 +125,7 @@ WeeChat:
 | cmake | ≥ 3.0
 | ビルド
 
-| pkg-config |
+| pkgconf / pkg-config |
 | インストール済みライブラリを検出
 
 | libncurses-dev |
@@ -244,8 +244,9 @@ Debian および Ubuntu
 ベースのディストリビューションを使っており、_/etc/apt/sources.list_ ファイルで "deb-src"
 ソースエントリを指定しているならば、すべての依存関係にあるパッケージを以下のコマンドでインストール可能です:
 
+[source,shell]
 ----
-# apt-get build-dep weechat
+sudo apt-get build-dep weechat
 ----
 
 // TRANSLATION MISSING
@@ -254,22 +255,24 @@ Debian および Ubuntu
 
 * システムディレクトリにインストールする場合 (_root_ 特権が必要です):
 
+[source,shell]
 ----
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ sudo make install
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
 ----
 
 * 任意のディレクトリ (例えば自分のホームディレクトリ) にインストールする場合:
 
+[source,shell]
 ----
-$ mkdir build
-$ cd build
-$ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/directory
-$ make
-$ make install
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/directory
+make
+make install
 ----
 
 CMake に対するオプションを指定するには、以下の書式を使ってください: `-DOPTION=VALUE`。
@@ -411,14 +414,16 @@ List of available options:
 
 その他のオプションは以下のコマンドで確認してください:
 
+[source,shell]
 ----
-$ cmake -LA
+cmake -LA
 ----
 
 Curses インターフェースを使う場合は以下のコマンドを使ってください:
 
+[source,shell]
 ----
-$ ccmake ..
+ccmake ..
 ----
 
 // TRANSLATION MISSING
@@ -432,14 +437,16 @@ $ ccmake ..
 
 テストは WeeChat のコンパイル時に有効化しなければいけません:
 
+[source,shell]
 ----
-$ cmake .. -DENABLE_TESTS=ON
+cmake .. -DENABLE_TESTS=ON
 ----
 
 コンパイル終了後、build ディレクトリでテストを起動してください:
 
+[source,shell]
 ----
-$ ctest -V
+ctest -V
 ----
 
 [[git_sources]]
@@ -450,8 +457,9 @@ $ ctest -V
 
 Git ソースを入手するには、以下のコマンドを使ってください:
 
+[source,shell]
 ----
-$ git clone https://github.com/weechat/weechat.git
+git clone https://github.com/weechat/weechat.git
 ----
 
 その後は、ソースパッケージの説明に従ってください
@@ -476,8 +484,9 @@ WeeChat がクラッシュした場合、または WeeChat
 
 CMake でコンパイルする場合:
 
+[source,shell]
 ----
-$ cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 ----
 
 // TRANSLATION MISSING
@@ -488,20 +497,22 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 You can additionally enable the address sanitizer, which causes WeeChat to
 crash immediately in case of problem:
 
+[source,shell]
 ----
-$ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS=-fsanitize=address -DCMAKE_CXX_FLAGS=-fsanitize=address -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS=-fsanitize=address -DCMAKE_CXX_FLAGS=-fsanitize=address -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address
 ----
 
 // TRANSLATION MISSING
-[WARNING]
+[CAUTION]
 You should enable address sanitizer only if you're trying to cause a crash,
 this is not recommended in production.
 
 // TRANSLATION MISSING
 Then once compiled and installed, you must run WeeChat like this:
 
+[source,shell]
 ----
-$ ASAN_OPTIONS="detect_odr_violation=0 log_path=asan.log" weechat
+ASAN_OPTIONS="detect_odr_violation=0 log_path=asan.log" weechat
 ----
 
 // TRANSLATION MISSING
@@ -522,12 +533,14 @@ WeeChat バージョン 0.3.8 以下または WeeChat の実行前に core
 
 Linux で _bash_ シェルを使っている場合、以下の内容を `~/.bashrc` に追加してください:
 
+[source,shell]
 ----
 ulimit -c unlimited
 ----
 
 サイズを指定する場合は:
 
+[source,shell]
 ----
 ulimit -c 200000
 ----
@@ -550,6 +563,7 @@ https://wiki.archlinux.org/title/Core_dump[wiki page ^↗^^].
 例えば、_weechat_ が _/usr/bin/_ にインストールされ、_core_ ファイルが
 _/home/user/_ にある場合、以下のコマンドで gdb を起動してください:
 
+[source,shell]
 ----
 gdb /usr/bin/weechat /home/user/core
 ----
@@ -596,6 +610,7 @@ Copying output to /tmp/crash.txt.
 起動している WeeChat をデバッグするには (例えば WeeChat がフリーズしているような場合)、gdb
 の引数にプロセス番号を与えて起動します (_12345_ は weechat プロセスの PID に変更してください):
 
+[source,shell]
 ----
 gdb /usr/bin/weechat 12345
 ----
@@ -611,8 +626,9 @@ gdb /usr/bin/weechat 12345
 
 WeeChat を起動させるには、以下コマンドを実行:
 
+[source,shell]
 ----
-$ weechat
+weechat
 ----
 
 WeeChat の初回起動時にデフォルトのオプション設定を含む設定ファイルが
@@ -628,7 +644,7 @@ include::includes/cmdline_options.ja.adoc[tag=standard]
 Some extra options are available for debug purposes only:
 
 // TRANSLATION MISSING
-[WARNING]
+[CAUTION]
 Do *NOT* use any of these options in production!
 
 include::includes/cmdline_options.ja.adoc[tag=debug]
@@ -844,26 +860,29 @@ This saves the current state in `*.upgrade` files. You can then either reboot
 or move the whole WeeChat directories (config, data, cache) to another machine,
 and restart WeeChat later with this command:
 
+[source,shell]
 ----
-$ weechat --upgrade
+weechat --upgrade
 ----
 
 // TRANSLATION MISSING
 [[restart_after_upgrade]]
 === Restart after upgrade
 
-[[restart_release_notes]]
-==== Release notes
+// TRANSLATION MISSING
+[[restart_upgrading_notes]]
+==== Upgrading notes
 
-After an upgrade, it is *strongly recommended* to read the
-https://weechat.org/files/doc/weechat/ReleaseNotes-devel.html[release notes ^↗^^]
-which contain important information about breaking changes and some
+// TRANSLATION MISSING
+After an upgrade, it is *strongly recommended* to read the file
+https://github.com/weechat/weechat/blob/main/UPGRADING.md[UPGRADING.md ^↗^^]
+which contains important information about breaking changes and some
 manual actions that could be required.
 
-You must read the release notes of all versions between your old (excluded) and
-your new version (included). +
-For example if you switch from version 3.0 to 3.2, you must read release notes
-of versions 3.1 and 3.2.
+// TRANSLATION MISSING
+You must read the versions between your old (excluded) and your new version (included). +
+For example if you switch from version 4.0.0 to 4.3.0, you must read versions
+4.0.1 to 4.3.0.
 
 [[restart_configuration_upgrade]]
 ==== Configuration upgrade
@@ -917,7 +936,7 @@ WeeChat を起動した端末の例:
 │         │                                                                    │       │
 │         │                                                                    │       │
 │         │                                                                    │       │
-│         │[12:55] [5] [irc/libera] 2:#test(+n){4}* [H: 3:#abc(2,5), 5]                │
+│         │[12:55] [5] [irc/libera] 2:#test(+n){4}* M [H: 3:#abc(2,5), 5]              │
 │         │[@Flashy(i)] hi peter!█                                                     │
 └──────────────────────────────────────────────────────────────────────────────────────┘
             ▲ "status" と "input" バー                               "nicklist" バー ▲
@@ -957,34 +976,39 @@ By default, the screen is divided up into the following areas:
 
 [width="100%",cols="^3,^3,9",options="header"]
 |===
-| 要素                  | 例                    | 説明
-| time                  | `[12:55]`             | 時刻
-| buffer_last_number    | `[5]`                 | リスト中の最後のバッファ番号
-| buffer_plugin         | `[irc/libera]`        | 現在のバッファのプラグイン (irc プラグインではバッファで利用されている IRC サーバ名を追加できます)
-| buffer_number         | `2`                   | 現在のバッファの番号
-| buffer_name           | `#test`               | 現在のバッファの名前
-| buffer_modes          | `+n`                  | IRC チャンネルモード
+| 要素                  | 例                     | 説明
+| time                  | `12:55`                | 時刻
 // TRANSLATION MISSING
-| buffer_nicklist_count | `{4}`                 | Number of nicks displayed in nicklist.
-| buffer_zoom           | !                     | `!` はマージされたバッファがズームされている状態 (ズームされたものだけを表示する状態) を示します、空の場合はすべてのマージされたバッファが表示されていることを示します
-| buffer_filter         | `+*+`                 | フィルタ表示: `+*+` の場合いくつかの行がフィルタされ (隠され) ます、空の場合すべての行が表示されます。
-| scroll                | `-MORE(50)-`          | スクロール表示、最後の行が表示されてから追加された行数を含む。
-| lag                   | `[Lag: 2.5]`          | 遅延秒表示 (遅延が短い場合は非表示)
-| hotlist               | `[H: 3:#abc(2,5), 5]` | 変化のあったバッファのリスト (未読メッセージ) (例では、_#abc_ に 2 個のハイライトと 5 個の未読メッセージ、5 番目のバッファに 1 個の未読メッセージがあることを意味します。)
-| completion            | `abc(2) def(5)`       | 補完候補の単語リスト、各単語に対して適応される補完候補の数を含む。
+| buffer_last_number    | `5`                    | Number of the latest buffer (can be different from `buffer_count` if option <<option_weechat.look.buffer_auto_renumber,weechat.look.buffer_auto_renumber>> is `off`).
+| buffer_plugin         | `irc/libera`           | 現在のバッファのプラグイン (irc プラグインではバッファで利用されている IRC サーバ名を追加できます)
+| buffer_number         | `2`                    | 現在のバッファの番号
+| buffer_name           | `#test`                | 現在のバッファの名前
+| buffer_modes          | `+n`                   | IRC チャンネルモード
+// TRANSLATION MISSING
+| buffer_nicklist_count | `4`                    | Number of nicks displayed in nicklist.
+| buffer_zoom           | !                      | `!` はマージされたバッファがズームされている状態 (ズームされたものだけを表示する状態) を示します、空の場合はすべてのマージされたバッファが表示されていることを示します
+| buffer_filter         | `+*+`                  | フィルタ表示: `+*+` の場合いくつかの行がフィルタされ (隠され) ます、空の場合すべての行が表示されます。
+// TRANSLATION MISSING
+| mouse_status          | `M`                    | Mouse status (empty if mouse is disabled), see command <<command_weechat_mouse,/mouse>> and <<key_bindings_toggle_keys,toggle keys>>.
+| scroll                | `-MORE(50)-`           | スクロール表示、最後の行が表示されてから追加された行数を含む。
+| lag                   | `Lag: 2.5`             | 遅延秒表示 (遅延が短い場合は非表示)
+| hotlist               | `H: 3:#abc(2,5), 5`    | 変化のあったバッファのリスト (未読メッセージ) (例では、_#abc_ に 2 個のハイライトと 5 個の未読メッセージ、5 番目のバッファに 1 個の未読メッセージがあることを意味します。)
+// TRANSLATION MISSING
+| typing                | `Typing: bob, (alice)` | Typing notification, see <<typing_notifications,typing notifications>>.
+| completion            | `abc(2) def(5)`        | 補完候補の単語リスト、各単語に対して適応される補完候補の数を含む。
 |===
 
 入力 (_input_) バーは以下の初期要素を持っています:
 
 [width="100%",cols="^3,^3,9",options="header"]
 |===
-| 要素         | 例                                           | 説明
-| input_prompt | `[@Flashy]`                                  | 入力プロンプト、irc の場合: ニックネームとモード (libera では "+i" モードは不可視状態を意味します)
-| away         | `(away)`                                     | 離席状態表示
+| 要素         | 例                                         | 説明
+| input_prompt | `@Flashy`                                  | 入力プロンプト、irc の場合: ニックネームとモード (libera では "+i" モードは不可視状態を意味します)
+| away         | `away`                                     | 離席状態表示
 // TRANSLATION MISSING
-| input_search | `[Search lines (~ str,msg)]`                 | Search indicator (see below).
-| input_paste  | `[Paste 7 lines ? [ctrl-y] Yes [ctrl-n] No]` | 行をペーストする場合にユーザへ行われる質問
-| input_text   | `hi peter!`                                  | 入力テキスト
+| input_search | `Search lines (~ str,msg)`                 | Search indicator (see below).
+| input_paste  | `Paste 7 lines ? [ctrl-y] Yes [ctrl-n] No` | 行をペーストする場合にユーザへ行われる質問
+| input_text   | `hi peter!`                                | 入力テキスト
 |===
 
 // TRANSLATION MISSING
@@ -1024,9 +1048,7 @@ There are two search modes:
 [width="100%",cols="^3,^3,9",options="header"]
 |===
 | 要素                         | 例                       | 説明
-| buffer_count                 | `10`                     | 開いているバッファの総数
-// TRANSLATION MISSING
-| buffer_last_number           | `10`                     | Number of the latest buffer (can be different from `buffer_count` if option <<option_weechat.look.buffer_auto_renumber,weechat.look.buffer_auto_renumber>> is `off`).
+| buffer_count                 | `5`                      | 開いているバッファの総数
 // TRANSLATION MISSING
 | buffer_nicklist_count_all    | `4`                      | Number of visible groups and nicks in nicklist.
 // TRANSLATION MISSING
@@ -1052,7 +1074,8 @@ There are two search modes:
 | irc_nick_modes               | `i`                      | 自分のニックネームに対する IRC モード
 // TRANSLATION MISSING
 | irc_nick_prefix              | `@`                      | IRC nick prefix on channel.
-| mouse_status                 | `M`                      | マウスの状態 (マウスが無効化されている場合は空文字列)
+// TRANSLATION MISSING
+| spacer                       |                          | Special item used to align text in bars, see <<item_spacer,Spacer item>>.
 | spell_dict                   | `fr,en`                  | 現在のバッファにおけるスペリング辞書
 | spell_suggest                | `print,prone,prune`      | カーソル下の単語に対するスペリング候補 (スペルが間違っている場合)
 // TRANSLATION MISSING
@@ -1417,7 +1440,8 @@ WeeChat は様々な目的で各行にタグを付けます:
 | no_filter        | フィルタできない行
 | no_highlight     | ハイライトできない行
 | no_log           | ログファイルに書き込まれない行
-| log0 … log9      | 行に対するログレベル (`/help logger` を参照)
+// TRANSLATION MISSING
+| log0 … log9      | 行に対するログレベル (see the <<command_logger_logger,/logger>> command).
 // TRANSLATION MISSING
 | notify_none      | The line must not be added to hotlist. ^(1)^
 // TRANSLATION MISSING
@@ -1870,11 +1894,13 @@ They can be changed and new ones can be added with the <<command_weechat_key,/ke
 
 [width="100%",cols="^.^3,.^8,.^5",options="header"]
 |===
-| キー         | 説明 | コマンド
-| kbd:[Alt+m] | マウスの有効無効を切り替え | `+/mouse toggle+`
-| kbd:[Alt+s] | スペルチェッカの有効無効を切り替え | `+/mute spell toggle+`
-| kbd:[Alt+=] | フィルタの有効無効を切り替え | `+/filter toggle+`
-| kbd:[Alt+-] | 現在のバッファのフィルタの有効無効を切り替え | `+/filter toggle @+`
+| キー                   | 説明 | コマンド
+| kbd:[Alt+m]            | マウスの有効無効を切り替え | `+/mouse toggle+`
+| kbd:[Alt+s]            | スペルチェッカの有効無効を切り替え | `+/mute spell toggle+`
+| kbd:[Alt+=]            | フィルタの有効無効を切り替え | `+/filter toggle+`
+| kbd:[Alt+-]            | 現在のバッファのフィルタの有効無効を切り替え | `+/filter toggle @+`
+// TRANSLATION MISSING
+| kbd:[Alt+Ctrl+l] (`L`) | Toggle between remote and local commands on a remote buffer (relay "api"). | `+/remote togglecmd+`
 |===
 
 // TRANSLATION MISSING
@@ -2124,9 +2150,9 @@ These keys and actions are used on the IRC /list buffer (see command <<command_i
 | kbd:[F11]      | `pass:[<]`   | Scroll horizontally on the left. | `+/list -left+`
 | kbd:[F12]      | `pass:[>]`   | Scroll horizontally on the right. | `+/list -right+`
 | kbd:[Ctrl+j]   | `j`          | Join IRC channel on selected line. | `+/list -join+`
-|                | `xxx`        | Show only channels with "xxx" in name or topic (case insensitive). |
-|                | `n:xxx`      | Show only channels with "xxx" in name (case insensitive). |
-|                | `t:xxx`      | Show only channels with "xxx" in topic (case insensitive). |
+|                | `xxx`        | Show only channels with "xxx" in name or topic (case-insensitive). |
+|                | `n:xxx`      | Show only channels with "xxx" in name (case-insensitive). |
+|                | `t:xxx`      | Show only channels with "xxx" in topic (case-insensitive). |
 |                | `u:n`        | Show only channels with at least "n" users. |
 |                | `u:>n`       | Show only channels with more than "n" users. |
 |                | `u:<n`       | Show only channels with less than "n" users. |
@@ -2189,27 +2215,27 @@ Example of fset buffer displaying options starting with `weechat.look` :
 [subs="quotes"]
 ....
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│1.weechat│1/121 | Filter: weechat.look.* | Sort: ~name | Key(input): alt+space=toggle │
-│2.fset   │weechat.look.bare_display_exit_on_input: exit the bare display mode on any c│
-│         │hanges in input [default: on]                                               │
+│1.weechat│7/125 | Filter: weechat.look.* | Sort: ~name | Key(input): alt+space=toggl>>│
+│2.fset   │weechat.look.bare_display_exit_on_input: 入力の変更に対する最小限表示モード │
+│         │を終了する [デフォルト: on]                                                 │
 │         │----------------------------------------------------------------------------│
-│         │  weechat.look.align_end_of_lines                   enum     message        │
-│         │  weechat.look.align_multiline_words                boolean  on             │
-│         │  weechat.look.bar_more_down                        string   "++"           │
-│         │  weechat.look.bar_more_left                        string   "<<"           │
-│         │  weechat.look.bar_more_right                       string   ">>"           │
-│         │  weechat.look.bar_more_up                          string   "--"           │
-│         │##  weechat.look.bare_display_exit_on_input           boolean  on             ##│
-│         │  weechat.look.bare_display_time_format             string   "%H:%M"        │
-│         │  weechat.look.buffer_auto_renumber                 boolean  on             │
-│         │  weechat.look.buffer_notify_default                enum     all            │
-│         │  weechat.look.buffer_position                      enum     end            │
-│         │  weechat.look.buffer_search_case_sensitive         boolean  off            │
-│         │  weechat.look.buffer_search_force_default          boolean  off            │
-│         │  weechat.look.buffer_search_regex                  boolean  off            │
-│         │  weechat.look.buffer_search_where                  enum     prefix_message │
-│         │  weechat.look.buffer_time_format                   string   "%H:%M:%S"     │
-│         │  weechat.look.buffer_time_same                     string   ""             │
+│         │  weechat.look.align_end_of_lines              enum    message              │
+│         │  weechat.look.align_multiline_words           ブール  on                   │
+│         │  weechat.look.bar_more_down                   文字列  "++"                 │
+│         │  weechat.look.bar_more_left                   文字列  "<<"                 │
+│         │  weechat.look.bar_more_right                  文字列  ">>"                 │
+│         │  weechat.look.bar_more_up                     文字列  "--"                 │
+│         │##  weechat.look.bare_display_exit_on_input      ブール  on                   ##│
+│         │  weechat.look.bare_display_time_format        文字列  "%H:%M"              │
+│         │  weechat.look.buffer_auto_renumber            ブール  on                   │
+│         │  weechat.look.buffer_notify_default           enum    all                  │
+│         │  weechat.look.buffer_position                 enum    end                  │
+│         │  weechat.look.buffer_search_case_sensitive    ブール  off                  │
+│         │  weechat.look.buffer_search_force_default     ブール  off                  │
+│         │  weechat.look.buffer_search_history           enum    local                │
+│         │  weechat.look.buffer_search_regex             ブール  off                  │
+│         │  weechat.look.buffer_search_where             enum    prefix_message       │
+│         │  weechat.look.buffer_time_format              文字列  "%H:%M:%S"           │
 │         │[12:55] [2] [fset] 2:fset                                                   │
 │         │█                                                                           │
 └──────────────────────────────────────────────────────────────────────────────────────┘
@@ -2996,8 +3022,9 @@ Speller オプションは aspell 設定の "option"
 ここで利用するオプション名は aspell
 設定オプションと同じものです。オプションのリストはシェルで以下のコマンドを実行することで確認できます:
 
+[source,shell]
 ----
-$ aspell config
+aspell config
 ----
 
 例えば、"ignore-case" オプションを有効化するには:
@@ -3439,7 +3466,8 @@ IRC サーバのパスワードを設定する例:
 例えばパスワードなどの個人データを含むオプションで暗号化データを使うことができます、書式:
 "${sec.data.xxx}" ここで "xxx" は暗号化データの名前です
 (`/secure set xxx ...` のように使います)。 +
-利用できるオプションの完全なリストはを見るには、`/help secure` を使ってください。
+// TRANSLATION MISSING
+For a complete list of supported options, see the <<command_weechat_secure,/secure>> command.
 
 例えば上の _libera_ パスワードを
 <<irc_sasl_authentication,SASL 認証>>で使うには:
@@ -3568,8 +3596,9 @@ irc[6][s]://[nick[:password]@]irc.example.org[:port][/channel][,channel[...]]
 _alice_ というニックネームを使って _irc.libera.chat_ ホストのデフォルトポート (6667)
 で稼働中の IRC サーバ上の _#weechat_ と _#weechat-fr_ チャンネルに参加する例:
 
+[source,shell]
 ----
-$ weechat irc://alice@irc.libera.chat/#weechat,#weechat-fr
+weechat irc://alice@irc.libera.chat/#weechat,#weechat-fr
 ----
 
 // TRANSLATION MISSING
@@ -3582,12 +3611,14 @@ $ weechat irc://alice@irc.libera.chat/#weechat,#weechat-fr
 By default no servers are defined. You can add as many servers as you want with
 the <<command_irc_server,/server>> command.
 
-For example to connect to https://libera.chat/[libera.chat ^↗^^]
-with TLS (encrypted trafic):
+For example to connect to https://libera.chat/[libera.chat ^↗^^]:
 
 ----
-/server add libera irc.libera.chat/6697 -tls
+/server add libera irc.libera.chat
 ----
+
+[NOTE]
+Default port is 6697 and TLS (encrypted traffic) is enabled.
 
 You can tell WeeChat to auto-connect to this server on startup:
 
@@ -3629,51 +3660,52 @@ For example if you created the _libera_ server with the commands above, you'll
 see this with the command `/fset libera`:
 
 ....
-irc.server.libera.addresses             string   "irc.libera.chat/6697"
-irc.server.libera.anti_flood_prio_high  integer  null -> 2
-irc.server.libera.anti_flood_prio_low   integer  null -> 2
-irc.server.libera.autoconnect           boolean  on
-irc.server.libera.autojoin              string   null -> ""
-irc.server.libera.autojoin_dynamic      boolean  null -> off
-irc.server.libera.autoreconnect         boolean  null -> on
-irc.server.libera.autoreconnect_delay   integer  null -> 10
-irc.server.libera.autorejoin            boolean  null -> off
-irc.server.libera.autorejoin_delay      integer  null -> 30
-irc.server.libera.away_check            integer  null -> 0
-irc.server.libera.away_check_max_nicks  integer  null -> 25
-irc.server.libera.capabilities          string   null -> "*"
-irc.server.libera.charset_message       enum     null -> message
-irc.server.libera.command               string   null -> ""
-irc.server.libera.command_delay         integer  null -> 0
-irc.server.libera.connection_timeout    integer  null -> 60
-irc.server.libera.default_chantypes     string   null -> "#&"
-irc.server.libera.ipv6                  boolean  null -> on
-irc.server.libera.local_hostname        string   null -> ""
-irc.server.libera.msg_kick              string   null -> ""
-irc.server.libera.msg_part              string   null -> "WeeChat ${info:version}"
-irc.server.libera.msg_quit              string   null -> "WeeChat ${info:version}"
-irc.server.libera.nicks                 string   null -> "alice,alice1,alice2,alice3,alice4"
-irc.server.libera.nicks_alternate       boolean  null -> on
-irc.server.libera.notify                string   null -> ""
-irc.server.libera.password              string   null -> ""
-irc.server.libera.proxy                 string   null -> ""
-irc.server.libera.realname              string   null -> ""
-irc.server.libera.sasl_fail             enum     null -> reconnect
-irc.server.libera.sasl_key              string   null -> ""
-irc.server.libera.sasl_mechanism        enum     null -> plain
-irc.server.libera.sasl_password         string   "${sec.data.libera}"
-irc.server.libera.sasl_timeout          integer  null -> 15
-irc.server.libera.sasl_username         string   "alice"
-irc.server.libera.split_msg_max_length  integer  null -> 512
-irc.server.libera.tls                   boolean  on
-irc.server.libera.tls_cert              string   null -> ""
-irc.server.libera.tls_dhkey_size        integer  null -> 2048
-irc.server.libera.tls_fingerprint       string   null -> ""
-irc.server.libera.tls_password          string   null -> ""
-irc.server.libera.tls_priorities        string   null -> "NORMAL:-VERS-SSL3.0"
-irc.server.libera.tls_verify            boolean  null -> on
-irc.server.libera.usermode              string   null -> ""
-irc.server.libera.username              string   null -> "alice"
+irc.server.libera.addresses             文字列  "irc.libera.chat"
+irc.server.libera.anti_flood            整数    null -> 2000
+irc.server.libera.autoconnect           ブール  on
+irc.server.libera.autojoin              文字列  null -> ""
+irc.server.libera.autojoin_delay        整数    null -> 0
+irc.server.libera.autojoin_dynamic      ブール  null -> off
+irc.server.libera.autoreconnect         ブール  null -> on
+irc.server.libera.autoreconnect_delay   整数    null -> 10
+irc.server.libera.autorejoin            ブール  null -> off
+irc.server.libera.autorejoin_delay      整数    null -> 30
+irc.server.libera.away_check            整数    null -> 0
+irc.server.libera.away_check_max_nicks  整数    null -> 25
+irc.server.libera.capabilities          文字列  null -> "*"
+irc.server.libera.charset_message       enum    null -> message
+irc.server.libera.command               文字列  null -> ""
+irc.server.libera.command_delay         整数    null -> 0
+irc.server.libera.connection_timeout    整数    null -> 60
+irc.server.libera.default_chantypes     文字列  null -> "#&"
+irc.server.libera.ipv6                  enum    null -> auto
+irc.server.libera.local_hostname        文字列  null -> ""
+irc.server.libera.msg_kick              文字列  null -> ""
+irc.server.libera.msg_part              文字列  null -> "WeeChat ${info:version}"
+irc.server.libera.msg_quit              文字列  null -> "WeeChat ${info:version}"
+irc.server.libera.nicks                 文字列  null -> "${username},${username}2,${username}3,${username}4,${username}5"
+irc.server.libera.nicks_alternate       ブール  null -> on
+irc.server.libera.notify                文字列  null -> ""
+irc.server.libera.password              文字列  null -> ""
+irc.server.libera.proxy                 文字列  null -> ""
+irc.server.libera.realname              文字列  null -> ""
+irc.server.libera.registered_mode       文字列  null -> "r"
+irc.server.libera.sasl_fail             enum    null -> reconnect
+irc.server.libera.sasl_key              文字列  null -> ""
+irc.server.libera.sasl_mechanism        enum    null -> plain
+irc.server.libera.sasl_password         文字列  "${sec.data.libera}"
+irc.server.libera.sasl_timeout          整数    null -> 15
+irc.server.libera.sasl_username         文字列  "alice"
+irc.server.libera.split_msg_max_length  整数    null -> 512
+irc.server.libera.tls                   ブール  null -> on
+irc.server.libera.tls_cert              文字列  null -> ""
+irc.server.libera.tls_dhkey_size        整数    null -> 2048
+irc.server.libera.tls_fingerprint       文字列  null -> ""
+irc.server.libera.tls_password          文字列  null -> ""
+irc.server.libera.tls_priorities        文字列  null -> "NORMAL"
+irc.server.libera.tls_verify            ブール  null -> on
+irc.server.libera.usermode              文字列  null -> ""
+irc.server.libera.username              文字列  null -> "${username}"
 ....
 
 For example if you want to automatically connect to all servers you define
@@ -3726,9 +3758,10 @@ irc.server.xxx.tls_verify::
 
 * シェルを使って証明書をインポート:
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ wget -O ~/.config/weechat/tls/CAs.pem https://www.spi-inc.org/ca/spi-cacert.crt
+mkdir -p ~/.config/weechat/tls
+wget -O ~/.config/weechat/tls/CAs.pem https://www.spi-inc.org/ca/spi-cacert.crt
 ----
 
 // TRANSLATION MISSING
@@ -3750,10 +3783,11 @@ CAs.pem ファイル中で複数の証明書を連結することもできます
 
 * シェルで証明書を作成:
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ cd ~/.config/weechat/tls
-$ openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
+mkdir -p ~/.config/weechat/tls
+cd ~/.config/weechat/tls
+openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
 ----
 
 // TRANSLATION MISSING
@@ -3806,8 +3840,9 @@ ECDSA-NIST256P-CHALLENGE を使って認証を行うためには、秘密鍵を�
 
 鍵を作成するには、以下のコマンドを使ってください:
 
+[source,shell]
 ----
-$ openssl ecparam -genkey -name prime256v1 -out ~/.config/weechat/ecdsa.pem
+openssl ecparam -genkey -name prime256v1 -out ~/.config/weechat/ecdsa.pem
 ----
 
 // TRANSLATION MISSING
@@ -3817,8 +3852,9 @@ which can also be for example `~/.weechat`.
 
 公開鍵を (base64 エンコード形式で) 作成するには、以下のコマンドを使ってください:
 
+[source,shell]
 ----
-$ openssl ec -noout -text -conv_form compressed -in ~/.config/weechat/ecdsa.pem | grep '^pub:' -A 3 | tail -n 3 | tr -d ' \n:' | xxd -r -p | base64
+openssl ec -noout -text -conv_form compressed -in ~/.config/weechat/ecdsa.pem | grep '^pub:' -A 3 | tail -n 3 | tr -d ' \n:' | xxd -r -p | base64
 ----
 
 サーバに接続、本人確認 (例えば "nickserv identify" を使って)、nickserv
@@ -3888,8 +3924,9 @@ privacy and security on the Internet.
 
 最初に、Tor をインストールしてください。Debian (とその派生ディストリビューション) の場合:
 
+[source,shell]
 ----
-$ sudo apt-get install tor
+sudo apt-get install tor
 ----
 
 WeeChat で Tor サービスを使った socks5 プロキシを作成してください
@@ -4316,7 +4353,8 @@ for example if `#channel1` requires a key but not `#channel2`:
 /set irc.server.libera.autojoin "#channel1,#channel2 key1"
 ----
 
-For help on the format, see `/help irc.server.libera.autojoin`.
+// TRANSLATION MISSING
+For help on the format, see option <<option_irc.server_default.autojoin,irc.server_default.autojoin>>.
 
 [[irc_private_messages]]
 === Private messages
@@ -4363,8 +4401,9 @@ buffers, for example:
 /filter add irc_smart * irc_smart_filter *
 ----
 
+// TRANSLATION MISSING
 It is possible to create filter for one channel only or channels beginning with
-same name (see `/help filter`):
+same name (see the <<command_weechat_filter,/filter>> command):
 
 ----
 /filter add irc_smart_weechat irc.libera.#weechat* irc_smart_filter *
@@ -4821,10 +4860,11 @@ The default path to certificate/key is defined by option
 
 以下のコマンドを使って証明書と秘密鍵ファイルを作成します:
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ cd ~/.config/weechat/tls
-$ openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
+mkdir -p ~/.config/weechat/tls
+cd ~/.config/weechat/tls
+openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
 ----
 
 // TRANSLATION MISSING
@@ -4903,10 +4943,18 @@ For example:
 Now you can connect on port 9000 with a WeeChat or a remote interface using
 password "mypassword".
 
-To connect to an _api_ relay with WeeChat:
+To connect to an _api_ relay running locally with WeeChat:
 
 ----
 /remote add weechat http://localhost:9000 -password=mypassword
+/remote connect weechat
+----
+
+To connect to an _api_ relay running elsewhere with WeeChat
+(TLS is highly recommended):
+
+----
+/remote add weechat https://example.com:9000 -password=mypassword
 /remote connect weechat
 ----
 
@@ -4930,10 +4978,10 @@ https://weechat.org/about/interfaces/[this page ^↗^^].
 例:
 
 ----
-/relay add weechat 9000
+/relay add weechat 9500
 ----
 
-この後、リモートインターフェースを使って 9000
+この後、リモートインターフェースを使って 9500
 番ポートに対して、パスワード "mypass" で接続することができます。
 
 [[relay_websocket]]
@@ -4951,10 +4999,10 @@ HTML5 を使えばたった 1 行の JavaScript で WebSocket をオープンす
 
 [source,javascript]
 ----
-websocket = new WebSocket("ws://server.com:9000/weechat");
+websocket = new WebSocket("ws://example.com:9500/weechat");
 ----
 
-ポート番号 (例では 9000 番) は Relay プラグインで定義したものです。
+ポート番号 (例では 9500 番) は Relay プラグインで定義したものです。
 
 // TRANSLATION MISSING
 The URI must end with "/weechat" for _irc_ and _weechat_ protocols and "/api"
@@ -4976,8 +5024,9 @@ SSH 転送を許可する際に特に便利です。
 
 OpenSSH を使った例:
 
+[source,shell]
 ----
-$ ssh -L 9000:.weechat/relay_socket user@hostname
+ssh -L 9000:.weechat/relay_socket user@hostname
 ----
 
 これでポート 9000 番に接続してきたローカルのリレークライアントは
@@ -5067,35 +5116,40 @@ allowing for example to send multiline messages:
 
 * IRC サーバ libera で使うニックネームを "newnick" に変更する:
 
+[source,shell]
 ----
-$ echo 'irc.server.libera */nick newnick' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.server.libera */nick newnick' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * IRC チャンネル #weechat に対してテキストを送信:
 
+[source,shell]
 ----
-$ echo 'irc.libera.#weechat *hello!' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.libera.#weechat *hello!' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 // TRANSLATION MISSING
 * Send a multiline message on IRC #test channel, if capability "draft/multiline"
   is enabled on the ergo server:
 
+[source,shell]
 ----
-$ echo 'irc.ergo.#test \hello\n...on two lines!' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.ergo.#test \hello\n...on two lines!' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * 現在のバッファに対してテキストを送信:
 
+[source,shell]
 ----
-$ echo '*hello!' >/run/user/1000/weechat/weechat_fifo_12345
+echo '*hello!' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * Python スクリプトのアンロードとロードを行う 2 つのコマンドを送信
   (複数のコマンドは "\n" で分割してください):
 
+[source,shell]
 ----
-$ printf '%b' '*/python unload\n*/python autoload\n' >/run/user/1000/weechat/weechat_fifo_12345
+printf '%b' '*/python unload\n*/python autoload\n' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 [[fifo_commands]]
@@ -6019,7 +6073,7 @@ For privacy considerations, the download of scripts is disabled by default. +
 To enable it, type this command:
 
 ----
-/set script.scripts.download_enabled on
+/script enable
 ----
 
 // TRANSLATION MISSING
@@ -6030,33 +6084,33 @@ with the <<command_script_script,/script>> command:
 :x: *
 ....
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│1.weechat│368/368 scripts (filter: {x}) | Sort: i,p,n | Alt+key/input: i=install, r=remove, l=load, L=reload, u=│
-│2.scripts│{x}      autosort.py                 3.9     2020-10-11 | Automatically keep buffers grouped by server│
-│         │{x}      multiline.pl                0.6.3   2016-01-02 | Multi-line edit box, also supports editing o│
-│         │{x}      highmon.pl                  2.7     2020-06-21 | Adds a highlight monitor buffer.            │
-│         │##{x}ia r  grep.py               0.8.5 0.8.5   2021-05-11 | Search regular expression in buffers or log ##│
-│         │{x}      autojoin.py                 0.3.1   2019-10-06 | Configure autojoin for all servers according│
-│         │{x}      colorize_nicks.py           28      2021-03-06 | Use the weechat nick colors in the chat area│
-│         │{x}ia r  go.py                 2.7   2.7     2021-05-26 | Quick jump to buffers.                      │
-│         │{x}      text_item.py                0.9     2019-05-25 | Add bar items with plain text.              │
-│         │       aesthetic.py                1.0.6   2020-10-25 | Make messages more A E S T H E T I C A L L Y│
-│         │       aformat.py                  0.2     2018-06-21 | Alternate text formatting, useful for relays│
-│         │       alternatetz.py              0.3     2018-11-11 | Add an alternate timezone item.             │
-│         │       amarok2.pl                  0.7     2012-05-08 | Amarok 2 control and now playing script.    │
-│         │       amqp_notify.rb              0.1     2011-01-12 | Send private messages and highlights to an A│
-│         │       announce_url_title.py       19      2021-06-05 | Announce URL title to user or to channel.   │
-│         │       anotify.py                  1.0.2   2020-05-16 | Notifications of private messages, highlight│
-│         │       anti_password.py            1.2.1   2021-03-13 | Prevent a password from being accidentally s│
-│         │       apply_corrections.py        1.3     2018-06-21 | Display corrected text when user sends s/typ│
-│         │       arespond.py                 0.1.1   2020-10-11 | Simple autoresponder.                       │
-│         │       atcomplete.pl               0.001   2016-10-29 | Tab complete nicks when prefixed with "@".  │
-│         │       audacious.pl                0.3     2009-05-03 | Display which song Audacious is currently pl│
-│         │       auth.rb                     0.3     2014-05-30 | Automatically authenticate with NickServ usi│
-│         │       auto_away.py                0.4     2018-11-11 | A simple auto-away script.                  │
-│         │       autoauth.py                 1.3     2021-11-07 | Permits to auto-authenticate when changing n│
-│         │       autobump.py                 0.1.0   2019-06-14 | Bump buffers upon activity.                 │
-│         │       autoconf.py                 0.4     2021-05-11 | Auto save/load changed options in a .weerc f│
-│         │       autoconnect.py              0.3.3   2019-10-06 | Reopen servers and channels opened last time│
+│1.weechat│322/322 個のスクリプト (フィルタ: {x}) | ソート: i,p,n | Alt+key/input: i=インストール、r=削除、l=ロ>>│
+│2.scripts│{x}      autosort.py                     3.10    2023-12-31 | サーバによるグループ化と名前によるソート│
+│         │{x}      highmon.pl                      2.7     2020-06-21 | ハイライトモニタバッファを追加。        │
+│         │{x}ia r  grep.py                   0.8.6 0.8.6   2022-11-11 | バッファとログファイルから正規表現で検索│
+│         │{x}      colorize_nicks.py               32      2023-10-30 | チャットエリアとコマンドラインで weechat│
+│         │##{x}ia r  go.py                     3.0.1 3.0.1   2024-05-30 | 素早くバッファへ移動。                  ##│
+│         │       aesthetic.py                    1.0.6   2020-10-25 | Make messages more A E S T H E T I C A L│
+│         │       aformat.py                      0.2     2018-06-21 | テキスト書式を変更します、書式機能を持た│
+│         │       alternatetz.py                  0.4     2022-01-25 | 代替タイムゾーン要素を追加。            │
+│         │       amarok2.pl                      0.7     2012-05-08 | Amarok 2 の操作と現在再生中の局に関する │
+│         │       amqp_notify.rb                  0.1     2011-01-12 | プライベートメッセージとハイライトを AMQ│
+│         │       announce_url_title.py           19      2021-06-05 | URL タイトルをユーザまたはチャンネルに通│
+│         │       anotify.py                      1.0.2   2020-05-16 | プライベートメッセージ、ハイライト、DCC │
+│         │       anti_password.py                1.2.1   2021-03-13 | Prevent a password from being accidental│
+│         │       apply_corrections.py            1.3     2018-06-21 | ユーザが s/誤/正 を送信したらテキストを │
+│         │       arespond.py                     0.1.2   2022-01-25 | 単純な自動応答。                        │
+│         │       atcomplete.pl                   0.001   2016-10-29 | "@" 文字の後でニックネームのタブ補完。  │
+│         │       audacious.pl                    0.3     2009-05-03 | Audacious が現在再生中の曲を表示。      │
+│         │       auth.rb                         0.3     2014-05-30 | SASL ユーザ名およびパスワードを使って Ni│
+│         │       auto_away.py                    0.4     2018-11-11 | 簡単な自動離席スクリプト。              │
+│         │       autoauth.py                     1.3     2021-11-07 | ニックネームを変更した際に自動認証を許可│
+│         │       autobump.py                     0.1.0   2019-06-14 | バッファの活発さに応じて並び替える。    │
+│         │       autoconf.py                     0.4     2021-05-11 | 変更されたオプションを .weerc ファイルに│
+│         │       autoconnect.py                  0.3.3   2019-10-06 | WeeChat の終了時に開いていたサーバとチャ│
+│         │       autojoin_on_invite.py           0.9     2022-10-25 | チャンネルに招待されたら自動的に参加。  │
+│         │       automarkbuffer.py               1.0     2015-03-31 | 特定の時間内に新しいメッセージを受け取っ│
+│         │       automerge.py                    0.2     2018-03-03 | 新しいバッファを事前に定義した規則に従っ│
 │         │[12:55] [2] [script] 2:scripts                                                                      │
 │         │█                                                                                                   │
 └──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

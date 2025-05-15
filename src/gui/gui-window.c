@@ -1,7 +1,7 @@
 /*
  * gui-window.c - window functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -208,7 +208,7 @@ gui_window_get_context_at_xy (struct t_gui_window *window,
         else if ((win_x >= window->coords[win_y].buffer_x1)
                  && (win_x <= window->coords[win_y].buffer_x2))
         {
-            *word = gui_color_decode (gui_buffer_get_short_name ((*line)->data->buffer), NULL);
+            *word = gui_color_decode ((*line)->data->buffer->short_name, NULL);
         }
         else if ((win_x >= window->coords[win_y].prefix_x1)
                  && (win_x <= window->coords[win_y].prefix_x2))
@@ -716,6 +716,7 @@ gui_window_new (struct t_gui_window *parent_window, struct t_gui_buffer *buffer,
 
     /* scroll */
     gui_window_scroll_init (new_window->scroll, buffer);
+    new_window->scroll_changed = 0;
 
     /* coordinates */
     new_window->coords_size = 0;
@@ -1667,7 +1668,6 @@ gui_window_search_text (struct t_gui_window *window)
                 window->buffer,
                 (window->buffer->text_search_history == GUI_BUFFER_SEARCH_HISTORY_LOCAL) ?
                 window->buffer->history : gui_history);
-            break;
         case GUI_BUFFER_NUM_SEARCH:
             break;
     }
@@ -1964,6 +1964,7 @@ gui_window_hdata_window_cb (const void *pointer, void *data,
         HDATA_VAR(struct t_gui_window, layout_plugin_name, STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window, layout_buffer_name, STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window, scroll, POINTER, 0, NULL, "window_scroll");
+        HDATA_VAR(struct t_gui_window, scroll_changed, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window, ptr_tree, POINTER, 0, NULL, "window_tree");
         HDATA_VAR(struct t_gui_window, prev_window, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_window, next_window, POINTER, 0, NULL, hdata_name);
@@ -2098,7 +2099,7 @@ gui_window_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-gui_window_print_log ()
+gui_window_print_log (void)
 {
     struct t_gui_window *ptr_window;
     struct t_gui_window_scroll *ptr_scroll;
@@ -2134,6 +2135,7 @@ gui_window_print_log ()
         log_printf ("  layout_plugin_name. : '%s'", ptr_window->layout_plugin_name);
         log_printf ("  layout_buffer_name. : '%s'", ptr_window->layout_buffer_name);
         log_printf ("  scroll. . . . . . . : %p", ptr_window->scroll);
+        log_printf ("  scroll_changed. . . : %d", ptr_window->scroll_changed);
         log_printf ("  coords_size . . . . : %d", ptr_window->coords_size);
         log_printf ("  coords. . . . . . . : %p", ptr_window->coords);
         log_printf ("  ptr_tree. . . . . . : %p", ptr_window->ptr_tree);

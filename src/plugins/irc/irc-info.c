@@ -1,7 +1,7 @@
 /*
  * irc-info.c - info, infolist and hdata hooks for IRC plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -53,13 +53,7 @@ irc_info_create_string_with_pointer (char **string, void *pointer)
         *string = NULL;
     }
     if (pointer)
-    {
-        *string = malloc (64);
-        if (*string)
-        {
-            snprintf (*string, 64, "%p", pointer);
-        }
-    }
+        weechat_asprintf (string, "0x%lx", (unsigned long)pointer);
 }
 
 /*
@@ -298,7 +292,11 @@ irc_info_info_irc_buffer_cb (const void *pointer, void *data,
 
     /* search for server or channel buffer */
     if (server && ptr_server && channel)
+    {
         ptr_channel = irc_channel_search (ptr_server, channel);
+        if (!ptr_channel)
+            ptr_server = NULL;
+    }
 
     free (server);
     free (channel);
@@ -526,6 +524,136 @@ irc_info_info_irc_is_message_ignored_cb (const void *pointer, void *data,
 
     return (irc_message_ignored (ptr_server, pos_message)) ?
         strdup ("1") : NULL;
+}
+
+/*
+ * Returns IRC info "irc_ptr_server".
+ */
+
+char *
+irc_info_info_irc_ptr_server_cb (const void *pointer, void *data,
+                                 const char *info_name,
+                                 const char *arguments)
+{
+    struct t_irc_server *ptr_server;
+    char str_ptr[64];
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) info_name;
+
+    if (!arguments || !arguments[0])
+        return NULL;
+
+    ptr_server = irc_server_search (arguments);
+    if (!ptr_server)
+        return NULL;
+
+    snprintf (str_ptr, sizeof (str_ptr), "0x%lx", (unsigned long)ptr_server);
+    return strdup (str_ptr);
+}
+
+/*
+ * Returns IRC info "irc_ptr_channel".
+ */
+
+char *
+irc_info_info_irc_ptr_channel_cb (const void *pointer, void *data,
+                                  const char *info_name,
+                                  const char *arguments)
+{
+    struct t_irc_server *ptr_server;
+    struct t_irc_channel *ptr_channel;
+    char **argv, str_ptr[64];
+    int argc;
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) info_name;
+
+    if (!arguments || !arguments[0])
+        return NULL;
+
+    ptr_server = NULL;
+    ptr_channel = NULL;
+
+    argv = weechat_string_split (arguments, ",", NULL,
+                                 WEECHAT_STRING_SPLIT_STRIP_LEFT
+                                 | WEECHAT_STRING_SPLIT_STRIP_RIGHT
+                                 | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
+                                 0, &argc);
+    if (!argv)
+        return NULL;
+
+    if (argc == 2)
+    {
+        ptr_server = irc_server_search (argv[0]);
+        if (ptr_server)
+            ptr_channel = irc_channel_search (ptr_server, argv[1]);
+    }
+    weechat_string_free_split (argv);
+
+    if (!ptr_channel)
+        return NULL;
+
+    snprintf (str_ptr, sizeof (str_ptr), "0x%lx", (unsigned long)ptr_channel);
+    return strdup (str_ptr);
+}
+
+/*
+ * Returns IRC info "irc_ptr_nick".
+ */
+
+char *
+irc_info_info_irc_ptr_nick_cb (const void *pointer, void *data,
+                               const char *info_name,
+                               const char *arguments)
+{
+    struct t_irc_server *ptr_server;
+    struct t_irc_channel *ptr_channel;
+    struct t_irc_nick *ptr_nick;
+    char **argv, str_ptr[64];
+    int argc;
+
+    /* make C compiler happy */
+    (void) pointer;
+    (void) data;
+    (void) info_name;
+
+    if (!arguments || !arguments[0])
+        return NULL;
+
+    ptr_server = NULL;
+    ptr_channel = NULL;
+    ptr_nick = NULL;
+
+    argv = weechat_string_split (arguments, ",", NULL,
+                                 WEECHAT_STRING_SPLIT_STRIP_LEFT
+                                 | WEECHAT_STRING_SPLIT_STRIP_RIGHT
+                                 | WEECHAT_STRING_SPLIT_COLLAPSE_SEPS,
+                                 0, &argc);
+    if (!argv)
+        return NULL;
+
+    if (argc == 3)
+    {
+        ptr_server = irc_server_search (argv[0]);
+        if (ptr_server)
+        {
+            ptr_channel = irc_channel_search (ptr_server, argv[1]);
+            if (ptr_channel)
+                ptr_nick = irc_nick_search (ptr_server, ptr_channel, argv[2]);
+        }
+    }
+    weechat_string_free_split (argv);
+
+    if (!ptr_nick)
+        return NULL;
+
+    snprintf (str_ptr, sizeof (str_ptr), "0x%lx", (unsigned long)ptr_nick);
+    return strdup (str_ptr);
 }
 
 /*
@@ -1207,7 +1335,7 @@ irc_info_infolist_irc_color_weechat_cb (const void *pointer, void *data,
  */
 
 void
-irc_info_init ()
+irc_info_init (void)
 {
     /* info hooks */
     weechat_hook_info (
@@ -1272,6 +1400,21 @@ irc_info_init ()
         N_("1 if the nick is ignored (message is not displayed)"),
         N_("server,message (message is the raw IRC message)"),
         &irc_info_info_irc_is_message_ignored_cb, NULL, NULL);
+    weechat_hook_info (
+        "irc_ptr_server",
+        N_("get pointer to an IRC server"),
+        N_("server"),
+        &irc_info_info_irc_ptr_server_cb, NULL, NULL);
+    weechat_hook_info (
+        "irc_ptr_channel",
+        N_("get pointer to an IRC channel"),
+        N_("server,channel"),
+        &irc_info_info_irc_ptr_channel_cb, NULL, NULL);
+    weechat_hook_info (
+        "irc_ptr_nick",
+        N_("get pointer to an IRC nick"),
+        N_("server,channel,nick"),
+        &irc_info_info_irc_ptr_nick_cb, NULL, NULL);
 
     /* info_hashtable hooks */
     weechat_hook_info_hashtable (

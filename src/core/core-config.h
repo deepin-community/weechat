@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -31,7 +31,7 @@ struct t_gui_buffer;
 #define WEECHAT_CONFIG_NAME "weechat"
 #define WEECHAT_CONFIG_PRIO_NAME "110000|weechat"
 
-#define WEECHAT_CONFIG_VERSION 3
+#define WEECHAT_CONFIG_VERSION 4
 
 #define TAB_MAX_WIDTH 64
 
@@ -273,8 +273,10 @@ extern struct t_config_option *config_look_scroll_page_percent;
 extern struct t_config_option *config_look_search_text_not_found_alert;
 extern struct t_config_option *config_look_separator_horizontal;
 extern struct t_config_option *config_look_separator_vertical;
+extern struct t_config_option *config_look_tab_whitespace_char;
 extern struct t_config_option *config_look_tab_width;
 extern struct t_config_option *config_look_time_format;
+extern struct t_config_option *config_look_whitespace_char;
 extern struct t_config_option *config_look_window_auto_zoom;
 extern struct t_config_option *config_look_window_separator_horizontal;
 extern struct t_config_option *config_look_window_separator_vertical;
@@ -356,6 +358,7 @@ extern struct t_config_option *config_completion_nick_case_sensitive;
 extern struct t_config_option *config_completion_nick_completer;
 extern struct t_config_option *config_completion_nick_first_only;
 extern struct t_config_option *config_completion_nick_ignore_chars;
+extern struct t_config_option *config_completion_nick_ignore_words;
 extern struct t_config_option *config_completion_partial_completion_alert;
 extern struct t_config_option *config_completion_partial_completion_command;
 extern struct t_config_option *config_completion_partial_completion_command_arg;
@@ -397,6 +400,7 @@ extern int config_num_highlight_tags;
 extern char **config_plugin_extensions;
 extern int config_num_plugin_extensions;
 extern char config_tab_spaces[];
+extern char config_tab_spaces_whitespace[];
 extern struct t_config_look_word_char_item *config_word_chars_highlight;
 extern int config_word_chars_highlight_count;
 extern struct t_config_look_word_char_item *config_word_chars_input;
@@ -407,24 +411,25 @@ extern struct t_hashtable *config_hashtable_nick_color_force;
 extern char **config_eval_syntax_colors;
 extern int config_num_eval_syntax_colors;
 extern char *config_buffer_time_same_evaluated;
+extern struct t_hashtable *config_hashtable_completion_nick_ignore_words;
 extern struct t_hashtable *config_hashtable_completion_partial_templates;
 extern char **config_hotlist_sort_fields;
 extern int config_num_hotlist_sort_fields;
 
-extern void config_set_nick_colors ();
+extern void config_set_nick_colors (void);
 extern struct t_config_option *config_weechat_debug_get (const char *plugin_name);
 extern int config_weechat_debug_set (const char *plugin_name,
                                      const char *value);
-extern void config_weechat_debug_set_all ();
+extern void config_weechat_debug_set_all (void);
 extern int config_weechat_buffer_set (struct t_gui_buffer *buffer,
                                       const char *property, const char *value);
 extern int config_weechat_notify_set (struct t_gui_buffer *buffer,
                                       const char *notify);
 extern void config_get_item_time (char *text_time, int max_length);
 extern int config_weechat_get_key_context (struct t_config_section *section);
-extern int config_weechat_init ();
-extern int config_weechat_read ();
-extern int config_weechat_write ();
-extern void config_weechat_free ();
+extern int config_weechat_init (void);
+extern int config_weechat_read (void);
+extern int config_weechat_write (void);
+extern void config_weechat_free (void);
 
 #endif /* WEECHAT_CONFIG_H */

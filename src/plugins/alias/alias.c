@@ -1,7 +1,7 @@
 /*
  * alias.c - alias plugin for WeeChat: command aliases
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -418,7 +418,6 @@ void
 alias_hook_command (struct t_alias *alias)
 {
     char *str_priority_name, *str_completion;
-    int length;
 
     if (alias->hook)
     {
@@ -428,13 +427,10 @@ alias_hook_command (struct t_alias *alias)
 
     /*
      * build string with priority and name: the alias priority is 2000, which
-     * is higher than default one (1000), so the alias is executed before a
+     * is greater than default one (1000), so the alias is executed before a
      * command (if a command with same name exists in core or in another plugin)
      */
-    length = strlen (alias->name) + 16 + 1;
-    str_priority_name = malloc (length);
-    if (str_priority_name)
-        snprintf (str_priority_name, length, "2000|%s", alias->name);
+    weechat_asprintf (&str_priority_name, "2000|%s", alias->name);
 
     /*
      * if alias has no custom completion, then default is to complete with
@@ -444,21 +440,20 @@ alias_hook_command (struct t_alias *alias)
     str_completion = NULL;
     if (!alias->completion)
     {
-        length = 2 + strlen (alias->command) + 1;
-        str_completion = malloc (length);
-        if (str_completion)
-        {
-            snprintf (str_completion, length, "%%%%%s",
-                      (weechat_string_is_command_char (alias->command)) ?
-                      weechat_utf8_next_char (alias->command) : alias->command);
-        }
+        weechat_asprintf (
+            &str_completion,
+            "%%%%%s",
+            (weechat_string_is_command_char (alias->command)) ?
+            weechat_utf8_next_char (alias->command) : alias->command);
     }
 
-    alias->hook = weechat_hook_command ((str_priority_name) ? str_priority_name : alias->name,
-                                        alias->command,
-                                        NULL, NULL,
-                                        (str_completion) ? str_completion : alias->completion,
-                                        &alias_cb, alias, NULL);
+    alias->hook = weechat_hook_command (
+        (str_priority_name) ? str_priority_name : alias->name,
+        alias->command,
+        NULL, NULL,
+        (str_completion) ? str_completion : alias->completion,
+        &alias_cb, alias, NULL);
+    weechat_hook_set (alias->hook, "keep_spaces_right", "1");
 
     free (str_priority_name);
     free (str_completion);
@@ -611,7 +606,7 @@ alias_free (struct t_alias *alias)
  */
 
 void
-alias_free_all ()
+alias_free_all (void)
 {
     while (alias_list)
     {
@@ -635,8 +630,8 @@ alias_update_completion (struct t_alias *alias, const char *completion)
 }
 
 /*
- * Checks if an alias name is valid: it must not contain any slashes nor
- * any spaces.
+ * Checks if an alias name is valid: it must contain neither slashes nor
+ * spaces.
  *
  * Returns:
  *   1: name is valid

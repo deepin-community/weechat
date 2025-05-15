@@ -1,7 +1,7 @@
 /*
  * trigger.c - trigger plugin for WeeChat
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1101,7 +1101,7 @@ trigger_new (const char *name, const char *enabled, const char *hook,
  */
 
 void
-trigger_create_default ()
+trigger_create_default (void)
 {
     int i;
 
@@ -1244,7 +1244,7 @@ trigger_free (struct t_trigger *trigger)
  */
 
 void
-trigger_free_all ()
+trigger_free_all (void)
 {
     while (triggers)
     {
@@ -1257,7 +1257,7 @@ trigger_free_all ()
  */
 
 void
-trigger_print_log ()
+trigger_print_log (void)
 {
     struct t_trigger *ptr_trigger;
     int i;

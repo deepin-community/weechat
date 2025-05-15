@@ -1,7 +1,7 @@
 /*
  * core-debug.c - debug functions
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -19,6 +19,9 @@
  * along with WeeChat.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* for wcwidth in wchar.h */
+#define _XOPEN_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,6 +31,7 @@
 #include <malloc.h>
 #endif
 #include <string.h>
+#include <wchar.h>
 #include <time.h>
 #include <sys/time.h>
 #include <gcrypt.h>
@@ -55,6 +59,7 @@
 #include "core-string.h"
 #include "core-utf8.h"
 #include "core-util.h"
+#include "core-version.h"
 #include "../gui/gui-bar.h"
 #include "../gui/gui-bar-item.h"
 #include "../gui/gui-buffer.h"
@@ -69,12 +74,77 @@
 #include "../gui/gui-window.h"
 #include "../plugins/plugin.h"
 
+#define DEBUG_DISPLAY_BUILD_OPTION_STR(OPTION)                  \
+    string_fprintf (stdout, "  %s: \"%s\"\n", #OPTION, OPTION);
+#define DEBUG_DISPLAY_BUILD_OPTION_BOOL(OPTION)                 \
+    string_fprintf (stdout,                                     \
+                    "  %s: %s\n",                               \
+                    #OPTION,                                    \
+                    (OPTION) ? "ON" : "OFF");
 
 int debug_dump_active = 0;
 
 long long debug_long_callbacks = 0;    /* callbacks taking more than        */
                                        /* N microseconds will be traced     */
 
+
+/*
+ * Displays build information on stdout.
+ */
+
+void
+debug_build_info (void)
+{
+    /* display version and compilation date/time */
+    string_fprintf (
+        stdout,
+        /* TRANSLATORS: "%s %s" after "compiled on" is date and time */
+        _("WeeChat %s, compiled on %s %s\n"),
+        version_get_version_with_git (),
+        version_get_compilation_date (),
+        version_get_compilation_time ());
+
+    /* display build options */
+    string_fprintf (stdout, _("Build options:\n"));
+    DEBUG_DISPLAY_BUILD_OPTION_STR(CMAKE_BUILD_TYPE);
+    DEBUG_DISPLAY_BUILD_OPTION_STR(CMAKE_INSTALL_PREFIX);
+    DEBUG_DISPLAY_BUILD_OPTION_STR(WEECHAT_HOME);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_ALIAS);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_BUFLIST);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_CHARSET);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_CJSON);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_CODE_COVERAGE);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_DOC);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_DOC_INCOMPLETE);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_ENCHANT);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_EXEC);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_FIFO);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_FSET);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_GUILE);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_HEADLESS);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_IRC);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_JAVASCRIPT);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_LARGEFILE);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_LOGGER);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_LUA);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_MAN);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_NCURSES);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_NLS);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_PERL);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_PHP);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_PYTHON);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_RELAY);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_RUBY);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_SCRIPT);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_SCRIPTS);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_SPELL);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_TCL);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_TESTS);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_TRIGGER);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_TYPING);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_XFER);
+    DEBUG_DISPLAY_BUILD_OPTION_BOOL(ENABLE_ZSTD);
+}
 
 /*
  * Writes dump of data to WeeChat log file.
@@ -158,8 +228,11 @@ debug_dump_cb (const void *pointer, void *data,
  */
 
 void
-debug_sigsegv_cb ()
+debug_sigsegv_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     debug_dump (1);
     unhook_all ();
     gui_main_end (0);
@@ -240,7 +313,7 @@ debug_windows_tree_display (struct t_gui_window_tree *tree, int indent)
             snprintf (format,
                       sizeof (format),
                       "%%-%dsnode: "
-                      "0x%%lx, "
+                      "%%p, "
                       "parent:%%p, "
                       "pct:%%d, "
                       "horizontal:%%d, "
@@ -270,7 +343,7 @@ debug_windows_tree_display (struct t_gui_window_tree *tree, int indent)
  */
 
 void
-debug_windows_tree ()
+debug_windows_tree (void)
 {
     gui_chat_printf (NULL, "");
     gui_chat_printf (NULL, _("Windows tree:"));
@@ -282,7 +355,7 @@ debug_windows_tree ()
  */
 
 void
-debug_memory ()
+debug_memory (void)
 {
 #ifdef HAVE_MALLINFO2
     struct mallinfo2 info;
@@ -428,7 +501,7 @@ debug_hdata_map_cb (void *data,
  */
 
 void
-debug_hdata ()
+debug_hdata (void)
 {
     int count;
 
@@ -446,7 +519,7 @@ debug_hdata ()
  */
 
 void
-debug_hooks ()
+debug_hooks (void)
 {
     int i;
 
@@ -463,35 +536,18 @@ debug_hooks ()
 }
 
 /*
- * Displays info about hooks for a specific plugin.
+ * Displays info about hooks for one or multiple plugins matching a mask.
  */
 
 void
-debug_hooks_plugin (const char *plugin_name)
+debug_hooks_plugin_types (const char *plugin_mask, const char **hook_types)
 {
-    struct t_weechat_plugin *ptr_plugin;
     struct t_hook *ptr_hook;
-    char *desc, **result, **result_type, str_type[128];
-    int i, count_total, count_type;
+    char *desc, **result, **result_type, str_type[1024];
+    int i, j, count_total, count_type, match_type, matches;
 
-    if (!plugin_name)
+    if (!plugin_mask)
         return;
-
-    if (strcmp (plugin_name, PLUGIN_CORE) == 0)
-    {
-        ptr_plugin = NULL;
-    }
-    else
-    {
-        ptr_plugin = plugin_search (plugin_name);
-        if (!ptr_plugin)
-        {
-            gui_chat_printf (NULL, "%sPlugin \"%s\" not found",
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                             plugin_name);
-            return;
-        }
-    }
 
     result = string_dyn_alloc (1024);
     if (!result)
@@ -505,55 +561,88 @@ debug_hooks_plugin (const char *plugin_name)
     }
 
     count_total = 0;
+    matches = 0;
 
     for (i = 0; i < HOOK_NUM_TYPES; i++)
     {
-        count_type = 0;
-        string_dyn_copy (result_type, NULL);
-
-        for (ptr_hook = weechat_hooks[i]; ptr_hook;
-             ptr_hook = ptr_hook->next_hook)
+        if (hook_types)
         {
-            if (ptr_hook->deleted || (ptr_hook->plugin != ptr_plugin))
-                continue;
-
-            desc = hook_get_description (ptr_hook);
-            if (desc)
+            match_type = 0;
+            for (j = 0; hook_types[j]; j++)
             {
-                string_dyn_concat (result_type, "    ", -1);
-                string_dyn_concat (result_type, desc, -1);
-                string_dyn_concat (result_type, "\n", -1);
-                free (desc);
+                if (strcmp (hook_types[j], hook_type_string[i]) == 0)
+                {
+                    matches = 1;
+                    match_type = 1;
+                    break;
+                }
             }
-            count_type++;
+        }
+        else
+        {
+            match_type = 1;
         }
 
-        snprintf (str_type, sizeof (str_type),
-                  "  %s (%d)%s\n",
-                  hook_type_string[i],
-                  count_type,
-                  (count_type > 0) ? ":" : "");
-        string_dyn_concat (result, str_type, -1);
+        if (match_type)
+        {
+            count_type = 0;
+            string_dyn_copy (result_type, NULL);
 
-        if (count_type > 0)
-            string_dyn_concat (result, *result_type, -1);
+            for (ptr_hook = weechat_hooks[i]; ptr_hook;
+                 ptr_hook = ptr_hook->next_hook)
+            {
+                if (ptr_hook->deleted)
+                    continue;
 
-        count_total += count_type;
+                if (!string_match (
+                        (ptr_hook->plugin) ? ptr_hook->plugin->name : PLUGIN_CORE,
+                        plugin_mask, 1))
+                    continue;
+
+                matches = 1;
+
+                desc = hook_get_description (ptr_hook);
+                if (desc)
+                {
+                    string_dyn_concat (result_type, "    ", -1);
+                    string_dyn_concat (result_type,
+                                       (ptr_hook->plugin) ?
+                                       ptr_hook->plugin->name : PLUGIN_CORE,
+                                       -1);
+                    string_dyn_concat (result_type, ": ", -1);
+                    string_dyn_concat (result_type, desc, -1);
+                    string_dyn_concat (result_type, "\n", -1);
+                    free (desc);
+                }
+                count_type++;
+            }
+
+            snprintf (str_type, sizeof (str_type),
+                      "  %s (%d)%s\n",
+                      hook_type_string[i],
+                      count_type,
+                      (count_type > 0) ? ":" : "");
+            string_dyn_concat (result, str_type, -1);
+
+            if (count_type > 0)
+                string_dyn_concat (result, *result_type, -1);
+
+            count_total += count_type;
+        }
     }
 
-    if (count_total > 0)
+    if (matches)
     {
         gui_chat_printf (NULL, "");
         gui_chat_printf (NULL,
-                         "hooks in plugin \"%s\" (%d)%s",
-                         plugin_name,
+                         "hooks (%d)%s",
                          count_total,
                          (count_total > 0) ? ":" : "");
         gui_chat_printf (NULL, *result);
     }
     else
     {
-        gui_chat_printf (NULL, "No hooks in plugin \"%s\"", plugin_name);
+        gui_chat_printf (NULL, "No hooks");
     }
     string_dyn_free (result, 1);
     string_dyn_free (result_type, 1);
@@ -564,7 +653,7 @@ debug_hooks_plugin (const char *plugin_name)
  */
 
 void
-debug_infolists ()
+debug_infolists (void)
 {
     struct t_infolist *ptr_infolist;
     struct t_infolist_item *ptr_item;
@@ -663,26 +752,10 @@ debug_libs_cb (const void *pointer, void *data,
                const char *signal, const char *type_data,
                void *signal_data)
 {
-#ifdef GCRYPT_VERSION
     const char *version_gcrypt = GCRYPT_VERSION;
-#else
-    const char *version_gcrypt = "(?)";
-#endif
-#ifdef GNUTLS_VERSION
     const char *version_gnutls = GNUTLS_VERSION;
-#else
-    const char *version_gnutls = "(?)";
-#endif
-#ifdef LIBCURL_VERSION
     const char *version_libcurl = LIBCURL_VERSION;
-#else
-    const char *version_libcurl = "(?)";
-#endif
-#ifdef ZLIB_VERSION
     const char *version_zlib = ZLIB_VERSION;
-#else
-    const char *version_zlib = "(?)";
-#endif
 
     /* make C compiler happy */
     (void) pointer;
@@ -744,7 +817,7 @@ debug_libs_cb (const void *pointer, void *data,
  */
 
 void
-debug_directories ()
+debug_directories (void)
 {
     char *extra_libdir, str_temp[1024];
 
@@ -792,7 +865,9 @@ debug_display_time_elapsed (struct timeval *time1, struct timeval *time2,
 
     gettimeofday (&debug_timeval_end, NULL);
     diff = util_timeval_diff (time1, time2);
-    str_diff = util_get_microseconds_string (diff);
+    if (diff < 0)
+        diff *= -1;
+    str_diff = util_get_microseconds_string ((unsigned long long)diff);
 
     if (display)
     {
@@ -953,7 +1028,7 @@ debug_unicode (const char *string)
  */
 
 void
-debug_init ()
+debug_init (void)
 {
     /*
      * hook signals with high priority, to be sure they will be used before
@@ -969,6 +1044,6 @@ debug_init ()
  */
 
 void
-debug_end ()
+debug_end (void)
 {
 }

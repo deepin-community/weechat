@@ -1,7 +1,7 @@
 /*
  * weechat-plugin.h - header to compile WeeChat plugins
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -74,7 +74,7 @@ struct t_weelist_item;
  * please change the date with current one; for a second change at same
  * date, increment the 01, otherwise please keep 01.
  */
-#define WEECHAT_PLUGIN_API_VERSION "20240402-01"
+#define WEECHAT_PLUGIN_API_VERSION "20250215-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -138,6 +138,7 @@ struct t_weelist_item;
 #define WEECHAT_HASHTABLE_POINTER                   "pointer"
 #define WEECHAT_HASHTABLE_BUFFER                    "buffer"
 #define WEECHAT_HASHTABLE_TIME                      "time"
+#define WEECHAT_HASHTABLE_LONGLONG                  "longlong"
 
 /* types for hdata */
 enum t_weechat_hdata
@@ -178,6 +179,11 @@ enum t_weechat_hdata
 #define WEECHAT_HOOK_PROCESS_ERROR                  -2
 #define WEECHAT_HOOK_PROCESS_CHILD                  -3
 
+/* IPv6 for connect hook */
+#define WEECHAT_HOOK_CONNECT_IPV6_DISABLE           0
+#define WEECHAT_HOOK_CONNECT_IPV6_AUTO              1
+#define WEECHAT_HOOK_CONNECT_IPV6_FORCE             2
+
 /* connect status for connection hooked */
 #define WEECHAT_HOOK_CONNECT_OK                     0
 #define WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND      1
@@ -202,29 +208,32 @@ enum t_weechat_hdata
 
 /* macro to format string with variable args, using dynamic buffer size */
 #define weechat_va_format(__format)                                     \
-    va_list argptr;                                                     \
-    int vaa_size, vaa_num;                                              \
-    char *vbuffer, *vaa_buffer2;                                        \
-    vaa_size = 1024;                                                    \
-    vbuffer = malloc (vaa_size);                                        \
-    if (vbuffer)                                                        \
+    va_list __argptr;                                                   \
+    int __num_bytes;                                                    \
+    size_t __size;                                                      \
+    char *vbuffer = NULL;                                               \
+                                                                        \
+    if (__format)                                                       \
     {                                                                   \
-        while (1)                                                       \
+        va_start (__argptr, __format);                                  \
+        __num_bytes = vsnprintf (NULL, 0, __format, __argptr);          \
+        va_end (__argptr);                                              \
+        if (__num_bytes >= 0)                                           \
         {                                                               \
-            va_start (argptr, __format);                                \
-            vaa_num = vsnprintf (vbuffer, vaa_size, __format, argptr);  \
-            va_end (argptr);                                            \
-            if ((vaa_num >= 0) && (vaa_num < vaa_size))                 \
-                break;                                                  \
-            vaa_size = (vaa_num >= 0) ? vaa_num + 1 : vaa_size * 2;     \
-            vaa_buffer2 = realloc (vbuffer, vaa_size);                  \
-            if (!vaa_buffer2)                                           \
+            __size = (size_t)__num_bytes + 1;                           \
+            vbuffer = malloc(__size);                                   \
+            if (vbuffer)                                                \
             {                                                           \
-                free (vbuffer);                                         \
-                vbuffer = NULL;                                         \
-                break;                                                  \
+                va_start (__argptr, __format);                          \
+                __num_bytes = vsnprintf (vbuffer, __size,               \
+                                         __format, __argptr);           \
+                va_end (__argptr);                                      \
+                if (__num_bytes < 0)                                    \
+                {                                                       \
+                    free (vbuffer);                                     \
+                    vbuffer = NULL;                                     \
+                }                                                       \
             }                                                           \
-            vbuffer = vaa_buffer2;                                      \
         }                                                               \
     }
 
@@ -298,6 +307,8 @@ struct t_weechat_plugin
     int upgrading;                     /* 1 if the plugin must load upgrade */
                                        /* info on startup (if weechat is    */
                                        /* run with --upgrade)               */
+    int unload_with_upgrade;           /* 1 if the plugin is unloaded after */
+                                       /* /upgrade command                  */
     struct t_hashtable *variables;     /* plugin custom variables           */
     struct t_weechat_plugin *prev_plugin; /* link to previous plugin        */
     struct t_weechat_plugin *next_plugin; /* link to next plugin            */
@@ -421,7 +432,7 @@ struct t_weechat_plugin
     /* crypto */
     int (*crypto_hash) (const void *data, int data_size,
                         const char *hash_algo, void *hash, int *hash_size);
-    int (*crypto_hash_file) (const char *fliename,
+    int (*crypto_hash_file) (const char *filename,
                              const char *hash_algo, void *hash, int *hash_size);
     int (*crypto_hash_pbkdf2) (const void *data, int data_size,
                                const char *hash_algo,
@@ -456,7 +467,7 @@ struct t_weechat_plugin
     int (*util_version_number) (const char *version);
 
     /* sorted lists */
-    struct t_weelist *(*list_new) ();
+    struct t_weelist *(*list_new) (void);
     struct t_weelist_item *(*list_add) (struct t_weelist *weelist,
                                         const char *data,
                                         const char *where,
@@ -987,7 +998,7 @@ struct t_weechat_plugin
                                               const void *close_callback_pointer,
                                               void *close_callback_data);
     struct t_gui_buffer *(*buffer_search) (const char *plugin, const char *name);
-    struct t_gui_buffer *(*buffer_search_main) ();
+    struct t_gui_buffer *(*buffer_search_main) (void);
     void (*buffer_clear) (struct t_gui_buffer *buffer);
     void (*buffer_close) (struct t_gui_buffer *buffer);
     void (*buffer_merge) (struct t_gui_buffer *buffer,
@@ -1006,6 +1017,9 @@ struct t_weechat_plugin
     char *(*buffer_string_replace_local_var) (struct t_gui_buffer *buffer,
                                               const char *string);
     int (*buffer_match_list) (struct t_gui_buffer *buffer, const char *string);
+
+    /* buffer lines */
+    struct t_gui_line *(*line_search_by_id) (struct t_gui_buffer *buffer, int id);
 
     /* windows */
     struct t_gui_window *(*window_search_with_buffer) (struct t_gui_buffer *buffer);
@@ -1119,6 +1133,8 @@ struct t_weechat_plugin
                               const char *data, int position, int direction);
     const char *(*completion_get_string) (struct t_gui_completion *completion,
                                           const char *property);
+    void (*completion_set) (struct t_gui_completion *completion,
+                            const char *property, const char *value);
     void (*completion_list_add) (struct t_gui_completion *completion,
                                  const char *word,
                                  int nick_completion,
@@ -2066,6 +2082,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #define weechat_buffer_match_list(__buffer, __string)                   \
     (weechat_plugin->buffer_match_list)(__buffer, __string)
 
+/* buffer lines */
+#define weechat_line_search_by_id(__buffer, __id)                       \
+    (weechat_plugin->line_search_by_id)(__buffer, __id)
+
 /* windows */
 #define weechat_window_search_with_buffer(__buffer)                     \
     (weechat_plugin->window_search_with_buffer)(__buffer)
@@ -2186,6 +2206,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                         __position, __direction)
 #define weechat_completion_get_string(__completion, __property)         \
     (weechat_plugin->completion_get_string)(__completion, __property)
+#define weechat_completion_set(__completion, __property, __value)       \
+    (weechat_plugin->completion_set)(__completion, __property, __value)
 #define weechat_completion_list_add(__completion, __word,               \
                                     __nick_completion, __where)         \
     (weechat_plugin->completion_list_add)(__completion, __word,         \

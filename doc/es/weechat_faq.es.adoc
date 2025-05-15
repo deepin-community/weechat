@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: es
-:toc-title: Índice
+include::includes/attributes-es.adoc[]
 
 Traductores
 
@@ -58,12 +58,14 @@ If you still have issues, please report them to the developers.
 Se recomienda utilizar https://brew.sh/[Homebrew ^↗^^],
 puede obtener ayuda con el comando:
 
+[source,shell]
 ----
 brew info weechat
 ----
 
 Puede instalar WeeChat con este comando:
 
+[source,shell]
 ----
 brew install weechat
 ----
@@ -326,10 +328,15 @@ Puede utilizar una terminal con selección rectangualr (como rxvt-unicode,
 konsole, gnome-terminal, etc.). La tecla normalmente es kbd:[Ctrl] + kbd:[Alt] + la selección
 con el ratón.
 
+// TRANSLATION MISSING
+You can toggle nicklist and make it visible only when needed, with key
+kbd:[Alt+Shift+N].
+
 Otra solución es mover la lista de apodos a la parte superior o inferior, por ejemplo:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 [[urls]]
@@ -340,10 +347,14 @@ You can use the bare display (default key: kbd:[Alt+l] (`L`)).
 
 Para abrir direcciones URL más fácilmente, puede:
 
+// TRANSLATION MISSING
+* toggle nicklist and make it visible only when needed, with key kbd:[Alt+Shift+N]
+
 * mover la lista de apodos a la parte superior con este comando:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 * inhabilitar la alineación de palabras multilínea:
@@ -394,6 +405,7 @@ No hay razón en WeeChat para cambiar la zona horaria, la variable de entorno
 
 En el archivo de inicialización de su shell o en la línea de comando, antes de ejecutar WeeChat:
 
+[source,shell]
 ----
 export TZ=America/New_York
 ----
@@ -701,16 +713,18 @@ De acuerdo a la información usada, el ratón podrá o no estar soportado.
 
 Puede comprobar el soporte del ratón en la terminal:
 
+[source,shell]
 ----
-$ printf '\033[?1002h'
+printf '\033[?1002h'
 ----
 
 Y después haga clic en el primer caracter de la terminal (superior izquierdo). Debería ver " !!#!!".
 
 Para inhabilitar el ratón en la terminal:
 
+[source,shell]
 ----
-$ printf '\033[?1002l'
+printf '\033[?1002l'
 ----
 
 [[mouse_coords]]
@@ -766,7 +780,7 @@ Puede intentar una cadena de prioridad diferente, reemplace "xxx" por el nombre
 de su servidor:
 
 ----
-/set irc.server.xxx.tls_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
+/set irc.server.xxx.tls_priorities "NORMAL:%COMPAT"
 ----
 
 [[irc_tls_libera]]
@@ -1033,8 +1047,9 @@ Primero compruebe las preguntas sobre la conexión TLS en este documento.
 
 Si todavía no funciona, trate de manera manual eliminar los archivos de scripts (escriba en su terminal):
 
+[source,shell]
 ----
-$ rm ~/.cache/weechat/script/plugins.xml.gz
+rm ~/.cache/weechat/script/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1059,9 +1074,10 @@ que actualizar manualmente el archivo usted mismo para obtener las actualizacion
 
 * en su terminal, con el software curl instalado:
 
+[source,shell]
 ----
-$ cd ~/.cache/weechat/script
-$ curl -O https://weechat.org/files/plugins.xml.gz
+cd ~/.cache/weechat/script
+curl -O https://weechat.org/files/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1069,6 +1085,7 @@ If you're running macOS and the downloaded file has a size of 0 bytes,
 try to set this variable in your shell initialization file or on command line,
 before starting WeeChat:
 
+[source,shell]
 ----
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ----
@@ -1243,6 +1260,7 @@ See https://weechat.org/about/support/[this page ^↗^^].
 
 Cuando ejecuta WeeChat bajo gdb, puede tener este error:
 
+[source,shell]
 ----
 $ gdb /ruta/a/weechat
 (gdb) run
@@ -1253,6 +1271,7 @@ Cannot find new threads: generic error
 Para solucionar esto, puede ejecutar gdb con este comando (reemplace la ruta a libpthread y
 WeeChat con las rutas de su sistema):
 
+[source,shell]
 ----
 $ LD_PRELOAD=/lib/libpthread.so.0 gdb /ruta/a/weechat
 (gdb) run
@@ -1261,7 +1280,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /ruta/a/weechat
 [[supported_os]]
 === ¿Cual es la lista de plataformas para las que está disponible WeeChat? ¿Será portado a otros sistemas operativos?
 
-WeeChat se ejecuta sin problemas en la mayoría de distribuciones Linux/BSD, GNU/Hurd, Mac OS y Windows
+WeeChat se ejecuta sin problemas en la mayoría de distribuciones Linux/BSD, GNU/Hurd, macOS y Windows
 (Cygwin y Windows Subsystem para Linux).
 
 Hacemos todo lo posible para que pueda ser ejecutado en cuantas plataformas sea posible. La ayuda es bienvenida para

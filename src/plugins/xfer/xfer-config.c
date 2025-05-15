@@ -1,7 +1,7 @@
 /*
  * xfer-config.c - xfer configuration options (file xfer.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -119,7 +119,7 @@ xfer_config_reload (const void *pointer, void *data,
  */
 
 int
-xfer_config_init ()
+xfer_config_init (void)
 {
     xfer_config_file = weechat_config_new (XFER_CONFIG_PRIO_NAME,
                                            &xfer_config_reload, NULL, NULL);
@@ -418,7 +418,7 @@ xfer_config_init ()
  */
 
 int
-xfer_config_read ()
+xfer_config_read (void)
 {
     return weechat_config_read (xfer_config_file);
 }
@@ -428,7 +428,7 @@ xfer_config_read ()
  */
 
 int
-xfer_config_write ()
+xfer_config_write (void)
 {
     return weechat_config_write (xfer_config_file);
 }

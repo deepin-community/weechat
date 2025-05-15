@@ -1,7 +1,7 @@
 /*
  * fset-config.c - Fast Set configuration options (file fset.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -365,7 +365,7 @@ fset_config_change_title_color_cb (const void *pointer, void *data,
  */
 
 int
-fset_config_init ()
+fset_config_init (void)
 {
     fset_config_file = weechat_config_new (FSET_CONFIG_PRIO_NAME,
                                            &fset_config_reload, NULL, NULL);
@@ -466,8 +466,8 @@ fset_config_init ()
             "sort", "string",
             N_("comma-separated list of fields to sort options (see /help fset "
                "for a list of fields); char \"-\" can be used before field to "
-               "reverse order, char \"~\" can be used to do a case insensitive "
-               "comparison; example: \"-~name\" for case insensitive and "
+               "reverse order, char \"~\" can be used to do a case-insensitive "
+               "comparison; example: \"-~name\" for case-insensitive and "
                "reverse sort on option name"),
             NULL, 0, 0, "~name", NULL, 0,
             NULL, NULL, NULL,
@@ -1148,7 +1148,7 @@ fset_config_init ()
  */
 
 int
-fset_config_read ()
+fset_config_read (void)
 {
     int rc;
 
@@ -1169,7 +1169,7 @@ fset_config_read ()
  */
 
 int
-fset_config_write ()
+fset_config_write (void)
 {
     return weechat_config_write (fset_config_file);
 }
@@ -1179,7 +1179,7 @@ fset_config_write ()
  */
 
 void
-fset_config_free ()
+fset_config_free (void)
 {
     weechat_config_free (fset_config_file);
     fset_config_file = NULL;

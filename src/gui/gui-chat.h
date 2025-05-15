@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -66,17 +66,40 @@ enum t_gui_chat_mute
     GUI_CHAT_MUTE_ALL_BUFFERS,
 };
 
+enum t_gui_chat_pipe_color
+{
+    GUI_CHAT_PIPE_COLOR_STRIP = 0,
+    GUI_CHAT_PIPE_COLOR_KEEP,
+    GUI_CHAT_PIPE_COLOR_ANSI,
+    /* number of color actions */
+    GUI_CHAT_PIPE_NUM_COLORS,
+};
+
 extern char *gui_chat_prefix[GUI_CHAT_NUM_PREFIXES];
 extern char gui_chat_prefix_empty[];
 extern int gui_chat_time_length;
 extern int gui_chat_mute;
 extern struct t_gui_buffer *gui_chat_mute_buffer;
+extern int gui_chat_whitespace_mode;
+extern int gui_chat_pipe;
+extern char *gui_chat_pipe_command;
+extern struct t_gui_buffer *gui_chat_pipe_buffer;
+extern int gui_chat_pipe_send_to_buffer;
+extern FILE *gui_chat_pipe_file;
+extern char *gui_chat_pipe_hsignal;
+extern char *gui_chat_pipe_concat_sep;
+extern char **gui_chat_pipe_concat_lines;
+extern char **gui_chat_pipe_concat_tags;
+extern char *gui_chat_pipe_strip_chars;
+extern int gui_chat_pipe_skip_empty_lines;
+extern enum t_gui_chat_pipe_color gui_chat_pipe_color;
+
 extern int gui_chat_display_tags;
 
 /* chat functions */
 
-extern void gui_chat_init ();
-extern void gui_chat_prefix_build ();
+extern void gui_chat_init (void);
+extern void gui_chat_prefix_build (void);
 extern int gui_chat_strlen (const char *string);
 extern int gui_chat_strlen_screen (const char *string);
 extern const char *gui_chat_string_add_offset (const char *string, int offset);
@@ -92,10 +115,12 @@ extern void gui_chat_get_word_info (struct t_gui_window *window,
                                     int *word_length);
 extern char *gui_chat_get_time_string (time_t date, int date_usec,
                                        int highlight);
-extern int gui_chat_get_time_length ();
-extern void gui_chat_change_time_format ();
+extern int gui_chat_get_time_length (void);
+extern void gui_chat_change_time_format (void);
 extern int gui_chat_buffer_valid (struct t_gui_buffer *buffer,
                                   int buffer_type);
+extern int gui_chat_pipe_search_color (const char *color);
+extern void gui_chat_pipe_end (void);
 extern void gui_chat_printf_datetime_tags (struct t_gui_buffer *buffer,
                                            time_t date, int date_usec,
                                            const char *tags,
@@ -109,7 +134,7 @@ extern void gui_chat_print_lines_waiting_buffer (FILE *f);
 extern int gui_chat_hsignal_quote_line_cb (const void *pointer, void *data,
                                            const char *signal,
                                            struct t_hashtable *hashtable);
-extern void gui_chat_end ();
+extern void gui_chat_end (void);
 
 /* chat functions (GUI dependent) */
 

@@ -2,6 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: en
+include::includes/attributes-en.adoc[]
 
 This manual documents WeeChat chat client, it is part of WeeChat.
 
@@ -165,9 +166,10 @@ required.
 
 To compile a plugin which has one file "toto.c" (under GNU/Linux):
 
+[source,shell]
 ----
-$ gcc -fPIC -Wall -c toto.c
-$ gcc -shared -fPIC -o toto.so toto.o
+gcc -fPIC -Wall -c toto.c
+gcc -shared -fPIC -o toto.so toto.o
 ----
 
 [[load_plugin]]
@@ -636,7 +638,7 @@ Arguments:
 
 * _string_: string to cut
 * _length_: max chars
-* _count_suffix_: if 1, the length of suffix is counter in the max length
+* _count_suffix_: if 1, the length of suffix is counted in the max length
 * _screen_: if 1, the cut is based on width of chars displayed
 * _cut_suffix_: the suffix added after the string if it is cut
 
@@ -816,7 +818,7 @@ This function is not available in scripting API.
 
 _WeeChat ≥ 3.8._
 
-Case sensitive string comparison.
+Case-sensitive string comparison.
 
 Prototype:
 
@@ -852,7 +854,7 @@ This function is not available in scripting API.
 
 _WeeChat ≥ 3.8._
 
-Case sensitive string comparison, for _max_ chars.
+Case-sensitive string comparison, for _max_ chars.
 
 Prototype:
 
@@ -889,7 +891,7 @@ This function is not available in scripting API.
 
 _Updated in 1.0, 3.8._
 
-Case insensitive string comparison.
+Case-insensitive string comparison.
 
 [NOTE]
 Behavior has changed in version 3.8: now all uppercase letters are properly
@@ -978,7 +980,7 @@ This function is not available in scripting API.
 
 _Updated in 1.0, 3.8._
 
-Case insensitive string comparison, for _max_ chars.
+Case-insensitive string comparison, for _max_ chars.
 
 [NOTE]
 Behavior has changed in version 3.8: now all uppercase letters are properly
@@ -1083,7 +1085,7 @@ Arguments:
 * _string1_: first string for comparison
 * _string2_: second string for comparison
 * _chars_ignored_: string with chars to ignored
-* _case_sensitive_: 1 for case sensitive comparison, otherwise 0
+* _case_sensitive_: 1 for case-sensitive comparison, otherwise 0
 
 [NOTE]
 Behavior has changed in version 3.8 when _case_sensitive_ is set to 0: now all
@@ -1093,7 +1095,7 @@ uppercase letters are properly converted to lowercase (by calling function
 Return value:
 
 * arithmetic result of subtracting the last compared UTF-8 char in
-  _string2_ (converted to lowercase if _case_sentitive_ is set to 0) from the last
+  _string2_ (converted to lowercase if _case_sensitive_ is set to 0) from the last
   compared UTF-8 char in _string1_ (converted to lowercase if _case_sensitive_ is
   set to 0):
 ** < 0 if string1 < string2
@@ -1114,7 +1116,7 @@ This function is not available in scripting API.
 
 _Updated in 1.3, 3.8._
 
-Case insensitive string search.
+Case-insensitive string search.
 
 [NOTE]
 Behavior has changed in version 3.8: now all uppercase letters are properly
@@ -1209,7 +1211,7 @@ Arguments:
 * _string_: string
 * _mask_: mask with wildcards (`+*+`), each wildcard matches 0 or more chars in
   the string
-* _case_sensitive_: 1 for case sensitive comparison, otherwise 0
+* _case_sensitive_: 1 for case-sensitive comparison, otherwise 0
 
 [NOTE]
 Since version 1.0, wildcards are allowed inside the mask
@@ -1271,7 +1273,7 @@ Arguments:
 * _string_: string
 * _masks_: list of masks, with a NULL after the last mask in list; each mask
   is compared to the string with the function <<_string_match,string_match>>
-* _case_sensitive_: 1 for case sensitive comparison, otherwise 0
+* _case_sensitive_: 1 for case-sensitive comparison, otherwise 0
 
 [NOTE]
 Behavior has changed in version 3.8 when _case_sensitive_ is set to 0: now all
@@ -1597,7 +1599,7 @@ Flags must be at beginning of regular expression. Format is:
 Allowed flags are:
 
 * _e_: POSIX extended regular expression (_REG_EXTENDED_)
-* _i_: case insensitive (_REG_ICASE_)
+* _i_: case-insensitive (_REG_ICASE_)
 * _n_: match-any-character operators don't match a newline (_REG_NEWLINE_)
 * _s_: support for substring addressing of matches is not required (_REG_NOSUB_)
 
@@ -2616,8 +2618,7 @@ str3 = weechat.string_input_for_buffer("//test")  # "/test"
 
 ==== string_eval_expression
 
-_WeeChat ≥ 0.4.0, updated in 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8, 2.0,
-2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6, 3.8, 4.0.0, 4.2.0, 4.3.0._
+_WeeChat ≥ 0.4.0, updated in 0.4.2, 0.4.3, 1.0, 1.1, 1.2, 1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.7, 2.9, 3.1, 3.2, 3.3, 3.4, 3.6, 3.8, 4.0.0, 4.2.0, 4.3.0, 4.4.0._
 
 Evaluate an expression and return result as a string.
 Special variables with format `+${variable}+` are expanded (see table below).
@@ -2791,7 +2792,7 @@ from first used to last):
   == `+1+`
 
 | `+==*+` | 2.9
-| Is matching mask where "*" is allowed, case sensitive (see function <<_string_match,string_match>>)
+| Is matching mask where "*" is allowed, case-sensitive (see function <<_string_match,string_match>>)
 | >> `+abc def ==* a*f+` +
   == `+1+` +
   +
@@ -2799,7 +2800,7 @@ from first used to last):
   == `+0+`
 
 | `+!!*+` | 2.9
-| Is NOT wildcard mask where "*" is allowed, case sensitive (see function <<_string_match,string_match>>)
+| Is NOT wildcard mask where "*" is allowed, case-sensitive (see function <<_string_match,string_match>>)
 | >> `+abc def !!* a*f+` +
   == `+0+` +
   +
@@ -2807,7 +2808,7 @@ from first used to last):
   == `+1+`
 
 | `+=*+` | 1.8
-| Is matching mask where "*" is allowed, case insensitive (see function <<_string_match,string_match>>)
+| Is matching mask where "*" is allowed, case-insensitive (see function <<_string_match,string_match>>)
 | >> `+abc def =* A*F+` +
   == `+1+` +
   +
@@ -2815,7 +2816,7 @@ from first used to last):
   == `+0+`
 
 | `+!*+` | 1.8
-| Is NOT wildcard mask where "*" is allowed, case insensitive (see function <<_string_match,string_match>>)
+| Is NOT wildcard mask where "*" is allowed, case-insensitive (see function <<_string_match,string_match>>)
 | >> `+abc def !* A*F+` +
   == `+0+` +
   +
@@ -2823,7 +2824,7 @@ from first used to last):
   == `+1+`
 
 | `+==-+` | 2.9
-| Is included, case sensitive
+| Is included, case-sensitive
 | >> `+abc def ==- bc+` +
   == `+1+` +
   +
@@ -2831,7 +2832,7 @@ from first used to last):
   == `+0+`
 
 | `+!!-+` | 2.9
-| Is NOT included, case sensitive
+| Is NOT included, case-sensitive
 | >> `+abc def !!- bc+` +
   == `+0+` +
   +
@@ -2839,7 +2840,7 @@ from first used to last):
   == `+1+`
 
 | `+=-+` | 2.9
-| Is included, case insensitive
+| Is included, case-insensitive
 | >> `+abc def =- BC+` +
   == `+1+` +
   +
@@ -2847,7 +2848,7 @@ from first used to last):
   == `+0+`
 
 | `+!-+` | 2.9
-| Is NOT included, case insensitive
+| Is NOT included, case-insensitive
 | >> `+abc def !- BC+` +
   == `+0+` +
   +
@@ -3331,6 +3332,12 @@ expanded to last):
   evaluated expression with `+${name}+`.
 | >> `+${define:len,${calc:5+3}}${len}x${len}+` +
   == `+8x8+`
+
+| `+${hdata_count:name[list]}+` +
+  `+${hdata_count:name[pointer]}+` | 4.4.0
+| Number of items in a hdata list or starting at `pointer`.
+| >> `+${hdata_count:buffer[gui_buffers]}+` +
+  == `+15+`
 
 | `+${sec.data.name}+` |
 | Value of the secured data `name`.
@@ -3995,7 +4002,7 @@ Arguments:
 
 Return value:
 
-* real potision (in bytes)
+* real position (in bytes)
 
 C example:
 
@@ -5808,7 +5815,7 @@ Hashtable functions.
 
 ==== hashtable_new
 
-_WeeChat ≥ 0.3.3._
+_WeeChat ≥ 0.3.3, updated in 4.4.0._
 
 Create a new hashtable.
 
@@ -5837,12 +5844,14 @@ Arguments:
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _type_values_: type for values in hashtable:
 ** _WEECHAT_HASHTABLE_INTEGER_
 ** _WEECHAT_HASHTABLE_STRING_
 ** _WEECHAT_HASHTABLE_POINTER_
 ** _WEECHAT_HASHTABLE_BUFFER_
 ** _WEECHAT_HASHTABLE_TIME_
+** _WEECHAT_HASHTABLE_LONGLONG_ _(WeeChat ≥ 4.4.0)_
 * _callback_hash_key_: callback used to "hash" a key (key as integer value), can
   be NULL if key type is not "buffer" (a default hash function is used),
   arguments and return value:
@@ -6203,12 +6212,14 @@ Arguments:
 *** _pointer_: pointer
 *** _buffer_: buffer
 *** _time_: time
+*** _longlong_: long long integer
 ** _type_values_: type for values:
 *** _integer_: integer
 *** _string_: string
 *** _pointer_: pointer
 *** _buffer_: buffer
 *** _time_: time
+*** _longlong_: long long integer
 ** _keys_: string with list of keys (format: "key1,key2,key3")
 ** _keys_sorted_: string with list of sorted keys (format: "key1,key2,key3")
 ** _values_: string with list of values (format: "value1,value2,value3")
@@ -6956,7 +6967,7 @@ my_section_delete_option_cb (const void *pointer, void *data,
     /* return WEECHAT_CONFIG_OPTION_UNSET_ERROR; */
 }
 
-/* standard section, user can not add/delete options */
+/* standard section, user cannot add/delete options */
 struct t_config_section *new_section1 =
     weechat_config_new_section (config_file, "section1", 0, 0,
                                 NULL, NULL, NULL,
@@ -8111,7 +8122,7 @@ def config_boolean_inherited(option: str) -> int: ...
 
 # example
 option = weechat.config_get("irc.server.libera.autoconnect")
-autoconect = weechat.config_boolean_inherited(option)
+autoconnect = weechat.config_boolean_inherited(option)
 ----
 
 ==== config_integer
@@ -9412,7 +9423,7 @@ _WeeChat ≥ 0.3.6, updated in 2.0._
 
 Remove key binding(s).
 
-[WARNING]
+[CAUTION]
 When calling this function, ensure that you will not remove a user key binding.
 
 Prototype:
@@ -9999,7 +10010,7 @@ C examples:
 [source,c]
 ----
 /* hook modifier with priority = 2000 */
-/* high priority: called before other modifier calbacks */
+/* high priority: called before other modifier callbacks */
 weechat_hook_modifier ("2000|input_text_display", &modifier_cb, NULL, NULL);
 
 /* hook two signals with priority = 3000 */
@@ -10465,7 +10476,7 @@ Arguments:
 * _flag_read_: 1 = catch read event, 0 = ignore
 * _flag_write_: 1 = catch write event, 0 = ignore
 * _flag_exception_: 1 = catch exception event, 0 = ignore
-  (_WeeChat ≥ 1.3_: this argument is ignored and not used any more)
+  (_WeeChat ≥ 1.3_: this argument is ignored and not used anymore)
 * _callback_: function called a selected event occurs for file (or socket),
   arguments and return value:
 ** _const void *pointer_: pointer
@@ -10529,7 +10540,7 @@ _Updated in 1.5._
 Hook a process (launched with fork), and catch output.
 
 [NOTE]
-Since version 0.3.9.2, the shell is not used any more to execute the command.
+Since version 0.3.9.2, the shell is not used anymore to execute the command.
 WeeChat makes an automatic split of the command and its arguments (like the
 shell does). +
 If the split is not correct (according to quotes in your command), or if you
@@ -10970,6 +10981,11 @@ _WeeChat ≥ 4.1.0._
 
 URL transfer.
 
+This function is similar to <<_hook_process,hook_process>> and
+<<_hook_process_hashtable,hook_process_hashtable>> with command "url:..."
+but it uses a thread instead of new process, making it more lightweight
+and thus recommended for this usage.
+
 Prototype:
 
 [source,c]
@@ -11116,7 +11132,7 @@ hook2 = weechat.hook_url("http://localhost:8080/", options, 20000, "my_url_cb", 
 
 ==== hook_connect
 
-_Updated in 1.5, 2.0._
+_Updated in 1.5, 2.0, 4.4.0._
 
 Hook a connection (background connection to a remote host).
 
@@ -11151,7 +11167,10 @@ Arguments:
   without proxy)
 * _address_: name or IP address to connect to
 * _port_: port number
-* _ipv6_: 1 to use IPv6 (with fallback to IPv4), 0 to use only IPv4
+* _ipv6_:
+** `WEECHAT_HOOK_CONNECT_IPV6_DISABLE` ^(1)^: disable IPv6 (use only IPv4)
+** `WEECHAT_HOOK_CONNECT_IPV6_AUTO` ^(1)^: use IPv6 with fallback to IPv4
+** `WEECHAT_HOOK_CONNECT_IPV6_FORCE` ^(1)^: force IPv6 (do not use IPv4) _(WeeChat ≥ 4.4.0)_
 * _retry_: retry count, used to fallback to IPv4 hosts if IPv6 hosts connect
   but then fail to accept the client
 * _gnutls_sess_: GnuTLS session (optional)
@@ -11171,7 +11190,7 @@ Arguments:
   return value:
 ** _const void *pointer_: pointer
 ** _void *data_: pointer
-** _int status_: connection status:
+** _int status_: connection status ^(2)^:
 *** _WEECHAT_HOOK_CONNECT_OK_: connection OK
 *** _WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND_: address not found
 *** _WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND_: IP address not found
@@ -11183,8 +11202,8 @@ Arguments:
 *** _WEECHAT_HOOK_CONNECT_MEMORY_ERROR_: insufficient memory
 *** _WEECHAT_HOOK_CONNECT_TIMEOUT_: timeout
 *** _WEECHAT_HOOK_CONNECT_SOCKET_ERROR_: unable to create socket
-** _gnutls_rc_: return value of _gnutls_handshake()_
-** _sock_: socket used to connect
+** _gnutls_rc_: return value of _gnutls_handshake()_ ^(2)^
+** _sock_: socket used to connect ^(2)^
 ** _const char *error_: return value of _gnutls_strerror(gnutls_rc)_
 ** _const char *ip_address_: IP address found
 ** return value:
@@ -11195,15 +11214,18 @@ Arguments:
   if not NULL, it must have been allocated with malloc (or similar function)
   and it is automatically freed when the hook is deleted
 
-Return value:
-
-* pointer to new hook, NULL if error occurred
-
-[IMPORTANT]
-In scripts, with WeeChat ≥ 2.0, the callback arguments _status_, _gnutls_rc_
+[NOTE]
+^(1)^ Constants for parameter _ipv6_ are available since WeeChat 4.4.0. +
+For older releases, allowed values are `1` (use IPv6 with fallback to IPv4) and
+`0` (disable IPv6, use only IPv4). +
+^(2)^ In scripts, with WeeChat ≥ 2.0, the callback arguments _status_, _gnutls_rc_
 and _sock_ are integers (with WeeChat ≤ 1.9, they were strings). +
 To be compatible with all versions, it is recommended to convert the argument
 to integer before using it, for example in Python: `int(sock)`.
+
+Return value:
+
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -11254,7 +11276,8 @@ my_connect_cb (const void *pointer, void *data, int status, int gnutls_rc,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       1, 0,
+                                                       WEECHAT_HOOK_CONNECT_IPV6_AUTO,
+                                                       0,
                                                        NULL, NULL, 0,  /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL, NULL);
@@ -11270,31 +11293,32 @@ def hook_connect(proxy: str, address: str, port: int, ipv6: int, retry: int, loc
 
 # example
 def my_connect_cb(data: str, status: int, gnutls_rc: int, sock: int, error: str, ip_address: str) -> int:
-    if status == WEECHAT_HOOK_CONNECT_OK:
+    if status == weechat.WEECHAT_HOOK_CONNECT_OK:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_PROXY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_PROXY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_TIMEOUT:
         # ...
-    elif status == WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
+    elif status == weechat.WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234,
+                            weechat.WEECHAT_HOOK_CONNECT_IPV6_AUTO, 0, "",
                             "my_connect_cb", "")
 ----
 
@@ -11559,7 +11583,7 @@ C example:
 [source,c]
 ----
 int
-my_line_cb (const void *pointer, void *data, struct t_hasbtable *line)
+my_line_cb (const void *pointer, void *data, struct t_hashtable *line)
 {
     struct t_hashtable *hashtable;
 
@@ -12106,6 +12130,10 @@ List of signals sent by WeeChat and plugins:
 | Pointer: line.
 | Line added in a buffer.
 
+| weechat | [[hook_signal_buffer_line_data_changed]] buffer_line_data_changed | 4.4.0
+| Pointer: line data.
+| Line data has been updated in a buffer.
+
 | weechat | [[hook_signal_buffer_lines_hidden]] buffer_lines_hidden |
 | Pointer: buffer.
 | Lines hidden in buffer.
@@ -12150,6 +12178,10 @@ List of signals sent by WeeChat and plugins:
 | Pointer: buffer.
 | Modes of buffer changed.
 
+| weechat | [[hook_signal_buffer_time_for_each_line_changed]] buffer_time_for_each_line_changed | 4.4.0
+| Pointer: buffer.
+| Display time for each line changed.
+
 | weechat | [[hook_signal_buffer_type_changed]] buffer_type_changed |
 | Pointer: buffer.
 | Type of buffer changed.
@@ -12166,7 +12198,7 @@ List of signals sent by WeeChat and plugins:
 | String: text sent to buffer.
 | Text sent to a user buffer as input (sent only for buffers created with `/buffer add`). +
   If the return code of a callback is _WEECHAT_RC_OK_EAT_, then the string "q"
-  can not be used any more to close the buffer.
+  cannot be used anymore to close the buffer.
 
 | weechat | [[hook_signal_buffer_user_closing_xxx]] buffer_user_closing_xxx ^(2)^ | 3.8
 | -
@@ -12259,6 +12291,14 @@ List of signals sent by WeeChat and plugins:
 | weechat | [[hook_signal_key_combo_cursor]] key_combo_cursor | 1.0
 | String: key combo.
 | Key combo in _cursor_ context.
+
+| weechat | [[hook_signal_layout_buffers_applied]] layout_buffers_applied | 4.4.0
+| String: layout name.
+| Layout applied for buffers.
+
+| weechat | [[hook_signal_layout_windows_applied]] layout_windows_applied | 4.4.0
+| String: layout name.
+| Layout applied for windows.
 
 | weechat | [[hook_signal_mouse_enabled]] mouse_enabled | 1.1
 | -
@@ -12453,7 +12493,7 @@ hook = weechat.hook_signal("quit;upgrade", "my_signal_cb", "")
 
 ==== hook_signal_send
 
-_Updated in 1.0._
+_Updated in 1.0, 4.5.0._
 
 Send a signal.
 
@@ -12467,9 +12507,19 @@ int weechat_hook_signal_send (const char *signal, const char *type_data,
 
 Arguments:
 
-* _signal_: signal to send
+* _signal_: signal to send; flags are allowed before the signal name (see below)
+  _(WeeChat ≥ 4.5.0)_
 * _type_data_: type of data sent with signal (see <<_hook_signal,hook_signal>>)
 * _signal_data_: data sent with signal
+
+The signal name can contain flags with the following format: `[flags:xxx,yyy]signal`
+where `xxx` and `yyy` are names of flags, and `signal` the signal name. +
+The following flags are supported:
+
+* _stop_on_error_: exit immediately if a callback returns WEECHAT_RC_ERROR
+  (remaining callbacks are then NOT executed) _(WeeChat ≥ 4.5.0)_
+* _ignore_eat_: consider any callback returning WEECHAT_RC_OK_EAT is in fact
+  WEECHAT_RC_OK and execute remaining callbacks _(WeeChat ≥ 4.5.0)_
 
 Return value _(WeeChat ≥ 1.0)_:
 
@@ -12484,6 +12534,8 @@ C example:
 [source,c]
 ----
 int rc = weechat_hook_signal_send ("my_signal", WEECHAT_HOOK_SIGNAL_STRING, my_string);
+int rc2 = weechat_hook_signal_send ("[flags:stop_on_error,ignore_eat]my_signal2",
+                                    WEECHAT_HOOK_SIGNAL_STRING, my_string);
 ----
 
 Script (Python):
@@ -12493,8 +12545,10 @@ Script (Python):
 # prototype
 def hook_signal_send(signal: str, type_data: str, signal_data: str) -> int: ...
 
-# example
+# examples
 rc = weechat.hook_signal_send("my_signal", weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
+rc2 = weechat.hook_signal_send("[flags:stop_on_error,ignore_eat]my_signal2",
+                               weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
 ----
 
 [[signal_logger_backlog]]
@@ -12779,7 +12833,7 @@ hook = weechat.hook_hsignal("test", "my_hsignal_cb", "")
 
 ==== hook_hsignal_send
 
-_WeeChat ≥ 0.3.4, updated in 1.0._
+_WeeChat ≥ 0.3.4, updated in 1.0, 4.5.0._
 
 Send a hsignal (signal with hashtable).
 
@@ -12792,7 +12846,8 @@ int weechat_hook_hsignal_send (const char *signal, struct t_hashtable *hashtable
 
 Arguments:
 
-* _signal_: signal to send
+* _signal_: signal to send; flags are allowed before the signal name
+  (see function <<_hook_signal_send,hook_signal_send>>) _(WeeChat ≥ 4.5.0)_
 * _hashtable_: hashtable
 
 Return value _(WeeChat ≥ 1.0)_:
@@ -12807,7 +12862,7 @@ C example:
 
 [source,c]
 ----
-int rc;
+int rc, rc2;
 struct t_hashtable *hashtable = weechat_hashtable_new (8,
                                                        WEECHAT_HASHTABLE_STRING,
                                                        WEECHAT_HASHTABLE_STRING,
@@ -12817,6 +12872,7 @@ if (hashtable)
 {
     weechat_hashtable_set (hashtable, "key", "value");
     rc = weechat_hook_hsignal_send ("my_hsignal", hashtable);
+    rc2 = weechat_hook_hsignal_send ("[flags:stop_on_error,ignore_eat]my_hsignal2", hashtable);
     weechat_hashtable_free (hashtable);
 }
 ----
@@ -12828,8 +12884,9 @@ Script (Python):
 # prototype
 def hook_hsignal_send(signal: str, hashtable: Dict[str, str]) -> int: ...
 
-# example
+# examples
 rc = weechat.hook_hsignal_send("my_hsignal", {"key": "value"})
+rc2 = weechat.hook_hsignal_send("[flags:stop_on_error,ignore_eat]my_hsignal2", {"key": "value"})
 ----
 
 [[hsignal_irc_redirect_command]]
@@ -13962,6 +14019,10 @@ Properties:
 | Name of sub plugin (commonly script name, which is displayed in
   `/help command` for a hook of type _command_).
 
+| keep_spaces_right | 4.6.0 | _command_, _command_run_
+| "0" or "1"
+| Keep trailing spaces in command arguments when it is executed.
+
 | stdin | 0.4.3 | _process_, _process_hashtable_
 | any string
 | Send data on standard input (_stdin_) of child process.
@@ -14373,7 +14434,7 @@ Arguments:
 ** `+==id+`: the name used is the buffer unique identifier (`id`) _(WeeChat ≥ 4.3.0)_
 * _name_: name of buffer, if it is NULL or empty string, the current buffer is
   returned (buffer displayed by current window); if the name starts with
-  `(?i)`, the search is case insensitive _(WeeChat ≥ 1.0)_
+  `(?i)`, the search is case-insensitive _(WeeChat ≥ 1.0)_
 
 Return value:
 
@@ -14608,7 +14669,6 @@ Arguments:
 ** _number_: number of buffer (starts to 1)
 ** _layout_number_: number of buffer saved in layout
 ** _layout_number_merge_order_: order in merge for layout
-** _short_name_is_set_: 1 if short name is set, 0 if not set
 ** _type_: buffer type (0: formatted, 1: free content)
 ** _notify_: notify level for buffer
 ** _num_displayed_: number of windows displaying buffer
@@ -14625,7 +14685,7 @@ Arguments:
 ** _next_line_id_: next line id in buffer _(WeeChat ≥ 3.8)_
 ** _time_for_each_line_: 1 if time is displayed for each line in buffer (default), otherwise 0
 ** _nicklist_: 1 if nicklist is enabled, otherwise 0
-** _nicklist_case_sensitive_: 1 if nicks are case sensitive, otherwise 0
+** _nicklist_case_sensitive_: 1 if nicks are case-sensitive, otherwise 0
 ** _nicklist_max_length_: max length for a nick
 ** _nicklist_display_groups_: 1 if groups are displayed, otherwise 0
 ** _nicklist_count_: number of nicks and groups in nicklist
@@ -14651,7 +14711,7 @@ Arguments:
 ** _text_search_direction_: direction for search:
 *** 0: backward search (direction: oldest messages/commands)
 *** 1: forward search (direction: newest messages/commands)
-** _text_search_exact_: 1 if text search is case sensitive
+** _text_search_exact_: 1 if text search is case-sensitive
 ** _text_search_regex_: 1 if searching with a regular expression
 ** _text_search_where_:
 *** 0: no search at this moment
@@ -14780,7 +14840,7 @@ C example:
 
 [source,c]
 ----
-weechat_printf (NULL, "plugin pointer of my buffer: %lx",
+weechat_printf (NULL, "plugin pointer of my buffer: %p",
                 weechat_buffer_get_pointer (my_buffer, "plugin"));
 ----
 
@@ -14827,6 +14887,12 @@ Properties:
   (conditions defined in option _weechat.look.hotlist_add_conditions_
   are *NOT* checked) +
   "-1": remove buffer from hotlist _(WeeChat ≥ 1.0)_.
+
+| hotlist_conditions | 4.5.0 | WEECHAT_HOTLIST_LOW, WEECHAT_HOTLIST_MESSAGE,
+  WEECHAT_HOTLIST_PRIVATE, WEECHAT_HOTLIST_HIGHLIGHT
+| priority: add buffer to hotlist with this priority
+  (conditions defined in option _weechat.look.hotlist_add_conditions_
+  are checked).
 
 | completion_freeze | | "0" or "1"
 | "0": no freeze of completion (default value)
@@ -14899,7 +14965,7 @@ Properties:
 | "0" to remove nicklist for buffer, "1" to add nicklist for buffer.
 
 | nicklist_case_sensitive | | "0" or "1"
-| "0" to have case insensitive nicklist, "1" to have case sensitive nicklist.
+| "0" to have case-insensitive nicklist, "1" to have case-sensitive nicklist.
 
 | nicklist_display_groups | | "0" or "1"
 | "0" to hide nicklist groups, "1" to display nicklist groups.
@@ -15156,7 +15222,7 @@ Arguments:
 ** wildcard `+*+` is allowed in name
 
 [NOTE]
-Since version 4.0.0, comparison of buffer names is case sensitive.
+Since version 4.0.0, comparison of buffer names is case-sensitive.
 
 Return value:
 
@@ -15190,6 +15256,46 @@ if buffer:
     weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "*,!*#weechat*"))        # 0
     weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.libera.*"))         # 1
     weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.oftc.*,python.*"))  # 0
+----
+
+[[buffer_lines]]
+=== Buffer lines
+
+Functions for buffer lines.
+
+==== line_search_by_id
+
+_WeeChat ≥ 4.4.0._
+
+Search line in buffer by identifier.
+
+Prototype:
+
+[source,c]
+----
+struct t_gui_line *weechat_line_search_by_id (struct t_gui_buffer *buffer, int id);
+----
+
+Return value:
+
+* pointer to line found, NULL if not found
+
+C example:
+
+[source,c]
+----
+struct t_gui_line *line = weechat_line_search_by_id (buffer, 123);
+----
+
+Script (Python):
+
+[source,python]
+----
+# prototype
+def line_search_by_id(buffer: str, line_id: int) -> str: ...
+
+# example
+line = weechat.line_search_by_id(buffer, 123)
 ----
 
 [[windows]]
@@ -15256,7 +15362,7 @@ C example:
 [source,c]
 ----
 weechat_printf (NULL,
-                "window displaying core buffer: %lx",
+                "window displaying core buffer: %p",
                 weechat_window_search_with_buffer (weechat_buffer_search_main ()));
 ----
 
@@ -15393,7 +15499,7 @@ C example:
 [source,c]
 ----
 weechat_printf (NULL,
-                "buffer displayed in current window: %lx",
+                "buffer displayed in current window: %p",
                 weechat_window_get_pointer (weechat_current_window (), "buffer"));
 ----
 
@@ -16776,7 +16882,7 @@ rc = weechat.command(weechat.buffer_search("irc", "libera.#weechat"), "/whois Fl
 
 ==== command_options
 
-_WeeChat ≥ 2.5, updated in 4.0.0._
+_WeeChat ≥ 2.5, updated in 4.0.0, 4.5.0._
 
 Execute a command or send text to buffer with options.
 
@@ -16792,13 +16898,14 @@ Arguments:
 
 * _buffer_: buffer pointer (command is executed on this buffer, use NULL for
   current buffer)
-* _command_: command to execute (if beginning with a "/"), or text to send to
-  buffer
+* _command_: command to execute (if beginning with a `/` or a command char),
+  or text to send to buffer
 * _options_: a hashtable with some options (keys and values must be string)
   (can be NULL):
 ** _commands_: a comma-separated list of commands allowed to be executed during
-   this call; see function <<_string_match_list,string_match_list>> for the
-   format
+   this call (see function <<_string_match_list,string_match_list>> for the
+   format); the special value `-` (hyphen-minus) disables the execution of commands
+   and the string in _command_ is sent as-is to the buffer (_WeeChat ≥ 4.5.0_)
 ** _delay_: delay to execute command, in milliseconds
 ** _split_newline_: `1` to split commands on newline char (`\n`) (_WeeChat ≥ 4.0.0_)
 
@@ -16831,7 +16938,7 @@ Script (Python):
 def command_options(buffer: str, command: str, options: Dict[str, str]) -> int: ...
 
 # example: allow any command except /exec
-rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec"})
+rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec", "delay": "2000"})
 ----
 
 [[completion]]
@@ -16981,6 +17088,71 @@ def my_completion_cb(data: str, completion_item: str, buffer: str, completion: s
     # get arguments of command
     args = weechat.completion_get_string(completion, "args")
     # completion depending on args
+    # ...
+    return weechat.WEECHAT_RC_OK
+----
+
+==== completion_set
+
+_WeeChat ≥ 4.6.0._
+
+Set a completion property.
+
+Prototype:
+
+[source,c]
+----
+void weechat_completion_get_string (struct t_gui_completion *completion,
+                                    const char *property,
+                                    const char *value);
+----
+
+Arguments:
+
+* _completion_: completion pointer
+* _property_: property name (see table below)
+* _value_: new value for property
+
+Properties:
+
+[width="100%",cols="^2,^1,4,8",options="header"]
+|===
+| Name | Min WeeChat | Value | Description
+
+| add_space | 4.6.0 | "0" or "1"
+| "0": do not add space after completion +
+  "1": add space after completion (default).
+|===
+
+C example:
+
+[source,c]
+----
+int
+my_completion_cb (const void *pointer, void *data, const char *completion_item,
+                  struct t_gui_buffer *buffer,
+                  struct t_gui_completion *completion)
+{
+    /* do not add space after completion */
+    weechat_completion_set (completion, "add_space", "0");
+
+    /* ... */
+
+    return WEECHAT_RC_OK;
+}
+----
+
+Script (Python):
+
+[source,python]
+----
+# prototype
+def completion_set(completion: str, property: str, value: str) -> int: ...
+
+# example
+def my_completion_cb(data: str, completion_item: str, buffer: str, completion: str) -> int:
+    # do not add space after completion
+    weechat.completion_set(completion, "add_space", "0")
     # ...
     return weechat.WEECHAT_RC_OK
 ----
@@ -19261,7 +19433,7 @@ C example:
 ----
 struct t_hdata *hdata = weechat_hdata_get ("buffer");
 struct t_gui_buffer *buffer = weechat_buffer_search_main ();
-weechat_printf (NULL, "lines = %lx", weechat_hdata_pointer (hdata, buffer, "lines"));
+weechat_printf (NULL, "lines = %p", weechat_hdata_pointer (hdata, buffer, "lines"));
 ----
 
 Script (Python):
@@ -19416,7 +19588,7 @@ Arguments:
 * _pointer2_: pointer to second WeeChat/plugin object
 * _name_: variable name or path to a variable name; for arrays, the name can be
   "N|name" where N is the index in array (starting at 0), for example: "2|name"
-* _case_sensitive_: 1 for case sensitive comparison of strings, otherwise 0
+* _case_sensitive_: 1 for case-sensitive comparison of strings, otherwise 0
 
 Return value:
 

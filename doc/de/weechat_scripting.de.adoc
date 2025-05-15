@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: de
-:toc-title: Inhaltsverzeichnis
+include::includes/attributes-de.adoc[]
 
 Übersetzer:
 
@@ -73,7 +73,7 @@ und die Dokumentation für die Funktion `+hook_process+` in link:weechat_plugin_
 WeeChat definiert ein `weechat` Module welches mittels `import weechat`
 importiert werden muss. +
 Ein Python-Stub für die WeeChat-API ist im Repository verfügbar:
-https://raw.githubusercontent.com/weechat/weechat/master/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
+https://raw.githubusercontent.com/weechat/weechat/main/src/plugins/python/weechat.pyi[weechat.pyi ^↗^^].
 
 [[python_functions]]
 ===== Funktionen
@@ -373,9 +373,10 @@ anlegen, der in das Verzeichnis _Skriptsprache/autoload_ zeigt.
 
 Ein Beispiel für ein Python-Skript:
 
+[source,shell]
 ----
-$ cd ~/.local/share/weechat/python/autoload
-$ ln -s ../script.py
+cd ~/.local/share/weechat/python/autoload
+ln -s ../script.py
 ----
 
 [NOTE]

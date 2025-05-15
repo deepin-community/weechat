@@ -1,7 +1,7 @@
 /*
  * tests-record.cpp - record and search in messages displayed
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -202,6 +202,16 @@ record_search (const char *buffer, const char *prefix, const char *message,
 
     /* message not displayed */
     return NULL;
+}
+
+/*
+ * Returns the number of messages displayed during the recording.
+ */
+
+int
+record_count_messages ()
+{
+    return arraylist_size (recorded_messages);
 }
 
 /*

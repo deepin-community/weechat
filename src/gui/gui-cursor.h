@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,8 +29,8 @@ extern int gui_cursor_y;
 
 /* cursor functions */
 
-extern void gui_cursor_mode_toggle ();
-extern void gui_cursor_mode_stop ();
+extern void gui_cursor_mode_toggle (void);
+extern void gui_cursor_mode_stop (void);
 extern void gui_cursor_debug_set (int debug);
 extern void gui_cursor_move_xy (int x, int y);
 extern void gui_cursor_move_add_xy (int add_x, int add_y);

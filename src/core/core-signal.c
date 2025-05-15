@@ -1,7 +1,7 @@
 /*
  * core-signal.c - signal functions
  *
- * Copyright (C) 2021-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2021-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -65,8 +65,11 @@ volatile sig_atomic_t signal_sigusr2_count = 0;
  */
 
 void
-signal_sighup_cb ()
+signal_sighup_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     signal_sighup_count++;
 }
 
@@ -75,8 +78,11 @@ signal_sighup_cb ()
  */
 
 void
-signal_sigquit_cb ()
+signal_sigquit_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     signal_sigquit_count++;
 }
 
@@ -85,8 +91,11 @@ signal_sigquit_cb ()
  */
 
 void
-signal_sigterm_cb ()
+signal_sigterm_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     signal_sigterm_count++;
 }
 
@@ -95,8 +104,11 @@ signal_sigterm_cb ()
  */
 
 void
-signal_sigusr1_cb ()
+signal_sigusr1_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     signal_sigusr1_count++;
 }
 
@@ -105,8 +117,11 @@ signal_sigusr1_cb ()
  */
 
 void
-signal_sigusr2_cb ()
+signal_sigusr2_cb (int signo)
 {
+    /* make C compiler happy */
+    (void) signo;
+
     signal_sigusr2_count++;
 }
 
@@ -266,7 +281,7 @@ signal_handle_number (int signal_number, int count, const char *command)
  */
 
 void
-signal_handle ()
+signal_handle (void)
 {
     /* SIGUSR1 */
     signal_handle_number (SIGUSR1, signal_sigusr1_count,
@@ -299,7 +314,7 @@ signal_handle ()
  */
 
 void
-signal_suspend ()
+signal_suspend (void)
 {
     kill (getpid (), SIGTSTP);
     gui_window_ask_refresh (2);
@@ -310,7 +325,7 @@ signal_suspend ()
  */
 
 void
-signal_init ()
+signal_init (void)
 {
     /* ignore some signals */
     signal_catch (SIGINT, SIG_IGN);

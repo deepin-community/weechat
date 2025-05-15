@@ -1,7 +1,7 @@
 /*
  * relay-api-msg.c - build JSON messages for "api" protocol
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -55,16 +55,13 @@
         cJSON_Create##__json_type (                                     \
             weechat_hdata_##__var_type (hdata, pointer, __var_name)));
 
-#define MSG_ADD_HDATA_TIME(__json_name, __var_name)                     \
-    date = weechat_hdata_time (hdata, pointer, __var_name);             \
-    strftime (str_time, sizeof (str_time), "%FT%TZ", gmtime (&date));   \
-    MSG_ADD_STR_BUF(__json_name, str_time);
-
 #define MSG_ADD_HDATA_TIME_USEC(__json_name,                            \
                                 __var_name, __var_name_usec)            \
     time_value = weechat_hdata_time (hdata, pointer, __var_name);       \
-    gmtime_r (&time_value, &gm_time);                                   \
-    tv.tv_sec = mktime (&gm_time);                                      \
+    local_time = localtime (&time_value);                               \
+    time_value -= local_time->tm_gmtoff;                                \
+    local_time = localtime (&time_value);                               \
+    tv.tv_sec = mktime (local_time);                                    \
     tv.tv_usec = weechat_hdata_integer (hdata, pointer,                 \
                                         __var_name_usec);               \
     weechat_util_strftimeval (str_time, sizeof (str_time),              \
@@ -130,7 +127,7 @@ relay_api_msg_send_json_internal (struct t_relay_client *client,
                                   const char *body_type,
                                   cJSON *json_body)
 {
-    cJSON *json, *json_event;
+    cJSON *json;
     char *string, *request;
     int num_bytes, length;
 
@@ -152,17 +149,12 @@ relay_api_msg_send_json_internal (struct t_relay_client *client,
             cJSON_AddItemToObject (json, "message", cJSON_CreateString (message));
             if (event_name)
             {
-                json_event = cJSON_CreateObject ();
-                if (json_event)
-                {
-                    cJSON_AddItemToObject (
-                        json_event, "name",
-                        cJSON_CreateString ((event_name) ? event_name : ""));
-                    cJSON_AddItemToObject (
-                        json_event, "buffer_id",
-                        cJSON_CreateNumber (event_buffer_id));
-                    cJSON_AddItemToObject (json, "event", json_event);
-                }
+                cJSON_AddItemToObject (
+                    json, "event_name",
+                    cJSON_CreateString ((event_name) ? event_name : ""));
+                cJSON_AddItemToObject (
+                    json, "buffer_id",
+                    cJSON_CreateNumber (event_buffer_id));
             }
             else
             {
@@ -179,17 +171,21 @@ relay_api_msg_send_json_internal (struct t_relay_client *client,
                     cJSON_AddItemToObject (
                         json, "request_body",
                         (client->http_req->body) ?
-                        cJSON_Parse (client->http_req->body) :cJSON_CreateNull ());
+                        cJSON_Parse (client->http_req->body) : cJSON_CreateNull ());
                     free (request);
                 }
+                cJSON_AddItemToObject (
+                    json, "request_id",
+                    (client->http_req->id) ?
+                    cJSON_CreateString (client->http_req->id) : cJSON_CreateNull ());
             }
-            if (body_type)
-            {
-                cJSON_AddItemToObject (json, "body_type",
-                                       cJSON_CreateString (body_type));
-            }
-            if (json_body)
-                cJSON_AddItemToObject (json, "body", json_body);
+            cJSON_AddItemToObject (
+                json, "body_type",
+                (body_type) ?
+                cJSON_CreateString (body_type) : cJSON_CreateNull ());
+            cJSON_AddItemToObject (
+                json, "body",
+                (json_body) ? json_body : cJSON_CreateNull ());
             string = cJSON_PrintUnformatted (json);
             num_bytes = relay_client_send (
                 client,
@@ -252,7 +248,7 @@ relay_api_msg_send_error_json (struct t_relay_client *client,
 {
     cJSON *json;
     int num_bytes;
-    char *error_msg, *str_json;
+    char *str_json;
 
     if (!client || !message || !format)
         return -1;
@@ -263,43 +259,37 @@ relay_api_msg_send_error_json (struct t_relay_client *client,
 
     num_bytes = -1;
 
+    json = cJSON_CreateObject ();
+    if (!json)
+        return -1;
+
+    cJSON_AddItemToObject (json, "error", cJSON_CreateString (vbuffer));
+
     if (client->websocket == RELAY_CLIENT_WEBSOCKET_READY)
     {
         /*
          * with established websocket, we return JSON string instead of
          * an HTTP response
          */
-        json = cJSON_CreateObject ();
-        if (json)
-        {
-            cJSON_AddItemToObject (json, "error", cJSON_CreateString (vbuffer));
-            num_bytes = relay_api_msg_send_json_internal (
-                client,
-                return_code,
-                message,
-                NULL,  /* event_name */
-                -1,    /* event_buffer_id */
-                headers,
-                NULL,  /* body_type */
-                json);
-            cJSON_Delete (json);
-        }
+        num_bytes = relay_api_msg_send_json_internal (
+            client,
+            return_code,
+            message,
+            NULL,  /* event_name */
+            -1,    /* event_buffer_id */
+            headers,
+            NULL,  /* body_type */
+            json);
     }
     else
     {
-        error_msg = weechat_string_replace (vbuffer, "\"", "\\\"");
-        if (error_msg)
-        {
-            if (weechat_asprintf (&str_json, "{\"error\": \"%s\"}", error_msg) >= 0)
-            {
-                num_bytes = relay_http_send_json (client, return_code, message,
-                                                  headers, str_json);
-                free (str_json);
-            }
-            free (error_msg);
-        }
+        str_json = cJSON_PrintUnformatted (json);
+        num_bytes = relay_http_send_json (client, return_code, message,
+                                          headers, str_json);
+        free (str_json);
     }
 
+    cJSON_Delete (json);
     free (vbuffer);
     return num_bytes;
 }
@@ -384,6 +374,7 @@ relay_api_msg_buffer_to_json (struct t_gui_buffer *buffer,
     if (weechat_strcmp (ptr_string, "free") == 0)
         lines = lines_free;
     MSG_ADD_STR_PTR("type", ptr_string);
+    MSG_ADD_HDATA_VAR(Bool, "hidden", integer, "hidden");
     MSG_ADD_HDATA_STR_COLORS("title", "title");
     MSG_ADD_HDATA_STR_COLORS("modes", "modes");
     MSG_ADD_HDATA_STR_COLORS("input_prompt", "input_prompt");
@@ -393,6 +384,7 @@ relay_api_msg_buffer_to_json (struct t_gui_buffer *buffer,
     MSG_ADD_HDATA_VAR(Bool, "nicklist", integer, "nicklist");
     MSG_ADD_HDATA_VAR(Bool, "nicklist_case_sensitive", integer, "nicklist_case_sensitive");
     MSG_ADD_HDATA_VAR(Bool, "nicklist_display_groups", integer, "nicklist_display_groups");
+    MSG_ADD_HDATA_VAR(Bool, "time_displayed", integer, "time_for_each_line");
 
     /* local_variables */
     json_local_vars = cJSON_CreateObject ();
@@ -497,7 +489,7 @@ relay_api_msg_line_data_to_json (struct t_gui_line_data *line_data,
     int i, tags_count;
     time_t time_value;
     struct timeval tv;
-    struct tm gm_time;
+    struct tm *local_time;
 
     hdata = relay_hdata_line_data;
     pointer = line_data;
@@ -724,6 +716,72 @@ relay_api_msg_nick_group_to_json (struct t_gui_nick_group *nick_group,
 }
 
 /*
+ * Creates a JSON object with a completion entry.
+ */
+
+cJSON *
+relay_api_msg_completion_to_json (struct t_gui_completion *completion)
+{
+    struct t_hdata *hdata;
+    struct t_gui_completion *pointer;
+    struct t_gui_completion_word *word;
+    const char *ptr_string;
+    struct t_arraylist *ptr_list;
+    cJSON *json, *json_array;
+    int context, i, size;
+
+    hdata = relay_hdata_completion;
+    pointer = completion;
+
+    json = cJSON_CreateObject ();
+    if (!json)
+        return NULL;
+
+    if (!completion)
+        return json;
+
+    ptr_list = weechat_hdata_pointer (relay_hdata_completion, completion, "list");
+    if (!ptr_list)
+        return json;
+
+    /* context */
+    context = weechat_hdata_integer (relay_hdata_completion, completion, "context");
+    switch (context)
+    {
+        case 0:
+            MSG_ADD_STR_PTR("context", "null");
+            break;
+        case 1:
+            MSG_ADD_STR_PTR("context", "command");
+            break;
+        case 2:
+            MSG_ADD_STR_PTR("context", "command_arg");
+            break;
+        default:
+            MSG_ADD_STR_PTR("context", "auto");
+            break;
+    }
+
+    MSG_ADD_HDATA_STR("base_word", "base_word");
+    MSG_ADD_HDATA_VAR(Number, "position_replace", integer, "position_replace");
+    MSG_ADD_HDATA_VAR(Bool, "add_space", integer, "add_space");
+
+    json_array = cJSON_CreateArray ();
+    size = weechat_arraylist_size (ptr_list);
+    for (i = 0; i < size; i++)
+    {
+        word = (struct t_gui_completion_word *)weechat_arraylist_get (ptr_list, i);
+        cJSON_AddItemToArray (
+            json_array,
+            cJSON_CreateString (
+                weechat_hdata_string (relay_hdata_completion_word, word, "word")));
+    }
+    cJSON_AddItemToObject (json, "list", json_array);
+
+    return json;
+}
+
+/*
  * Creates a JSON object with a hotlist entry.
  */
 
@@ -736,7 +794,7 @@ relay_api_msg_hotlist_to_json (struct t_gui_hotlist *hotlist)
     cJSON *json, *json_count;
     time_t time_value;
     struct timeval tv;
-    struct tm gm_time;
+    struct tm *local_time;
     char str_time[256], str_key[32];
     int i, array_size;
     long long buffer_id;

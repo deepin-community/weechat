@@ -1,7 +1,7 @@
 /*
  * fifo-config.c - fifo configuration options (file fifo.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -87,7 +87,7 @@ fifo_config_change_file_path (const void *pointer, void *data,
  */
 
 int
-fifo_config_init ()
+fifo_config_init (void)
 {
     fifo_config_file = weechat_config_new (FIFO_CONFIG_PRIO_NAME,
                                            NULL, NULL, NULL);
@@ -134,7 +134,7 @@ fifo_config_init ()
  */
 
 int
-fifo_config_read ()
+fifo_config_read (void)
 {
     return weechat_config_read (fifo_config_file);
 }
@@ -144,7 +144,7 @@ fifo_config_read ()
  */
 
 int
-fifo_config_write ()
+fifo_config_write (void)
 {
     return weechat_config_write (fifo_config_file);
 }
@@ -154,7 +154,7 @@ fifo_config_write ()
  */
 
 void
-fifo_config_free ()
+fifo_config_free (void)
 {
     weechat_config_free (fifo_config_file);
     fifo_config_file = NULL;

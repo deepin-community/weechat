@@ -1,7 +1,7 @@
 /*
  * script-repo.c - download and read repository file (plugins.xml.gz)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -375,7 +375,7 @@ script_repo_get_status_desc_for_display (struct t_script_repo *script,
  */
 
 struct t_script_repo *
-script_repo_alloc ()
+script_repo_alloc (void)
 {
     struct t_script_repo *new_script;
 
@@ -688,7 +688,7 @@ script_repo_remove (struct t_script_repo *script)
  */
 
 void
-script_repo_remove_all ()
+script_repo_remove_all (void)
 {
     while (scripts_repo)
     {
@@ -855,7 +855,7 @@ script_repo_update_status (struct t_script_repo *script)
  */
 
 void
-script_repo_update_status_all ()
+script_repo_update_status_all (void)
 {
     struct t_script_repo *ptr_script;
 
@@ -1006,7 +1006,7 @@ script_repo_filter_scripts (const char *search)
  */
 
 int
-script_repo_file_exists ()
+script_repo_file_exists (void)
 {
     char *filename;
     int rc;
@@ -1036,7 +1036,7 @@ script_repo_file_exists ()
  */
 
 int
-script_repo_file_is_uptodate ()
+script_repo_file_is_uptodate (void)
 {
     char *filename;
     struct stat st;
@@ -1107,7 +1107,7 @@ script_repo_file_read (int quiet)
     const char *ptr_desc;
     gzFile file;
     struct t_script_repo *script;
-    int version_number, version_ok, script_ok, length;
+    int version_number, version_ok, script_ok;
     struct tm tm_script;
     struct t_hashtable *descriptions;
 
@@ -1237,17 +1237,10 @@ script_repo_file_read (int quiet)
                             if (ptr_desc)
                             {
                                 script->description = strdup (ptr_desc);
-                                length = strlen (script->name) + 1 +
-                                    strlen (script_extension[script->language]) + 1;
-                                script->name_with_extension = malloc (length);
-                                if (script->name_with_extension)
-                                {
-                                    snprintf (script->name_with_extension,
-                                              length,
-                                              "%s.%s",
-                                              script->name,
-                                              script_extension[script->language]);
-                                }
+                                weechat_asprintf (&script->name_with_extension,
+                                                  "%s.%s",
+                                                  script->name,
+                                                  script_extension[script->language]);
                                 script_repo_update_status (script);
                                 script->displayed = (script_repo_match_filter (script));
                                 script_repo_add (script);
@@ -1606,7 +1599,7 @@ script_repo_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-script_repo_print_log ()
+script_repo_print_log (void)
 {
     struct t_script_repo *ptr_script;
 

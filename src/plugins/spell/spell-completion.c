@@ -1,7 +1,7 @@
 /*
  * spell-completion.c - completion for spell checker commands
  *
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -102,11 +102,14 @@ spell_completion_dicts_cb (const void *pointer, void *data,
     (void) buffer;
 
 #ifdef USE_ENCHANT
-    enchant_broker_list_dicts (broker,
+    enchant_broker_list_dicts (spell_enchant_broker,
                                spell_completion_enchant_add_dict_cb,
                                completion);
 #else
     config = new_aspell_config ();
+#ifdef ASPELL_DICT_DIR
+    aspell_config_replace (config, "dict-dir", ASPELL_DICT_DIR);
+#endif
     list = get_aspell_dict_info_list (config);
     elements = aspell_dict_info_list_elements (list);
 
@@ -131,7 +134,7 @@ spell_completion_dicts_cb (const void *pointer, void *data,
  */
 
 void
-spell_completion_init ()
+spell_completion_init (void)
 {
     weechat_hook_completion ("spell_langs",
                              N_("list of all languages supported"),

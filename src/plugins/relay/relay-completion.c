@@ -1,7 +1,7 @@
 /*
  * relay-completion.c - completion for relay command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -199,7 +199,7 @@ relay_completion_remotes_cb (const void *pointer, void *data,
  */
 
 void
-relay_completion_init ()
+relay_completion_init (void)
 {
     weechat_hook_completion ("relay_protocol_name",
                              N_("all possible protocol.name for relay plugin"),

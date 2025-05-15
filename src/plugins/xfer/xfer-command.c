@@ -1,7 +1,7 @@
 /*
  * xfer-command.c - xfer command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -27,6 +27,7 @@
 #include "xfer.h"
 #include "xfer-buffer.h"
 #include "xfer-chat.h"
+#include "xfer-command.h"
 #include "xfer-config.h"
 
 
@@ -55,12 +56,12 @@ xfer_command_me (const void *pointer, void *data,
                         _("%s%s: can't find xfer for buffer \"%s\""),
                         weechat_prefix ("error"), XFER_PLUGIN_NAME,
                         weechat_buffer_get_string (buffer, "name"));
-        return WEECHAT_RC_OK;
+        return WEECHAT_RC_ERROR;
     }
 
     if (!XFER_HAS_ENDED(ptr_xfer->status))
     {
-        xfer_chat_sendf (ptr_xfer, "\01ACTION %s\01\r\n",
+        xfer_chat_sendf (ptr_xfer, "\001ACTION %s\001\r\n",
                          (argv_eol[1]) ? argv_eol[1] : "");
         weechat_printf_date_tags (buffer,
                                   0,
@@ -169,7 +170,7 @@ xfer_command_xfer_list (int full)
                                     ptr_xfer->remote_address_str,
                                     ptr_xfer->port);
                     date[0] = '\0';
-                    date_tmp = localtime (&(ptr_xfer->start_transfer));
+                    date_tmp = localtime (&(ptr_xfer->start_transfer.tv_sec));
                     if (date_tmp)
                     {
                         if (strftime (date, sizeof (date),
@@ -251,17 +252,20 @@ xfer_command_xfer (const void *pointer, void *data,
  */
 
 void
-xfer_command_init ()
+xfer_command_init (void)
 {
-    weechat_hook_command (
+    struct t_hook *ptr_hook;
+
+    ptr_hook = weechat_hook_command (
         "me",
         N_("send a CTCP action to remote host"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("<message>"),
         WEECHAT_CMD_ARGS_DESC(
             N_("message: message to send")),
         NULL,
         &xfer_command_me, NULL, NULL);
+    XFER_COMMAND_KEEP_SPACES;
     weechat_hook_command (
         "xfer",
         N_("xfer control"),

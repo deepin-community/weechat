@@ -1,7 +1,7 @@
 /*
  * test-core-command.cpp - test command functions
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -325,6 +325,16 @@ TEST(CoreCommand, Mouse)
  */
 
 TEST(CoreCommand, Mute)
+{
+    /* TODO: write tests */
+}
+
+/*
+ * Tests functions:
+ *   command_pipe
+ */
+
+TEST(CoreCommand, Pipe)
 {
     /* TODO: write tests */
 }

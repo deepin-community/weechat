@@ -1,7 +1,7 @@
 /*
  * relay-api.c - API protocol for relay to client
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -144,7 +144,7 @@ relay_api_hook_signals (struct t_relay_client *client)
     if (!RELAY_API_DATA(client, hook_signal_upgrade))
     {
         RELAY_API_DATA(client, hook_signal_upgrade) =
-            weechat_hook_signal ("upgrade*",
+            weechat_hook_signal ("upgrade*;quit",
                                  &relay_api_protocol_signal_upgrade_cb,
                                  client, NULL);
     }

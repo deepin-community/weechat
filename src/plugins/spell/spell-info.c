@@ -1,7 +1,7 @@
 /*
  * spell-info.c - info for spell checker plugin
  *
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,7 +37,6 @@ spell_info_info_spell_dict_cb (const void *pointer, void *data,
                                const char *arguments)
 {
     int rc;
-    unsigned long value;
     struct t_gui_buffer *buffer;
     const char *buffer_full_name, *ptr_dict;
 
@@ -54,10 +53,9 @@ spell_info_info_spell_dict_cb (const void *pointer, void *data,
     buffer_full_name = NULL;
     if (strncmp (arguments, "0x", 2) == 0)
     {
-        rc = sscanf (arguments, "%lx", &value);
-        if ((rc != EOF) && (rc != 0) && value)
+        rc = sscanf (arguments, "%p", &buffer);
+        if ((rc != EOF) && (rc != 0) && buffer)
         {
-            buffer = (struct t_gui_buffer *)value;
             if (weechat_hdata_check_pointer (weechat_hdata_get ("buffer"),
                                              NULL, buffer))
             {
@@ -82,7 +80,7 @@ spell_info_info_spell_dict_cb (const void *pointer, void *data,
  */
 
 void
-spell_info_init ()
+spell_info_init (void)
 {
     /* info hooks */
     weechat_hook_info (

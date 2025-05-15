@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,7 +24,7 @@ struct t_relay_client;
 enum t_relay_status;
 
 #define RELAY_API_VERSION_MAJOR 0
-#define RELAY_API_VERSION_MINOR 1
+#define RELAY_API_VERSION_MINOR 4
 #define RELAY_API_VERSION_PATCH 0
 #define RELAY_API_VERSION_NUMBER                                        \
     ((RELAY_API_VERSION_MAJOR << 16)                                    \
@@ -58,6 +58,7 @@ struct t_relay_api_data
     struct t_hook *hook_signal_input;     /* hook for signal                */
                                           /* "input_text_changed"           */
     struct t_hook *hook_signal_upgrade;   /* hook for signals "upgrade*"    */
+                                          /* and "quit"                     */
     struct t_hashtable *buffers_closing;  /* ptr -> "id" of buffers closing */
     int sync_enabled;                     /* 1 if sync is enabled           */
     int sync_nicks;                       /* 1 if nicks are synchronized    */

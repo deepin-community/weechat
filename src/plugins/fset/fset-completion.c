@@ -1,7 +1,7 @@
 /*
  * fset-completion.c - completion for Fast Set commands
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -115,7 +115,7 @@ fset_completion_option_cb (const void *pointer, void *data,
  */
 
 void
-fset_completion_init ()
+fset_completion_init (void)
 {
     weechat_hook_completion ("fset_options",
                              N_("configuration files, sections, options and "

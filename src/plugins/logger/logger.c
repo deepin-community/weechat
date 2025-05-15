@@ -1,7 +1,7 @@
 /*
  * logger.c - logger plugin for WeeChat: save buffer lines to disk files
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -114,7 +114,7 @@ logger_check_conditions (struct t_gui_buffer *buffer, const char *conditions)
  */
 
 char *
-logger_get_file_path ()
+logger_get_file_path (void)
 {
     char *path, *path2;
     int length;
@@ -171,7 +171,7 @@ end:
  */
 
 int
-logger_create_directory ()
+logger_create_directory (void)
 {
     int rc;
     char *file_path;
@@ -182,7 +182,15 @@ logger_create_directory ()
     if (file_path)
     {
         if (!weechat_mkdir_parents (file_path, 0700))
+        {
+            weechat_printf_date_tags (
+                NULL, 0, "no_log",
+                _("%s%s: unable to create directory for logs "
+                  "(\"%s\")"),
+                weechat_prefix ("error"), LOGGER_PLUGIN_NAME,
+                file_path);
             rc = 0;
+        }
         free (file_path);
     }
     else
@@ -202,7 +210,6 @@ logger_build_option_name (struct t_gui_buffer *buffer)
 {
     const char *plugin_name, *name;
     char *option_name;
-    int length;
 
     if (!buffer)
         return NULL;
@@ -210,12 +217,7 @@ logger_build_option_name (struct t_gui_buffer *buffer)
     plugin_name = weechat_buffer_get_string (buffer, "plugin");
     name = weechat_buffer_get_string (buffer, "name");
 
-    length = strlen (plugin_name) + 1 + strlen (name) + 1;
-    option_name = malloc (length);
-    if (!option_name)
-        return NULL;
-
-    snprintf (option_name, length, "%s.%s", plugin_name, name);
+    weechat_asprintf (&option_name, "%s.%s", plugin_name, name);
 
     return option_name;
 }
@@ -378,11 +380,11 @@ logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
         mask2[0] = '\0';
 
     /*
-     * we first replace directory separator (commonly '/') by \01 because
+     * we first replace directory separator (commonly '/') by \001 because
      * buffer mask can contain this char, and will be replaced by replacement
      * char ('_' by default)
      */
-    mask3 = weechat_string_replace (mask2, dir_separator, "\01");
+    mask3 = weechat_string_replace (mask2, dir_separator, "\001");
     if (!mask3)
         goto end;
 
@@ -407,7 +409,7 @@ logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
 
     /* restore directory separator */
     mask7 = weechat_string_replace (mask6,
-                                    "\01", dir_separator);
+                                    "\001", dir_separator);
     if (!mask7)
         goto end;
 
@@ -450,7 +452,6 @@ logger_get_filename (struct t_gui_buffer *buffer)
 {
     char *res, *mask_expanded, *file_path, *dir_separator;
     const char *mask;
-    int length;
 
     res = NULL;
     mask_expanded = NULL;
@@ -483,16 +484,12 @@ logger_get_filename (struct t_gui_buffer *buffer)
         goto end;
 
     /* build string with path + mask */
-    length = strlen (file_path) + strlen (dir_separator) +
-        strlen (mask_expanded) + 1;
-    res = malloc (length);
-    if (res)
-    {
-        snprintf (res, length, "%s%s%s",
-                  file_path,
-                  (file_path[strlen (file_path) - 1] == dir_separator[0]) ? "" : dir_separator,
-                  mask_expanded);
-    }
+    weechat_asprintf (
+        &res,
+        "%s%s%s",
+        file_path,
+        (file_path[strlen (file_path) - 1] == dir_separator[0]) ? "" : dir_separator,
+        mask_expanded);
 
 end:
     free (dir_separator);

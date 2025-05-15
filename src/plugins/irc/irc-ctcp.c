@@ -1,7 +1,7 @@
 /*
  * irc-ctcp.c - IRC CTCP protocol
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -170,7 +170,7 @@ irc_ctcp_get_reply (struct t_irc_server *server, const char *ctcp)
 
 /*
  * Extracts CTCP type and arguments from message, which format is:
- *   \01TYPE arguments...\01
+ *   \001TYPE arguments...\001
  *
  * Strings *type and *arguments are set with type and arguments parsed,
  * both are set to NULL in case of error.
@@ -188,10 +188,10 @@ irc_ctcp_parse_type_arguments (const char *message,
     *type = NULL;
     *arguments = NULL;
 
-    if (message[0] != '\01')
+    if (message[0] != '\001')
         return;
 
-    pos_end = strrchr (message + 1, '\01');
+    pos_end = strrchr (message + 1, '\001');
     if (!pos_end)
         return;
 
@@ -238,8 +238,8 @@ irc_ctcp_display_request (struct t_irc_protocol_ctxt *ctxt,
         IRC_COLOR_CHAT_CHANNEL,
         ctcp,
         IRC_COLOR_RESET,
-        (arguments) ? " " : "",
-        (arguments) ? arguments : "",
+        (arguments && arguments[0]) ? " " : "",
+        (arguments && arguments[0]) ? arguments : "",
         (reply && !reply[0]) ? _(" (blocked)") : "");
 }
 
@@ -253,7 +253,7 @@ irc_ctcp_display_reply_from_nick (struct t_irc_protocol_ctxt *ctxt,
 {
     char *dup_arguments, *ptr_args, *pos_end, *pos_space, *pos_args, *pos_usec;
     struct timeval tv;
-    long sec1, usec1, sec2, usec2, difftime;
+    long long sec1, usec1, sec2, usec2, difftime;
 
     dup_arguments = strdup (arguments);
     if (!dup_arguments)
@@ -263,7 +263,7 @@ irc_ctcp_display_reply_from_nick (struct t_irc_protocol_ctxt *ctxt,
 
     while (ptr_args && ptr_args[0])
     {
-        pos_end = strrchr (ptr_args + 1, '\01');
+        pos_end = strrchr (ptr_args + 1, '\001');
         if (pos_end)
             pos_end[0] = '\0';
 
@@ -284,8 +284,8 @@ irc_ctcp_display_reply_from_nick (struct t_irc_protocol_ctxt *ctxt,
                     pos_usec[0] = '\0';
 
                     gettimeofday (&tv, NULL);
-                    sec1 = atol (pos_args);
-                    usec1 = atol (pos_usec + 1);
+                    sec1 = atoll (pos_args);
+                    usec1 = atoll (pos_usec + 1);
                     sec2 = tv.tv_sec;
                     usec2 = tv.tv_usec;
 
@@ -327,7 +327,7 @@ irc_ctcp_display_reply_from_nick (struct t_irc_protocol_ctxt *ctxt,
                     ptr_args + 1,
                     IRC_COLOR_RESET,
                     " ",
-                    pos_args);
+                    IRC_COLOR_MSG(pos_args));
             }
         }
         else
@@ -382,7 +382,7 @@ irc_ctcp_display_reply_to_nick_internal (struct t_irc_protocol_ctxt *ctxt,
         type,
         (args && args[0]) ? IRC_COLOR_RESET : "",
         (args && args[0]) ? " " : "",
-        (args) ? args : "");
+        (args && args[0]) ? IRC_COLOR_MSG(args) : "");
 }
 
 /*
@@ -396,7 +396,7 @@ irc_ctcp_display_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
 {
     char *ctcp_type, *ctcp_args, *ctcp_args_no_colors;
 
-    if (!ctxt || !arguments || (arguments[0] != '\01'))
+    if (!ctxt || !arguments || (arguments[0] != '\001'))
         return;
 
     irc_ctcp_parse_type_arguments (arguments, &ctcp_type, &ctcp_args);
@@ -424,7 +424,7 @@ irc_ctcp_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
                         const char *arguments)
 {
     struct t_arraylist *list_messages;
-    int i, list_size, length;
+    int i, list_size;
     char *dup_ctcp, *dup_ctcp_upper, *dup_args, *message;
     const char *ptr_message;
 
@@ -434,10 +434,10 @@ irc_ctcp_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
     list_messages = NULL;
 
     /*
-     * replace any "\01" by a space to prevent any firewall attack via
+     * replace any "\001" by a space to prevent any firewall attack via
      * nf_conntrack_irc (CVE-2022-2663)
      */
-    dup_ctcp = weechat_string_replace (ctcp, "\01", " ");
+    dup_ctcp = weechat_string_replace (ctcp, "\001", " ");
     if (!dup_ctcp)
         goto end;
 
@@ -448,10 +448,10 @@ irc_ctcp_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
     if (arguments)
     {
         /*
-         * replace any "\01" by a space to prevent any firewall attack via
+         * replace any "\001" by a space to prevent any firewall attack via
          * nf_conntrack_irc (CVE-2022-2663)
          */
-        dup_args = weechat_string_replace (arguments, "\01", " ");
+        dup_args = weechat_string_replace (arguments, "\001", " ");
         if (!dup_args)
             goto end;
     }
@@ -461,7 +461,7 @@ irc_ctcp_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
         IRC_SERVER_SEND_OUTQ_PRIO_LOW | IRC_SERVER_SEND_RETURN_LIST
         | IRC_SERVER_SEND_MULTILINE,
         NULL,
-        "NOTICE %s :\01%s%s%s\01",
+        "NOTICE %s :\001%s%s%s\001",
         ctxt->nick,
         dup_ctcp_upper,
         (dup_args) ? " " : "",
@@ -478,13 +478,12 @@ irc_ctcp_reply_to_nick (struct t_irc_protocol_ctxt *ctxt,
             ptr_message = (const char *)weechat_arraylist_get (list_messages, i);
             if (!ptr_message)
                 break;
-            /* build arguments: '\01' + CTCP + ' ' + message + '\01' */
-            length = 1 + strlen (dup_ctcp_upper) + 1 + strlen (ptr_message) + 1 + 1;
-            message = malloc (length);
-            if (message)
+            /* build arguments: '\001' + CTCP + ' ' + message + '\001' */
+            if (weechat_asprintf (&message,
+                                  "\001%s %s\001",
+                                  dup_ctcp_upper,
+                                  ptr_message) >= 0)
             {
-                snprintf (message, length,
-                          "\01%s %s\01", dup_ctcp_upper, ptr_message);
                 irc_ctcp_display_reply_to_nick (ctxt, ctxt->nick, message);
                 free (message);
             }
@@ -602,7 +601,7 @@ irc_ctcp_get_supported_ctcp (struct t_irc_server *server)
                 (const char *)weechat_arraylist_get (list_ctcp, i));
             if (ctcp_upper)
             {
-                if (*result[0])
+                if ((*result)[0])
                     weechat_string_dyn_concat (result, " ", -1);
                 weechat_string_dyn_concat (result, ctcp_upper, -1);
                 free (ctcp_upper);
@@ -1419,7 +1418,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
 
     while (ptr_args && ptr_args[0])
     {
-        pos_end = strrchr (ptr_args + 1, '\01');
+        pos_end = strrchr (ptr_args + 1, '\001');
         if (pos_end)
             pos_end[0] = '\0';
 
@@ -1481,7 +1480,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
                         ctxt->nick,
                         (pos_args) ? IRC_COLOR_RESET : "",
                         (pos_args) ? " " : "",
-                        (pos_args) ? pos_args : "");
+                        (pos_args) ? IRC_COLOR_MSG(pos_args) : "");
                 }
                 else
                 {
@@ -1502,7 +1501,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
                         ctxt->nick,
                         (pos_args) ? IRC_COLOR_RESET : "",
                         (pos_args) ? " " : "",
-                        (pos_args) ? pos_args : "");
+                        (pos_args) ? IRC_COLOR_MSG(pos_args) : "");
                 }
                 free (nick_color);
             }
@@ -1545,7 +1544,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
                         ctxt->nick,
                         (pos_args) ? IRC_COLOR_RESET : "",
                         (pos_args) ? " " : "",
-                        (pos_args) ? pos_args : "");
+                        (pos_args) ? IRC_COLOR_MSG(pos_args) : "");
                     (void) weechat_hook_signal_send ("irc_pv",
                                                      WEECHAT_HOOK_SIGNAL_STRING,
                                                      (void *)ctxt->irc_message);
@@ -1558,7 +1557,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
             reply = irc_ctcp_get_reply (ctxt->server, ptr_args + 1);
             irc_ctcp_display_request (ctxt, channel,
                                       ptr_args + 1,
-                                      pos_args, reply);
+                                      IRC_COLOR_MSG(pos_args), reply);
             if (!reply || reply[0])
             {
                 if (reply)
@@ -1588,7 +1587,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
             if (reply)
             {
                 irc_ctcp_display_request (ctxt, channel,
-                                          ptr_args + 1, pos_args,
+                                          ptr_args + 1, IRC_COLOR_MSG(pos_args),
                                           reply);
 
                 if (reply[0])
@@ -1621,7 +1620,7 @@ irc_ctcp_recv (struct t_irc_protocol_ctxt *ctxt,
                         ptr_args + 1,
                         (pos_args) ? IRC_COLOR_RESET : "",
                         (pos_args) ? " " : "",
-                        (pos_args) ? pos_args : "");
+                        (pos_args) ? IRC_COLOR_MSG(pos_args) : "");
                 }
             }
         }
@@ -1648,7 +1647,7 @@ irc_ctcp_send (struct t_irc_server *server,
                       IRC_SERVER_SEND_OUTQ_PRIO_HIGH
                       | IRC_SERVER_SEND_MULTILINE,
                       NULL,
-                      "PRIVMSG %s :\01%s%s%s\01",
+                      "PRIVMSG %s :\001%s%s%s\001",
                       target,
                       type,
                       (args) ? " " : "",

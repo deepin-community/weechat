@@ -1,7 +1,7 @@
 /*
  * xfer.c - file transfer and direct chat plugin for WeeChat
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -80,9 +81,7 @@ struct t_xfer *xfer_list = NULL;       /* list of files/chats               */
 struct t_xfer *last_xfer = NULL;       /* last file/chat in list            */
 int xfer_count = 0;                    /* number of xfer                    */
 
-int xfer_signal_upgrade_received = 0;  /* signal "upgrade" received ?       */
-
-void xfer_disconnect_all ();
+void xfer_disconnect_all (void);
 
 
 /*
@@ -130,11 +129,16 @@ xfer_signal_upgrade_cb (const void *pointer, void *data,
     /* only save session and continue? */
     if (signal_data && (strcmp (signal_data, "save") == 0))
     {
-        xfer_upgrade_save ();
+        if (!xfer_upgrade_save ())
+        {
+            weechat_printf (
+                NULL,
+                _("%s%s: failed to save upgrade data"),
+                weechat_prefix ("error"), XFER_PLUGIN_NAME);
+            return WEECHAT_RC_ERROR;
+        }
         return WEECHAT_RC_OK;
     }
-
-    xfer_signal_upgrade_received = 1;
 
     /*
      * TODO: do not disconnect here in case of upgrade when the save of xfers
@@ -143,6 +147,15 @@ xfer_signal_upgrade_cb (const void *pointer, void *data,
      */
     /*if (signal_data && (strcmp (signal_data, "quit") == 0))*/
     xfer_disconnect_all ();
+
+    if (!xfer_upgrade_save ())
+    {
+        weechat_printf (
+            NULL,
+            _("%s%s: failed to save upgrade data"),
+            weechat_prefix ("error"), XFER_PLUGIN_NAME);
+        return WEECHAT_RC_ERROR;
+    }
 
     return WEECHAT_RC_OK;
 }
@@ -153,7 +166,7 @@ xfer_signal_upgrade_cb (const void *pointer, void *data,
  */
 
 void
-xfer_create_directories ()
+xfer_create_directories (void)
 {
     char *path;
     struct t_hashtable *options;
@@ -418,7 +431,7 @@ xfer_close (struct t_xfer *xfer, enum t_xfer_status status)
  */
 
 void
-xfer_disconnect_all ()
+xfer_disconnect_all (void)
 {
     struct t_xfer *ptr_xfer;
 
@@ -497,7 +510,7 @@ xfer_send_signal (struct t_xfer *xfer, const char *signal)
  */
 
 struct t_xfer *
-xfer_alloc ()
+xfer_alloc (void)
 {
     struct t_xfer *new_xfer;
     time_t time_now;
@@ -532,7 +545,7 @@ xfer_alloc ()
     new_xfer->send_ack = weechat_config_boolean (xfer_config_network_send_ack);
     new_xfer->blocksize = weechat_config_integer (xfer_config_network_blocksize);
     new_xfer->start_time = time_now;
-    new_xfer->start_transfer = time_now;
+    gettimeofday (&new_xfer->start_transfer, NULL);
     new_xfer->sock = -1;
     new_xfer->child_pid = 0;
     new_xfer->child_read = -1;
@@ -548,7 +561,7 @@ xfer_alloc ()
     new_xfer->pos = 0;
     new_xfer->ack = 0;
     new_xfer->start_resume = 0;
-    new_xfer->last_check_time = time_now;
+    new_xfer->last_check_time = new_xfer->start_transfer;
     new_xfer->last_check_pos = time_now;
     new_xfer->last_activity = 0;
     new_xfer->bytes_per_sec = 0;
@@ -965,7 +978,7 @@ xfer_free (struct t_xfer *xfer)
  */
 
 void
-xfer_free_all ()
+xfer_free_all (void)
 {
     while (xfer_list)
     {
@@ -1632,7 +1645,9 @@ xfer_add_to_infolist (struct t_infolist *infolist, struct t_xfer *xfer)
         return 0;
     if (!weechat_infolist_new_var_time (ptr_item, "start_time", xfer->start_time))
         return 0;
-    if (!weechat_infolist_new_var_time (ptr_item, "start_transfer", xfer->start_transfer))
+    if (!weechat_infolist_new_var_time (ptr_item, "start_transfer", xfer->start_transfer.tv_sec))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "start_transfer_usec", xfer->start_transfer.tv_usec))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "sock", xfer->sock))
         return 0;
@@ -1667,7 +1682,9 @@ xfer_add_to_infolist (struct t_infolist *infolist, struct t_xfer *xfer)
     snprintf (value, sizeof (value), "%llu", xfer->start_resume);
     if (!weechat_infolist_new_var_string (ptr_item, "start_resume", value))
         return 0;
-    if (!weechat_infolist_new_var_time (ptr_item, "last_check_time", xfer->last_check_time))
+    if (!weechat_infolist_new_var_time (ptr_item, "last_check_time", xfer->last_check_time.tv_sec))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "last_check_time_usec", xfer->last_check_time.tv_usec))
         return 0;
     snprintf (value, sizeof (value), "%llu", xfer->last_check_pos);
     if (!weechat_infolist_new_var_string (ptr_item, "last_check_pos", value))
@@ -1695,7 +1712,7 @@ xfer_add_to_infolist (struct t_infolist *infolist, struct t_xfer *xfer)
  */
 
 void
-xfer_print_log ()
+xfer_print_log (void)
 {
     struct t_xfer *ptr_xfer;
 
@@ -1734,7 +1751,9 @@ xfer_print_log ()
         weechat_log_printf ("  fast_send . . . . . . . : %d", ptr_xfer->fast_send);
         weechat_log_printf ("  blocksize . . . . . . . : %d", ptr_xfer->blocksize);
         weechat_log_printf ("  start_time. . . . . . . : %lld", (long long)ptr_xfer->start_time);
-        weechat_log_printf ("  start_transfer. . . . . : %lld", (long long)ptr_xfer->start_transfer);
+        weechat_log_printf ("  start_transfer. . . . . : tv_sec:%lld, tv_usec:%ld",
+                            (long long)(ptr_xfer->start_transfer.tv_sec),
+                            (long)(ptr_xfer->start_transfer.tv_usec));
         weechat_log_printf ("  sock. . . . . . . . . . : %d", ptr_xfer->sock);
         weechat_log_printf ("  child_pid . . . . . . . : %d", ptr_xfer->child_pid);
         weechat_log_printf ("  child_read. . . . . . . : %d", ptr_xfer->child_read);
@@ -1750,7 +1769,9 @@ xfer_print_log ()
         weechat_log_printf ("  pos . . . . . . . . . . : %llu", ptr_xfer->pos);
         weechat_log_printf ("  ack . . . . . . . . . . : %llu", ptr_xfer->ack);
         weechat_log_printf ("  start_resume. . . . . . : %llu", ptr_xfer->start_resume);
-        weechat_log_printf ("  last_check_time . . . . : %lld", (long long)ptr_xfer->last_check_time);
+        weechat_log_printf ("  last_check_time . . . . : tv_sec:%lld, tv_usec:%ld",
+                            (long long)(ptr_xfer->last_check_time.tv_sec),
+                            (long)(ptr_xfer->last_check_time.tv_usec));
         weechat_log_printf ("  last_check_pos. . . . . : %llu", ptr_xfer->last_check_pos);
         weechat_log_printf ("  last_activity . . . . . : %lld", (long long)ptr_xfer->last_activity);
         weechat_log_printf ("  bytes_per_sec . . . . . : %llu", ptr_xfer->bytes_per_sec);
@@ -1808,8 +1829,6 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_plugin = plugin;
 
-    xfer_signal_upgrade_received = 0;
-
     if (!xfer_config_init ())
         return WEECHAT_RC_ERROR;
 
@@ -1860,9 +1879,6 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     xfer_buffer_selected_line = 0;
 
     xfer_config_write ();
-
-    if (xfer_signal_upgrade_received)
-        xfer_upgrade_save ();
 
     xfer_disconnect_all ();
 

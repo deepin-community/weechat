@@ -2,7 +2,7 @@
  * spell-config.c - spell checker configuration options (file spell.conf)
  *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -443,7 +443,7 @@ spell_config_set_dict (const char *name, const char *value)
  */
 
 int
-spell_config_init ()
+spell_config_init (void)
 {
     spell_config_file = weechat_config_new (SPELL_CONFIG_PRIO_NAME,
                                             NULL, NULL, NULL);
@@ -622,7 +622,7 @@ spell_config_init ()
  */
 
 int
-spell_config_read ()
+spell_config_read (void)
 {
     int rc;
 
@@ -641,7 +641,7 @@ spell_config_read ()
  */
 
 int
-spell_config_write ()
+spell_config_write (void)
 {
     return weechat_config_write (spell_config_file);
 }
@@ -651,7 +651,7 @@ spell_config_write ()
  */
 
 void
-spell_config_free ()
+spell_config_free (void)
 {
     weechat_config_free (spell_config_file);
     spell_config_file = NULL;

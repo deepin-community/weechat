@@ -1,7 +1,7 @@
 /*
  * irc-join.c - functions for list of channels to join
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -413,18 +413,18 @@ irc_join_build_string (struct t_arraylist *arraylist)
     {
         ptr_join_chan = (struct t_irc_join_channel *)weechat_arraylist_get (
             arraylist, i);
-        if (*channels[0])
+        if ((*channels)[0])
             weechat_string_dyn_concat (channels, ",", -1);
         weechat_string_dyn_concat (channels, ptr_join_chan->name, -1);
         if (ptr_join_chan->key)
         {
-            if (*keys[0])
+            if ((*keys)[0])
                 weechat_string_dyn_concat (keys, ",", -1);
             weechat_string_dyn_concat (keys, ptr_join_chan->key, -1);
         }
     }
 
-    if (*keys[0])
+    if ((*keys)[0])
     {
         weechat_string_dyn_concat (channels, " ", -1);
         weechat_string_dyn_concat (channels, *keys, -1);
@@ -442,7 +442,7 @@ end:
  * Checks if a channel is in a join string.
  *
  * Returns:
- *   1: channel found in join string (case insensitive comparison)
+ *   1: channel found in join string (case-insensitive comparison)
  *   0: channel NOT found in join string
  */
 

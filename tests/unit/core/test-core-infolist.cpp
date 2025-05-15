@@ -1,7 +1,7 @@
 /*
  * test-core-infolist.cpp - test infolist functions
  *
- * Copyright (C) 2014-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2014-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -140,7 +140,7 @@ TEST(CoreInfolist, New)
     /* check initial item values */
     POINTERS_EQUAL(NULL, item->vars);
     POINTERS_EQUAL(NULL, item->last_var);
-    POINTERS_EQUAL(NULL, item->fields);
+    STRCMP_EQUAL(NULL, item->fields);
     POINTERS_EQUAL(NULL, item->prev_item);
     POINTERS_EQUAL(NULL, item->next_item);
 

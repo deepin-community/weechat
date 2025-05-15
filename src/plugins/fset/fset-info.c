@@ -1,7 +1,7 @@
 /*
  * fset-info.c - info, infolist and hdata hooks for Fast Set plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -94,7 +94,7 @@ fset_info_infolist_fset_option_cb (const void *pointer, void *data,
  */
 
 void
-fset_info_init ()
+fset_info_init (void)
 {
     /* infolist hooks */
     weechat_hook_infolist (

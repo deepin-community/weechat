@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -88,9 +88,9 @@ extern char **fset_config_sort_fields;
 extern int fset_config_sort_fields_count;
 extern int fset_config_format_option_num_lines[2];
 
-extern int fset_config_init ();
-extern int fset_config_read ();
-extern int fset_config_write ();
-extern void fset_config_free ();
+extern int fset_config_init (void);
+extern int fset_config_read (void);
+extern int fset_config_write (void);
+extern void fset_config_free (void);
 
 #endif /* WEECHAT_PLUGIN_FSET_CONFIG_H */

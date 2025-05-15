@@ -1,7 +1,7 @@
 /*
  * core-secure.c - secured data
  *
- * Copyright (C) 2013-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -500,7 +500,7 @@ secure_decrypt_data_not_decrypted (const char *passphrase)
  */
 
 int
-secure_init ()
+secure_init (void)
 {
     char *ptr_phrase;
 
@@ -541,7 +541,7 @@ secure_init ()
  */
 
 void
-secure_end ()
+secure_end (void)
 {
     if (secure_passphrase)
     {

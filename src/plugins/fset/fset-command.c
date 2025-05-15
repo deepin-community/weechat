@@ -1,7 +1,7 @@
 /*
  * fset-command.c - Fast Set command
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -416,7 +416,7 @@ fset_command_fset (const void *pointer, void *data,
                                 _("%s%s: there are no options displayed, "
                                   "unable to export."),
                                 weechat_prefix ("error"), FSET_PLUGIN_NAME);
-                return WEECHAT_RC_OK;
+                return WEECHAT_RC_ERROR;
             }
             if (!fset_option_export (ptr_filename, with_help))
                 WEECHAT_COMMAND_ERROR;
@@ -434,13 +434,13 @@ fset_command_fset (const void *pointer, void *data,
                     weechat_printf (NULL,
                         _("%s%s: not enough memory"),
                         weechat_prefix ("error"), FSET_PLUGIN_NAME);
-                    break;
+                    return WEECHAT_RC_ERROR;
                 case -1:
                     weechat_printf (NULL,
                                     _("%s%s: file \"%s\" not found"),
                                     weechat_prefix ("error"), FSET_PLUGIN_NAME,
                                     argv_eol[2]);
-                    break;
+                    return WEECHAT_RC_ERROR;
                 default:
                     weechat_printf (NULL,
                                     NG_("%d command executed in file \"%s\"",
@@ -638,12 +638,12 @@ fset_command_run_key_cb (const void *pointer, void *data,
  */
 
 void
-fset_command_init ()
+fset_command_init (void)
 {
     weechat_hook_command (
         "fset",
         N_("fast set WeeChat and plugins options"),
-        /* TRANSLATORS: only text between angle brackets (eg: "<name>") must be translated */
+        /* TRANSLATORS: only text between angle brackets (eg: "<name>") may be translated */
         N_("-bar"
            " || -refresh"
            " || -up|-down [<number>]"
@@ -685,7 +685,7 @@ fset_command_init ()
                "of option (move the cursor at the end of value)"),
             N_("raw[-mark]: toggle mark"),
             N_("raw[-format]: switch to the next available format"),
-            N_("raw[-export]: export the options and values displayed in a file "
+            N_("raw[-export]: export the options and values displayed to a file "
                "(each line has format: \"/set name value\" or \"/unset name\")"),
             N_("raw[-import]: import the options from a file "
                "(all lines containing commands are executed)"),

@@ -1,7 +1,7 @@
 /*
  * relay-remote.c - remote relay server functions for relay plugin
  *
- * Copyright (C) 2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2024-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,14 +37,16 @@
 #include "relay-remote.h"
 #include "relay-websocket.h"
 #ifdef HAVE_CJSON
+#include "api/remote/relay-remote-event.h"
 #include "api/remote/relay-remote-network.h"
 #endif
 
 
 char *relay_remote_option_string[RELAY_REMOTE_NUM_OPTIONS] =
-{ "url", "autoconnect", "proxy", "tls_verify", "password", "totp_secret" };
+{ "url", "autoconnect", "autoreconnect_delay", "proxy", "tls_verify",
+  "password", "totp_secret" };
 char *relay_remote_option_default[RELAY_REMOTE_NUM_OPTIONS] =
-{ "", "off", "", "on", "", "" };
+{ "", "off", "10", "", "on", "", "" };
 
 struct t_relay_remote *relay_remotes = NULL;
 struct t_relay_remote *last_relay_remote = NULL;
@@ -185,7 +187,107 @@ relay_remote_name_valid (const char *name)
 }
 
 /*
- * Checks if a remote URL is valid;
+ * Extracts TLS, address and port from remote URL.
+ *
+ * If address is an IPv6 like "[::1]", the square brackets are removed.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error, invalid URL
+ */
+
+int
+relay_remote_parse_url (const char *url,
+                        int *tls, char **address, int *port)
+{
+    const char *ptr_url;
+    char *pos, *str_port, *error;
+    long number;
+
+    if (tls)
+        *tls = 0;
+    if (address)
+        *address = NULL;
+    if (port)
+        *port = RELAY_REMOTE_DEFAULT_PORT;
+
+    if (!url || !url[0])
+        return 0;
+
+    /* check scheme and extract TLS flag */
+    if (strncmp (url, "http://", 7) == 0)
+    {
+        ptr_url = url + 7;
+    }
+    else if (strncmp (url, "https://", 8) == 0)
+    {
+        if (tls)
+            *tls = 1;
+        ptr_url = url + 8;
+    }
+    else
+    {
+        return 0;
+    }
+
+    /* check if there is an IPv6 address with square brackets, like "[::1]" */
+    if (ptr_url[0] == '[')
+    {
+        /* extract IPv6 address between square brackets */
+        pos = strchr (ptr_url, ']');
+        if (!pos)
+            return 0;
+        if (address)
+            *address = weechat_strndup (ptr_url + 1, pos - ptr_url - 1);
+        ptr_url = pos + 1;
+    }
+    else
+    {
+        /* extract another address */
+        pos = strrchr (ptr_url, ':');
+        if (!pos)
+            pos = strchr (ptr_url, '/');
+        if (!pos)
+            pos = strchr (ptr_url, '?');
+        if (address)
+        {
+            *address = (pos) ?
+                weechat_strndup (ptr_url, pos - ptr_url) : strdup (ptr_url);
+        }
+    }
+
+    /* extract port number */
+    pos = strrchr (ptr_url, ':');
+    if (pos)
+    {
+        ptr_url = pos + 1;
+        pos = strchr (ptr_url, '/');
+        if (!pos)
+            pos = strchr (ptr_url, '?');
+        str_port = (pos) ?
+            weechat_strndup (ptr_url, pos - ptr_url) : strdup (ptr_url);
+        if (!str_port)
+            return 0;
+        error = NULL;
+        number = strtol (str_port, &error, 10);
+        if (error && !error[0] && (number >= 0) && (number <= 65535))
+        {
+            if (port)
+                *port = number;
+            free (str_port);
+        }
+        else
+        {
+            free (str_port);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/*
+ * Checks if a remote URL is valid.
  *
  * Returns:
  *   1: URL is valid
@@ -195,23 +297,7 @@ relay_remote_name_valid (const char *name)
 int
 relay_remote_url_valid (const char *url)
 {
-    const char *pos;
-
-    if (!url || !url[0])
-        return 0;
-
-    /* URL must start with "https://" or "http://" */
-    if ((strncmp (url, "https://", 8) != 0) && (strncmp (url, "http://", 7) != 0))
-        return 0;
-
-    pos = strchr (url + 7, ':');
-
-    /* invalid port? */
-    if (pos && !isdigit ((unsigned char)pos[1]))
-        return 0;
-
-    /* URL is valid */
-    return 1;
+    return relay_remote_parse_url (url, NULL, NULL, NULL);
 }
 
 /*
@@ -227,76 +313,6 @@ relay_remote_send_signal (struct t_relay_remote *remote)
               "relay_remote_%s",
               relay_status_name[remote->status]);
     weechat_hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_POINTER, remote);
-}
-
-/*
- * Extracts address from URL.
- *
- * Note: result must be free after use.
- */
-
-char *
-relay_remote_get_address (const char *url)
-{
-    const char *ptr_start;
-    char *pos;
-
-    if (!url)
-        return NULL;
-
-    if (strncmp (url, "http://", 7) == 0)
-        ptr_start = url + 7;
-    else if (strncmp (url, "https://", 8) == 0)
-        ptr_start = url + 8;
-    else
-        return NULL;
-
-    pos = strchr (ptr_start, ':');
-    if (!pos)
-        pos = strchr (ptr_start, '?');
-
-    return (pos) ?
-        weechat_strndup (ptr_start, pos - ptr_start) : strdup (ptr_start);
-}
-
-/*
- * Extracts port from URL.
- */
-
-int
-relay_remote_get_port (const char *url)
-{
-    char *pos, *pos2, *str_port, *error;
-    long port;
-
-    if (!url)
-        goto error;
-
-    pos = strchr (url + 7, ':');
-    if (!pos)
-        goto error;
-
-    pos++;
-
-    pos2 = strchr (pos, '/');
-    if (pos2)
-        str_port = weechat_strndup (pos, pos2 - pos);
-    else
-        str_port = strdup (pos);
-    if (!str_port)
-        goto error;
-
-    error = NULL;
-    port = strtol (str_port, &error, 10);
-    if (error && !error[0])
-    {
-        free (str_port);
-        return (int)port;
-    }
-    free (str_port);
-
-error:
-    return RELAY_REMOTE_DEFAULT_PORT;
 }
 
 /*
@@ -344,6 +360,8 @@ relay_remote_alloc (const char *name)
     new_remote->synced = 0;
     new_remote->partial_ws_frame = NULL;
     new_remote->partial_ws_frame_size = 0;
+    new_remote->reconnect_delay = 0;
+    new_remote->reconnect_start = 0;
     new_remote->prev_remote = NULL;
     new_remote->next_remote = NULL;
 
@@ -415,9 +433,7 @@ void
 relay_remote_set_url (struct t_relay_remote *remote, const char *url)
 {
     free (remote->address);
-    remote->address = relay_remote_get_address (url);
-    remote->port = relay_remote_get_port (url);
-    remote->tls = (weechat_strncmp (url, "https:", 6) == 0) ? 1 : 0;
+    relay_remote_parse_url (url, &remote->tls, &remote->address, &remote->port);
 }
 
 /*
@@ -465,9 +481,14 @@ relay_remote_new_with_options (const char *name, struct t_config_option **option
  */
 
 struct t_relay_remote *
-relay_remote_new (const char *name, const char *url, const char *autoconnect,
-                  const char *proxy, const char *tls_verify,
-                  const char *password, const char *totp_secret)
+relay_remote_new (const char *name,
+                  const char *url,
+                  const char *autoconnect,
+                  const char *autoreconnect_delay,
+                  const char *proxy,
+                  const char *tls_verify,
+                  const char *password,
+                  const char *totp_secret)
 {
     struct t_config_option *option[RELAY_REMOTE_NUM_OPTIONS];
     const char *value[RELAY_REMOTE_NUM_OPTIONS];
@@ -479,6 +500,7 @@ relay_remote_new (const char *name, const char *url, const char *autoconnect,
 
     value[RELAY_REMOTE_OPTION_URL] = url;
     value[RELAY_REMOTE_OPTION_AUTOCONNECT] = autoconnect;
+    value[RELAY_REMOTE_OPTION_AUTORECONNECT_DELAY] = autoreconnect_delay;
     value[RELAY_REMOTE_OPTION_PROXY] = proxy;
     value[RELAY_REMOTE_OPTION_TLS_VERIFY] = tls_verify;
     value[RELAY_REMOTE_OPTION_PASSWORD] = password;
@@ -544,6 +566,8 @@ relay_remote_new_with_infolist (struct t_infolist *infolist)
     new_remote->ws_deflate->client_context_takeover = weechat_infolist_integer (infolist, "ws_deflate_client_context_takeover");
     new_remote->ws_deflate->window_bits_deflate = weechat_infolist_integer (infolist, "ws_deflate_window_bits_deflate");
     new_remote->ws_deflate->window_bits_inflate = weechat_infolist_integer (infolist, "ws_deflate_window_bits_inflate");
+    new_remote->ws_deflate->server_max_window_bits_recv = weechat_infolist_integer (infolist, "ws_deflate_server_max_window_bits_recv");
+    new_remote->ws_deflate->client_max_window_bits_recv = weechat_infolist_integer (infolist, "ws_deflate_client_max_window_bits_recv");
     new_remote->ws_deflate->strm_deflate = NULL;
     new_remote->ws_deflate->strm_inflate = NULL;
     if (weechat_infolist_search_var (infolist, "ws_deflate_strm_deflate_dict"))
@@ -580,6 +604,8 @@ relay_remote_new_with_infolist (struct t_infolist *infolist)
     }
     new_remote->version_ok = weechat_infolist_integer (infolist, "version_ok");
     new_remote->synced = weechat_infolist_integer (infolist, "synced");
+    new_remote->reconnect_delay = weechat_infolist_integer (infolist, "reconnect_delay");
+    new_remote->reconnect_start = weechat_infolist_integer (infolist, "reconnect_start");
     ptr_ws_frame = weechat_infolist_buffer (infolist, "partial_ws_frame", &ws_frame_size);
     if (ptr_ws_frame && (ws_frame_size > 0))
     {
@@ -624,6 +650,7 @@ relay_remote_set_status (struct t_relay_remote *remote,
     remote->status = status;
 
     relay_remote_send_signal (remote);
+    weechat_bar_item_update ("input_prompt");
 }
 
 /*
@@ -637,13 +664,12 @@ relay_remote_set_status (struct t_relay_remote *remote,
 int
 relay_remote_connect (struct t_relay_remote *remote)
 {
-#ifdef HAVE_CJSON
     if (!remote)
         return 0;
 
+#ifdef HAVE_CJSON
     return relay_remote_network_connect (remote);
 #else
-    (void) remote;
     weechat_printf (NULL,
                     _("%s%s: error: unable to connect to a remote relay via API "
                       "(cJSON support is not enabled)"),
@@ -682,7 +708,7 @@ relay_remote_auto_connect_timer_cb (const void *pointer, void *data,
  */
 
 void
-relay_remote_auto_connect ()
+relay_remote_auto_connect (void)
 {
     weechat_hook_timer (1, 0, 1,
                         &relay_remote_auto_connect_timer_cb, NULL, NULL);
@@ -771,17 +797,151 @@ relay_remote_rename (struct t_relay_remote *remote, const char *name)
 
 /*
  * Disconnects one remote.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
-void
+int
 relay_remote_disconnect (struct t_relay_remote *remote)
 {
+    if (!remote)
+        return 0;
+
 #ifdef HAVE_CJSON
     if (remote->sock >= 0)
         relay_remote_network_disconnect (remote);
+    return 1;
 #else
-    (void) remote;
+    return 0;
 #endif /* HAVE_CJSON */
+}
+
+/*
+ * Schedules reconnection to remote.
+ */
+
+void
+relay_remote_reconnect_schedule (struct t_relay_remote *remote)
+{
+    int minutes, seconds;
+
+    if (weechat_config_integer (remote->options[RELAY_REMOTE_OPTION_AUTORECONNECT_DELAY]) == 0)
+    {
+        remote->reconnect_delay = 0;
+        remote->reconnect_start = 0;
+        return;
+    }
+
+    /* growing reconnect delay */
+    if (remote->reconnect_delay == 0)
+        remote->reconnect_delay = weechat_config_integer (remote->options[RELAY_REMOTE_OPTION_AUTORECONNECT_DELAY]);
+    else
+        remote->reconnect_delay = remote->reconnect_delay * weechat_config_integer (relay_config_api_remote_autoreconnect_delay_growing);
+    if ((weechat_config_integer (relay_config_api_remote_autoreconnect_delay_max) > 0)
+        && (remote->reconnect_delay > weechat_config_integer (relay_config_api_remote_autoreconnect_delay_max)))
+    {
+        remote->reconnect_delay = weechat_config_integer (relay_config_api_remote_autoreconnect_delay_max);
+    }
+
+    remote->reconnect_start = time (NULL);
+
+    minutes = remote->reconnect_delay / 60;
+    seconds = remote->reconnect_delay % 60;
+    if ((minutes > 0) && (seconds > 0))
+    {
+        weechat_printf (
+            NULL,
+            _("remote[%s]: reconnecting to remote relay in %d %s, %d %s"),
+            remote->name,
+            minutes,
+            NG_("minute", "minutes", minutes),
+            seconds,
+            NG_("second", "seconds", seconds));
+    }
+    else if (minutes > 0)
+    {
+        weechat_printf (
+            NULL,
+            _("remote[%s]: reconnecting to remote relay in %d %s"),
+            remote->name,
+            minutes,
+            NG_("minute", "minutes", minutes));
+    }
+    else
+    {
+        weechat_printf (
+            NULL,
+            _("remote[%s]: reconnecting to remote relay in %d %s"),
+            remote->name,
+            seconds,
+            NG_("second", "seconds", seconds));
+    }
+}
+
+/*
+ * Reconnects to a remote WeeChat relay/api.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
+ */
+
+int
+relay_remote_reconnect (struct t_relay_remote *remote)
+{
+    int rc;
+
+    if (!remote)
+        return 0;
+
+    remote->reconnect_start = 0;
+
+#ifdef HAVE_CJSON
+    if (!relay_remote_disconnect (remote))
+        return 0;
+    rc = relay_remote_network_connect (remote);
+    if (!rc)
+        relay_remote_reconnect_schedule (remote);
+    return rc;
+#else
+    (void) rc;
+    weechat_printf (NULL,
+                    _("%s%s: error: unable to connect to a remote relay via API "
+                      "(cJSON support is not enabled)"),
+                    weechat_prefix ("error"), RELAY_PLUGIN_NAME);
+    return 0;
+#endif /* HAVE_CJSON */
+}
+
+/*
+ * Timer used to auto-reconnect to remotes.
+ */
+
+void
+relay_remote_timer (void)
+{
+    struct t_relay_remote *ptr_remote, *ptr_next_remote;
+    time_t current_time;
+
+    current_time = time (NULL);
+
+    ptr_remote = relay_remotes;
+    while (ptr_remote)
+    {
+        ptr_next_remote = ptr_remote->next_remote;
+
+        /* check if reconnection is pending */
+        if ((ptr_remote->sock <= 0)
+            && (ptr_remote->reconnect_start > 0)
+            && (current_time >= (ptr_remote->reconnect_start + ptr_remote->reconnect_delay)))
+        {
+            relay_remote_reconnect (ptr_remote);
+        }
+
+        ptr_remote = ptr_next_remote;
+    }
 }
 
 /*
@@ -789,7 +949,7 @@ relay_remote_disconnect (struct t_relay_remote *remote)
  */
 
 void
-relay_remote_disconnect_all ()
+relay_remote_disconnect_all (void)
 {
     struct t_relay_remote *ptr_remote;
 
@@ -798,6 +958,21 @@ relay_remote_disconnect_all ()
     {
         relay_remote_disconnect (ptr_remote);
     }
+}
+
+/*
+ * Callback for input data in a remote buffer.
+ */
+
+void
+relay_remote_buffer_input (struct t_gui_buffer *buffer, const char *input_data)
+{
+#ifdef HAVE_CJSON
+    relay_remote_event_buffer_input (buffer, input_data);
+#else
+    (void) buffer;
+    (void) input_data;
+#endif
 }
 
 /*
@@ -846,7 +1021,7 @@ relay_remote_free (struct t_relay_remote *remote)
  */
 
 void
-relay_remote_free_all ()
+relay_remote_free_all (void)
 {
     while (relay_remotes)
     {
@@ -945,6 +1120,10 @@ relay_remote_add_to_infolist (struct t_infolist *infolist,
     }
     if (!weechat_infolist_new_var_integer (ptr_item, "version_ok", remote->version_ok))
         return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "reconnect_delay", remote->reconnect_delay))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "reconnect_start", remote->reconnect_start))
+        return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "synced", remote->synced))
         return 0;
 
@@ -956,7 +1135,7 @@ relay_remote_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-relay_remote_print_log ()
+relay_remote_print_log (void)
 {
     struct t_relay_remote *ptr_remote;
 
@@ -964,13 +1143,15 @@ relay_remote_print_log ()
          ptr_remote = ptr_remote->next_remote)
     {
         weechat_log_printf ("");
-        weechat_log_printf ("[relay remote (addr:0x%lx)]", ptr_remote);
+        weechat_log_printf ("[relay remote (addr:%p)]", ptr_remote);
         weechat_log_printf ("  name. . . . . . . . . . : '%s'", ptr_remote->name);
         weechat_log_printf ("  url . . . . . . . . . . : '%s'",
                             weechat_config_string (ptr_remote->options[RELAY_REMOTE_OPTION_URL]));
         weechat_log_printf ("  autoconnect . . . . . . : %s",
                             (weechat_config_boolean (ptr_remote->options[RELAY_REMOTE_OPTION_AUTOCONNECT])) ?
                             "on" : "off");
+        weechat_log_printf ("  autoreconnect_delay . . : %d",
+                            weechat_config_integer (ptr_remote->options[RELAY_REMOTE_OPTION_AUTORECONNECT_DELAY]));
         weechat_log_printf ("  proxy . . . . . . . . . : '%s'",
                             weechat_config_string (ptr_remote->options[RELAY_REMOTE_OPTION_PROXY]));
         weechat_log_printf ("  tls_verify. . . . . . . : %s",
@@ -989,19 +1170,21 @@ relay_remote_print_log ()
         weechat_log_printf ("  password_hash_algo. . . : %d", ptr_remote->password_hash_algo);
         weechat_log_printf ("  password_hash_iterations: %d", ptr_remote->password_hash_iterations);
         weechat_log_printf ("  totp. . . . . . . . . . : %d", ptr_remote->totp);
-        weechat_log_printf ("  websocket_key . . . . . : 0x%ls", ptr_remote->websocket_key);
+        weechat_log_printf ("  websocket_key . . . . . : %p", ptr_remote->websocket_key);
         weechat_log_printf ("  sock. . . . . . . . . . : %d", ptr_remote->sock);
-        weechat_log_printf ("  hook_url_handshake. . . : 0x%lx", ptr_remote->hook_url_handshake);
-        weechat_log_printf ("  hook_connect. . . . . . : 0x%lx", ptr_remote->hook_connect);
-        weechat_log_printf ("  hook_fd . . . . . . . . : 0x%lx", ptr_remote->hook_fd);
-        weechat_log_printf ("  gnutls_sess . . . . . . : 0x%lx", ptr_remote->gnutls_sess);
+        weechat_log_printf ("  hook_url_handshake. . . : %p", ptr_remote->hook_url_handshake);
+        weechat_log_printf ("  hook_connect. . . . . . : %p", ptr_remote->hook_connect);
+        weechat_log_printf ("  hook_fd . . . . . . . . : %p", ptr_remote->hook_fd);
+        weechat_log_printf ("  gnutls_sess . . . . . . : %p", ptr_remote->gnutls_sess);
         relay_websocket_deflate_print_log (ptr_remote->ws_deflate, "");
         weechat_log_printf ("  version_ok. . . . . . . : %d", ptr_remote->version_ok);
+        weechat_log_printf ("  reconnect_delay . . . . : %d", ptr_remote->reconnect_delay);
+        weechat_log_printf ("  reconnect_start . . . . : %d", ptr_remote->reconnect_start);
         weechat_log_printf ("  synced. . . . . . . . . : %d", ptr_remote->synced);
         weechat_log_printf ("  partial_ws_frame. . . . : %p (%d bytes)",
                             ptr_remote->partial_ws_frame,
                             ptr_remote->partial_ws_frame_size);
-        weechat_log_printf ("  prev_remote . . . . . . : 0x%lx", ptr_remote->prev_remote);
-        weechat_log_printf ("  next_remote . . . . . . : 0x%lx", ptr_remote->next_remote);
+        weechat_log_printf ("  prev_remote . . . . . . : %p", ptr_remote->prev_remote);
+        weechat_log_printf ("  next_remote . . . . . . : %p", ptr_remote->next_remote);
     }
 }

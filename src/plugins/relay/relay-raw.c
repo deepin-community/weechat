@@ -1,7 +1,7 @@
 /*
  * relay-raw.c - functions for Relay raw data messages
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -84,6 +84,8 @@ relay_raw_open (int switch_to_buffer)
             if (buffer_props)
             {
                 weechat_hashtable_set (buffer_props,
+                                       "short_name", RELAY_RAW_BUFFER_NAME);
+                weechat_hashtable_set (buffer_props,
                                        "title", _("Relay raw messages"));
                 weechat_hashtable_set (buffer_props,
                                        "localvar_set_type", "debug");
@@ -106,12 +108,6 @@ relay_raw_open (int switch_to_buffer)
             /* failed to create buffer ? then return */
             if (!relay_raw_buffer)
                 return;
-
-            if (!weechat_buffer_get_integer (relay_raw_buffer, "short_name_is_set"))
-            {
-                weechat_buffer_set (relay_raw_buffer, "short_name",
-                                    RELAY_RAW_BUFFER_NAME);
-            }
 
             /* print messages in list */
             for (ptr_raw_message = relay_raw_messages; ptr_raw_message;
@@ -168,7 +164,7 @@ relay_raw_message_free (struct t_relay_raw_message *raw_message)
  */
 
 void
-relay_raw_message_free_all ()
+relay_raw_message_free_all (void)
 {
     while (relay_raw_messages)
     {
@@ -181,7 +177,7 @@ relay_raw_message_free_all ()
  */
 
 void
-relay_raw_message_remove_old ()
+relay_raw_message_remove_old (void)
 {
     int max_messages;
 
@@ -303,8 +299,9 @@ relay_raw_message_add (enum t_relay_msg_type msg_type,
                        const char *peer_id,
                        const char *data, int data_size)
 {
-    char *raw_data, *buf, prefix[1024], prefix_arrow[16];
-    int length;
+    char *raw_data, *raw_data_cut, *buf, prefix[1024], prefix_arrow[16];
+    const char *ptr_raw_data;
+    int max_length;
     struct t_relay_raw_message *new_raw_message;
     struct timeval tv_now;
 
@@ -350,15 +347,18 @@ relay_raw_message_add (enum t_relay_msg_type msg_type,
                   (peer_id && peer_id[0]) ? peer_id : "");
     }
 
-    length = strlen (relay_msg_type_string[msg_type]) + strlen (raw_data) + 1;
-    buf = malloc (length);
-    if (buf)
+    raw_data_cut = NULL;
+    ptr_raw_data = raw_data;
+    max_length = weechat_config_integer (relay_config_look_raw_messages_max_length);
+    if (max_length > 0)
     {
-        snprintf (buf, length, "%s%s",
-                  relay_msg_type_string[msg_type],
-                  raw_data);
+        raw_data_cut = weechat_string_cut (raw_data, max_length, 0, 0, " (...)");
+        ptr_raw_data = raw_data_cut;
     }
-
+    weechat_asprintf (&buf, "%s%s",
+                      relay_msg_type_string[msg_type],
+                      (ptr_raw_data) ? ptr_raw_data : "");
+    free (raw_data_cut);
     gettimeofday (&tv_now, NULL);
     new_raw_message = relay_raw_message_add_to_list (
         tv_now.tv_sec,

@@ -1,7 +1,7 @@
 /*
  * irc-mode.c - IRC channel/user modes management
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -155,7 +155,7 @@ irc_mode_channel_update (struct t_irc_server *server,
 {
     char *pos_args, *str_modes, **argv, *pos, *ptr_arg;
     char *new_modes, *new_args, str_mode[2], *str_temp;
-    int argc, current_arg, chanmode_found, length;
+    int argc, current_arg, chanmode_found;
 
     if (!channel->modes)
         channel->modes = strdup ("+");
@@ -295,11 +295,8 @@ irc_mode_channel_update (struct t_irc_server *server,
         }
         if (new_args[0])
         {
-            length = strlen (new_modes) + 1 + strlen (new_args) + 1;
-            str_temp = malloc (length);
-            if (str_temp)
+            if (weechat_asprintf (&str_temp, "%s %s", new_modes, new_args) >= 0)
             {
-                snprintf (str_temp, length, "%s %s", new_modes, new_args);
                 free (channel->modes);
                 channel->modes = str_temp;
             }
@@ -671,6 +668,10 @@ irc_mode_user_set (struct t_irc_server *server, const char *modes,
             free (server->nick_modes);
             server->nick_modes = NULL;
         }
+    }
+    while (modes && (modes[0] == ' '))
+    {
+        modes++;
     }
     set_flag = '+';
     end = 0;

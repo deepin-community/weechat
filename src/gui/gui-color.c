@@ -1,7 +1,7 @@
 /*
  * gui-color.c - color functions (used by all GUI)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -760,18 +760,15 @@ gui_color_code_size (const char *string)
                     break;
             }
             return ptr_string - string;
-            break;
         case GUI_COLOR_SET_ATTR_CHAR:
         case GUI_COLOR_REMOVE_ATTR_CHAR:
             ptr_string++;
             if (ptr_string[0])
                 ptr_string++;
             return ptr_string - string;
-            break;
         case GUI_COLOR_RESET_CHAR:
             ptr_string++;
             return ptr_string - string;
-            break;
     }
 
     return 0;
@@ -1921,7 +1918,7 @@ gui_color_palette_free_value_cb (struct t_hashtable *hashtable,
  */
 
 void
-gui_color_palette_alloc_structs ()
+gui_color_palette_alloc_structs (void)
 {
     if (!gui_color_hash_palette_color)
     {
@@ -2037,7 +2034,7 @@ gui_color_palette_remove (int number)
  */
 
 void
-gui_color_palette_free_structs ()
+gui_color_palette_free_structs (void)
 {
     hashtable_free (gui_color_hash_palette_color);
     hashtable_free (gui_color_hash_palette_alias);
@@ -2049,7 +2046,7 @@ gui_color_palette_free_structs ()
  */
 
 void
-gui_color_init ()
+gui_color_init (void)
 {
     int i;
 
@@ -2064,7 +2061,7 @@ gui_color_init ()
  */
 
 void
-gui_color_end ()
+gui_color_end (void)
 {
     int i;
 

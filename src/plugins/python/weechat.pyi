@@ -31,6 +31,9 @@ WEECHAT_HOTLIST_PRIVATE: str = "2"
 WEECHAT_HOTLIST_HIGHLIGHT: str = "3"
 WEECHAT_HOOK_PROCESS_RUNNING: int = -1
 WEECHAT_HOOK_PROCESS_ERROR: int = -2
+WEECHAT_HOOK_CONNECT_IPV6_DISABLE: int = 0
+WEECHAT_HOOK_CONNECT_IPV6_AUTO: int = 1
+WEECHAT_HOOK_CONNECT_IPV6_FORCE: int = 2
 WEECHAT_HOOK_CONNECT_OK: int = 0
 WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND: int = 1
 WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND: int = 2
@@ -801,7 +804,7 @@ def config_boolean_inherited(option: str) -> int:
 
         # example
         option = weechat.config_get("irc.server.libera.autoconnect")
-        autoconect = weechat.config_boolean_inherited(option)
+        autoconnect = weechat.config_boolean_inherited(option)
     """
     ...
 
@@ -1474,31 +1477,32 @@ def hook_connect(proxy: str, address: str, port: int, ipv6: int, retry: int, loc
 
         # example
         def my_connect_cb(data: str, status: int, gnutls_rc: int, sock: int, error: str, ip_address: str) -> int:
-            if status == WEECHAT_HOOK_CONNECT_OK:
+            if status == weechat.WEECHAT_HOOK_CONNECT_OK:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_PROXY_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_PROXY_ERROR:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_TIMEOUT:
                 # ...
-            elif status == WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
+            elif status == weechat.WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
                 # ...
             return weechat.WEECHAT_RC_OK
 
-        hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
+        hook = weechat.hook_connect("", "my.server.org", 1234,
+                                    weechat.WEECHAT_HOOK_CONNECT_IPV6_AUTO, 0, "",
                                     "my_connect_cb", "")
     """
     ...
@@ -1554,8 +1558,10 @@ def hook_signal_send(signal: str, type_data: str, signal_data: str) -> int:
     """`hook_signal_send in WeeChat plugin API reference <https://weechat.org/doc/weechat/api/#_hook_signal_send>`_
     ::
 
-        # example
+        # examples
         rc = weechat.hook_signal_send("my_signal", weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
+        rc2 = weechat.hook_signal_send("[flags:stop_on_error,ignore_eat]my_signal2",
+                                       weechat.WEECHAT_HOOK_SIGNAL_STRING, my_string)
     """
     ...
 
@@ -1578,8 +1584,9 @@ def hook_hsignal_send(signal: str, hashtable: Dict[str, str]) -> int:
     """`hook_hsignal_send in WeeChat plugin API reference <https://weechat.org/doc/weechat/api/#_hook_hsignal_send>`_
     ::
 
-        # example
+        # examples
         rc = weechat.hook_hsignal_send("my_hsignal", {"key": "value"})
+        rc2 = weechat.hook_hsignal_send("[flags:stop_on_error,ignore_eat]my_hsignal2", {"key": "value"})
     """
     ...
 
@@ -1922,6 +1929,16 @@ def buffer_match_list(buffer: str, string: str) -> int:
             weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "*,!*#weechat*"))        # 0
             weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.libera.*"))         # 1
             weechat.prnt("", "%d" % weechat.buffer_match_list(buffer, "irc.oftc.*,python.*"))  # 0
+    """
+    ...
+
+
+def line_search_by_id(buffer: str, line_id: int) -> str:
+    """`line_search_by_id in WeeChat plugin API reference <https://weechat.org/doc/weechat/api/#_line_search_by_id>`_
+    ::
+
+        # example
+        line = weechat.line_search_by_id(buffer, 123)
     """
     ...
 
@@ -2280,7 +2297,7 @@ def command_options(buffer: str, command: str, options: Dict[str, str]) -> int:
     ::
 
         # example: allow any command except /exec
-        rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec"})
+        rc = weechat.command_options("", "/some_command arguments", {"commands": "*,!exec", "delay": "2000"})
     """
     ...
 
@@ -2316,6 +2333,20 @@ def completion_get_string(completion: str, property: str) -> str:
             # get arguments of command
             args = weechat.completion_get_string(completion, "args")
             # completion depending on args
+            # ...
+            return weechat.WEECHAT_RC_OK
+    """
+    ...
+
+
+def completion_set(completion: str, property: str, value: str) -> int:
+    """`completion_set in WeeChat plugin API reference <https://weechat.org/doc/weechat/api/#_completion_set>`_
+    ::
+
+        # example
+        def my_completion_cb(data: str, completion_item: str, buffer: str, completion: str) -> int:
+            # do not add space after completion
+            weechat.completion_set(completion, "add_space", "0")
             # ...
             return weechat.WEECHAT_RC_OK
     """

@@ -2,7 +2,7 @@
  * weechat-php-api.c - PHP API functions
  *
  * Copyright (C) 2006-2017 Adam Saponara <as@php.net>
- * Copyright (C) 2017-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2017-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -3976,6 +3976,27 @@ API_FUNC(buffer_match_list)
     API_RETURN_INT(result);
 }
 
+API_FUNC(line_search_by_id)
+{
+    zend_string *z_buffer;
+    zend_long z_id;
+    struct t_gui_buffer *buffer;
+    int id;
+    const char *result;
+
+    API_INIT_FUNC(1, "line_search_by_id", API_RETURN_EMPTY);
+    if (zend_parse_parameters (ZEND_NUM_ARGS(), "Sl", &z_buffer,
+                               &z_id) == FAILURE)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    buffer = (struct t_gui_buffer *)API_STR2PTR(ZSTR_VAL(z_buffer));
+    id = (int)z_id;
+
+    result = API_PTR2STR(weechat_line_search_by_id (buffer, id));
+
+    API_RETURN_STRING(result);
+}
+
 API_FUNC(current_window)
 {
     const char *result;
@@ -4791,6 +4812,26 @@ API_FUNC(completion_get_string)
                                             (const char *)property);
 
     API_RETURN_STRING(result);
+}
+
+API_FUNC(completion_set)
+{
+    zend_string *z_completion, *z_property, *z_value;
+    struct t_gui_completion *completion;
+    char *property, *value;
+
+    API_INIT_FUNC(1, "completion_set", API_RETURN_ERROR);
+    if (zend_parse_parameters (ZEND_NUM_ARGS(), "SSS", &z_completion,
+                               &z_property, &z_value) == FAILURE)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    completion = (struct t_gui_completion *)API_STR2PTR(ZSTR_VAL(z_completion));
+    property = ZSTR_VAL(z_property);
+    value = ZSTR_VAL(z_value);
+
+    weechat_completion_set (completion, (const char *)property, (const char *)value);
+
+    API_RETURN_OK;
 }
 
 API_FUNC(completion_list_add)

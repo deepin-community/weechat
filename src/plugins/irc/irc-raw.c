@@ -1,7 +1,7 @@
 /*
  * irc-raw.c - functions for IRC raw data messages
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -315,7 +315,7 @@ irc_raw_message_print (struct t_irc_raw_message *raw_message)
  */
 
 void
-irc_raw_set_localvar_filter ()
+irc_raw_set_localvar_filter (void)
 {
     if (!irc_raw_buffer)
         return;
@@ -329,7 +329,7 @@ irc_raw_set_localvar_filter ()
  */
 
 void
-irc_raw_set_title ()
+irc_raw_set_title (void)
 {
     char str_title[1024];
 
@@ -391,6 +391,8 @@ irc_raw_open (int switch_to_buffer)
             if (buffer_props)
             {
                 weechat_hashtable_set (buffer_props,
+                                       "short_name", IRC_RAW_BUFFER_NAME);
+                weechat_hashtable_set (buffer_props,
                                        "localvar_set_type", "debug");
                 weechat_hashtable_set (buffer_props,
                                        "localvar_set_server", IRC_RAW_BUFFER_NAME);
@@ -411,12 +413,6 @@ irc_raw_open (int switch_to_buffer)
             /* failed to create buffer ? then return */
             if (!irc_raw_buffer)
                 return;
-
-            if (!weechat_buffer_get_integer (irc_raw_buffer, "short_name_is_set"))
-            {
-                weechat_buffer_set (irc_raw_buffer, "short_name",
-                                    IRC_RAW_BUFFER_NAME);
-            }
 
             irc_raw_set_localvar_filter ();
 
@@ -494,7 +490,7 @@ irc_raw_message_free (struct t_irc_raw_message *raw_message)
  */
 
 void
-irc_raw_message_free_all ()
+irc_raw_message_free_all (void)
 {
     while (irc_raw_messages)
     {
@@ -507,7 +503,7 @@ irc_raw_message_free_all ()
  */
 
 void
-irc_raw_message_remove_old ()
+irc_raw_message_remove_old (void)
 {
     int max_messages;
 
@@ -647,7 +643,7 @@ irc_raw_add_to_infolist (struct t_infolist *infolist,
  */
 
 void
-irc_raw_init ()
+irc_raw_init (void)
 {
     irc_raw_filter_hashtable_options = weechat_hashtable_new (
         8,
@@ -666,7 +662,7 @@ irc_raw_init ()
  */
 
 void
-irc_raw_end ()
+irc_raw_end (void)
 {
     irc_raw_message_free_all ();
 

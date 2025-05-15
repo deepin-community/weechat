@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: fr
-:toc-title: Table des matières
+include::includes/attributes-fr.adoc[]
 
 Ce manuel documente le client de messagerie instantanée WeeChat, il fait
 partie de WeeChat.
@@ -110,7 +110,7 @@ Le tableau suivant liste les paquets *requis* pour construire WeeChat :
 | cmake | ≥ 3.0
 | Construction.
 
-| pkg-config |
+| pkgconf / pkg-config |
 | Détection des bibliothèques installées.
 
 | libncurses-dev |
@@ -219,8 +219,9 @@ Si vous utilisez une distribution basée sur Debian ou Ubuntu, et si vous avez
 des entrées source "deb-src" dans votre fichier _/etc/apt/sources.list_, vous
 pouvez installer toutes les dépendances avec la commande :
 
+[source,shell]
 ----
-# apt-get build-dep weechat
+sudo apt-get build-dep weechat
 ----
 
 [[build]]
@@ -228,22 +229,24 @@ pouvez installer toutes les dépendances avec la commande :
 
 * Installation dans les répertoires systèmes (nécessite les droits _root_) :
 
+[source,shell]
 ----
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ sudo make install
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
 ----
 
 * Installation dans un répertoire spécifique (par exemple dans votre "home") :
 
+[source,shell]
 ----
-$ mkdir build
-$ cd build
-$ cmake .. -DCMAKE_INSTALL_PREFIX=/chemin/vers/répertoire
-$ make
-$ make install
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/chemin/vers/répertoire
+make
+make install
 ----
 
 Des options peuvent être utilisées pour CMake, avec le format : `-DOPTION=VALUE`.
@@ -380,14 +383,16 @@ Liste des options disponibles :
 
 Les autres options peuvent être affichées avec cette commande :
 
+[source,shell]
 ----
-$ cmake -LA
+cmake -LA
 ----
 
 Ou avec l'interface Curses :
 
+[source,shell]
 ----
-$ ccmake ..
+ccmake ..
 ----
 
 [[tests]]
@@ -400,14 +405,16 @@ Les paquets suivants sont nécessaires pour compiler les tests :
 
 Les tests doivent être activés pour compiler WeeChat :
 
+[source,shell]
 ----
-$ cmake .. -DENABLE_TESTS=ON
+cmake .. -DENABLE_TESTS=ON
 ----
 
 Ils peuvent être lancés après compilation depuis le répertoire de construction :
 
+[source,shell]
 ----
-$ ctest -V
+ctest -V
 ----
 
 [[git_sources]]
@@ -418,8 +425,9 @@ que WeeChat ne compile pas et qu'il soit très instable. Vous êtes prévenus !
 
 Pour récupérer les sources Git, tapez cette commande :
 
+[source,shell]
 ----
-$ git clone https://github.com/weechat/weechat.git
+git clone https://github.com/weechat/weechat.git
 ----
 
 Suivez alors les instructions du paquet source (voir
@@ -442,8 +450,9 @@ futur de WeeChat, vous devez :
 
 Si vous compilez avec CMake :
 
+[source,shell]
 ----
-$ cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 ----
 
 [[address_sanitizer]]
@@ -452,18 +461,20 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 Vous pouvez aussi activer la vérification des adresses (« address sanitizer »),
 ce qui provoquera immédiatement un plantage de WeeChat en cas de problème :
 
+[source,shell]
 ----
-$ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS=-fsanitize=address -DCMAKE_CXX_FLAGS=-fsanitize=address -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS=-fsanitize=address -DCMAKE_CXX_FLAGS=-fsanitize=address -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address
 ----
 
-[WARNING]
+[CAUTION]
 Vous ne devriez activer la vérification des adresses que si vous essayez de
 provoquer un plantage, ce qui n'est pas recommandé en production.
 
 Une fois compilé et installé, vous devez lancer WeeChat comme ceci :
 
+[source,shell]
 ----
-$ ASAN_OPTIONS="detect_odr_violation=0 log_path=asan.log" weechat
+ASAN_OPTIONS="detect_odr_violation=0 log_path=asan.log" weechat
 ----
 
 En cas de plantage, la trace se trouve dans le fichier `asan.log`.
@@ -484,12 +495,14 @@ WeeChat ne démarre, vous pouvez utiliser la commande `ulimit`.
 Par exemple sous Linux avec le shell _bash_, ajoutez cette ligne dans votre
 `~/.bashrc` :
 
+[source,shell]
 ----
 ulimit -c unlimited
 ----
 
 Ou une taille maximum :
 
+[source,shell]
 ----
 ulimit -c 200000
 ----
@@ -513,6 +526,7 @@ https://wiki.archlinux.org/title/Core_dump[page wiki ^↗^^].
 Par exemple si _weechat_ est installé dans _/usr/bin/_ et que le fichier
 _core_ se trouve dans _/home/user/_, alors il faut lancer gdb avec cette commande :
 
+[source,shell]
 ----
 gdb /usr/bin/weechat /home/user/core
 ----
@@ -561,6 +575,7 @@ Pour déboguer WeeChat qui tourne (par exemple si WeeChat semble bloqué), vous
 pouvez utiliser gdb avec l'identifiant du processus (remplacez _12345_ par le
 PID du processus weechat) :
 
+[source,shell]
 ----
 gdb /usr/bin/weechat 12345
 ----
@@ -576,8 +591,9 @@ Ensuite comme pour un crash, utilisez la commande `bt full` :
 
 Pour lancer WeeChat, tapez cette commande :
 
+[source,shell]
 ----
-$ weechat
+weechat
 ----
 
 Lorsque vous lancez WeeChat pour la première fois, les fichiers de configuration
@@ -591,7 +607,7 @@ include::includes/cmdline_options.fr.adoc[tag=standard]
 
 Quelques options supplémentaires sont disponibles pour du debug seulement :
 
-[WARNING]
+[CAUTION]
 N'utilisez *AUCUNE* de ces options in production !
 
 include::includes/cmdline_options.fr.adoc[tag=debug]
@@ -801,25 +817,26 @@ Cela sauvegarde l'état actuel dans des fichiers `*.upgrade`. Vous pouvez soit
 rebooter ou déplacer les répertoires WeeChat (config, data, cache) vers une
 autre machine, et redémarrer WeeChat plus tard avec cette commande :
 
+[source,shell]
 ----
-$ weechat --upgrade
+weechat --upgrade
 ----
 
 [[restart_after_upgrade]]
 === Redémarrage après mise à jour
 
-[[restart_release_notes]]
-==== Notes de version
+[[restart_upgrading_notes]]
+==== Notes de mise à jour
 
-Après une mise à jour, il est *fortement recommandé* de lire les
-https://weechat.org/files/doc/weechat/ReleaseNotes-devel.html[notes de version ^↗^^]
-qui contiennent des informations importantes sur les changements majeurs et
+Après une mise à jour, il est *fortement recommandé* de lire le fichier
+https://github.com/weechat/weechat/blob/main/UPGRADING.md[UPGRADING.md ^↗^^]
+qui contient des informations importantes sur les changements majeurs et
 quelques actions manuelles qui pourraient être nécessaires.
 
-Vous devez lire les notes des versions entre votre version ancienne (exclue)
+Vous devez lire les versions entre votre version ancienne (exclue)
 et votre nouvelle version (incluse). +
-Par exemple si vous passez de la version 3.0 à 3.2, vous devez lire les notes
-des versions 3.1 et 3.2.
+Par exemple si vous passez de la version 4.0.0 à 4.3.0, vous devez lire les
+versions 4.0.1 à 4.3.0.
 
 [[restart_configuration_upgrade]]
 ==== Mise à jour de la configuration
@@ -873,7 +890,7 @@ Exemple de terminal avec WeeChat :
 │         │                                                                    │       │
 │         │                                                                    │       │
 │         │                                                                    │       │
-│         │[12:55] [5] [irc/libera] 2:#test(+n){4}* [H: 3:#abc(2,5), 5]                │
+│         │[12:55] [5] [irc/libera] 2:#test(+n){4}* M [H: 3:#abc(2,5), 5]              │
 │         │[@Flashy(i)] salut peter !█                                                 │
 └──────────────────────────────────────────────────────────────────────────────────────┘
             ▲ barres "status" et "input"                            barre "nicklist" ▲
@@ -913,32 +930,34 @@ La barre _status_ contient les objets (items) suivants par défaut :
 
 [width="100%",cols="^3,^3,9",options="header"]
 |===
-| Objet (item)          | Exemple               | Description
-| time                  | `[12:55]`             | Heure.
-| buffer_last_number    | `[5]`                 | Numéro du dernier tampon de la liste.
-| buffer_plugin         | `[irc/libera]`        | Extension du tampon courant (l'extension irc peut afficher le nom du serveur IRC auquel est rattaché ce tampon).
-| buffer_number         | `2`                   | Numéro du tampon courant.
-| buffer_name           | `#test`               | Nom du tampon courant.
-| buffer_modes          | `+n`                  | Modes du canal IRC.
-| buffer_nicklist_count | `{4}`                 | Nombre de pseudos affichés dans la liste des pseudos.
-| buffer_zoom           | !                     | `!` signifie que le tampon mélangé est zoomé, une valeur vide signifie que tous les tampons mélangés sont affichés.
-| buffer_filter         | `+*+`                 | Indicateur de filtrage : `+*+` signifie que des lignes sont filtrées (cachées), une valeur vide signifie que toutes les lignes sont affichées.
-| scroll                | `-PLUS(50)-`          | Indicateur de scroll, avec le nombre de lignes sous la dernière ligne affichée.
-| lag                   | `[Lag: 2.5]`          | Indicateur de "lag" (ralentissements réseau), en secondes (caché si le lag est faible).
-| hotlist               | `[H: 3:#abc(2,5), 5]` | Liste des tampons où il y a de l'activité (messages non lus) (dans cet exemple, 2 highlights et 5 messages non lus sur _#abc_, un message non lu sur le tampon numéro 5).
-| completion            | `abc(2) def(5)`       | Liste des mots pour la complétion, avec le nombre de complétions possibles pour chaque mot.
+| Objet (item)          | Exemple                | Description
+| time                  | `12:55`                | Heure.
+| buffer_last_number    | `5`                    | Numéro du dernier tampon (peut être différent de `buffer_count` si l'option <<option_weechat.look.buffer_auto_renumber,weechat.look.buffer_auto_renumber>> est `off`).
+| buffer_plugin         | `irc/libera`           | Extension du tampon courant (l'extension irc peut afficher le nom du serveur IRC auquel est rattaché ce tampon).
+| buffer_number         | `2`                    | Numéro du tampon courant.
+| buffer_name           | `#test`                | Nom du tampon courant.
+| buffer_modes          | `+n`                   | Modes du canal IRC.
+| buffer_nicklist_count | `4`                    | Nombre de pseudos affichés dans la liste des pseudos.
+| buffer_zoom           | !                      | `!` signifie que le tampon mélangé est zoomé, une valeur vide signifie que tous les tampons mélangés sont affichés.
+| buffer_filter         | `+*+`                  | Indicateur de filtrage : `+*+` signifie que des lignes sont filtrées (cachées), une valeur vide signifie que toutes les lignes sont affichées.
+| mouse_status          | `M`                    | Statut de la souris (vide si la souris est désactivée), voir la commande <<command_weechat_mouse,/mouse>> et <<key_bindings_toggle_keys,Touches de bascule>>.
+| scroll                | `-PLUS(50)-`           | Indicateur de scroll, avec le nombre de lignes sous la dernière ligne affichée.
+| lag                   | `Lag: 2.5`             | Indicateur de "lag" (ralentissements réseau), en secondes (caché si le lag est faible).
+| hotlist               | `H: 3:#abc(2,5), 5`    | Liste des tampons où il y a de l'activité (messages non lus) (dans cet exemple, 2 highlights et 5 messages non lus sur _#abc_, un message non lu sur le tampon numéro 5).
+| typing                | `Écrit : bob, (alice)` | Notification de saisie, voir <<typing_notifications,Notifications de saisie>>.
+| completion            | `abc(2) def(5)`        | Liste des mots pour la complétion, avec le nombre de complétions possibles pour chaque mot.
 |===
 
 La barre _input_ contient les objets (items) suivants par défaut :
 
 [width="100%",cols="^3,^3,9",options="header"]
 |===
-| Objet (item) | Exemple                                         | Description
-| input_prompt | `[@Flashy(i)]`                                  | Prompt, pour irc : pseudo et modes (le mode "+i" signifie invisible sur libera).
-| away         | `(absent)`                                      | Indicateur d'absence.
-| input_search | `[Recherche lignes (~ str,msg)]`                | Indicateur de recherche de texte (voir ci-dessous).
-| input_paste  | `[Coller 7 lignes ? [ctrl-y] Oui [ctrl-n] Non]` | Question à l'utilisateur pour coller des lignes.
-| input_text   | `salut peter !`                                 | Texte entré.
+| Objet (item) | Exemple                                       | Description
+| input_prompt | `@Flashy(i)`                                  | Prompt, pour irc : pseudo et modes (le mode "+i" signifie invisible sur libera).
+| away         | `absent`                                      | Indicateur d'absence.
+| input_search | `Recherche lignes (~ str,msg)`                | Indicateur de recherche de texte (voir ci-dessous).
+| input_paste  | `Coller 7 lignes ? [ctrl-y] Oui [ctrl-n] Non` | Question à l'utilisateur pour coller des lignes.
+| input_text   | `salut peter !`                               | Texte entré.
 |===
 
 Il y a deux modes de recherche :
@@ -974,8 +993,7 @@ Autres objets (non utilisés dans des barres par défaut) :
 [width="100%",cols="^3,^3,9",options="header"]
 |===
 | Objet (item)                 | Exemple                  | Description
-| buffer_count                 | `10`                     | Nombre total de tampons ouverts.
-| buffer_last_number           | `10`                     | Numéro du dernier tampon (peut être différent de `buffer_count` si l'option <<option_weechat.look.buffer_auto_renumber,weechat.look.buffer_auto_renumber>> est `off`).
+| buffer_count                 | `5`                      | Nombre total de tampons ouverts.
 | buffer_nicklist_count_all    | `4`                      | Nombre de groupes et pseudos visibles dans la liste de pseudos.
 | buffer_nicklist_count_groups | `0`                      | Nombre de groupes visibles dans la liste de pseudos.
 | buffer_short_name            | `#test`                  | Nom court du tampon courant.
@@ -990,7 +1008,7 @@ Autres objets (non utilisés dans des barres par défaut) :
 | irc_nick_host                | `+Flashy!user@host.com+` | Pseudo et hôte IRC.
 | irc_nick_modes               | `i`                      | Modes IRC pour le pseudo.
 | irc_nick_prefix              | `@`                      | Préfixe de pseudo IRC sur le canal.
-| mouse_status                 | `M`                      | Statut de la souris (vide si la souris est désactivée).
+| spacer                       |                          | Objet spécial utilisé pour aligner le texte dans les barres, voir <<item_spacer,Objet d'espacement>>.
 | spell_dict                   | `fr,en`                  | Dictionnaires utilisés pour la vérification de l'orthographe sur le tampon courant.
 | spell_suggest                | `print,prone,prune`      | Suggestions pour le mot sous le curseur (si mal orthographié).
 | tls_version                  | `TLS1.3`                 | Version de TLS utilisée sur le serveur IRC courant.
@@ -1350,7 +1368,7 @@ Les étiquettes couramment utilisées (liste non exhaustive) :
 | no_filter        | La ligne ne peut pas être filtrée.
 | no_highlight     | Aucun highlight n'est possible sur cette ligne.
 | no_log           | La ligne n'est pas écrite dans le fichier de log.
-| log0 … log9      | Niveau de log pour la ligne (voir `/help logger`).
+| log0 … log9      | Niveau de log pour la ligne (voir la commande <<command_logger_logger,/logger>>).
 | notify_none      | La ligne ne doit pas être ajoutée à la "hotlist". ^(1)^
 | notify_message   | La ligne est un message utilisateur. ^(1)^
 | notify_private   | La ligne est un message privé. ^(1)^
@@ -1770,11 +1788,12 @@ Ils peuvent être modifiés et de nouveaux peuvent être ajoutés avec la comman
 
 [width="100%",cols="^.^3,.^8,.^5",options="header"]
 |===
-| Touche      | Description | Commande
-| kbd:[Alt+m] | Activer/désactiver la souris. | `+/mouse toggle+`
-| kbd:[Alt+s] | Activer/désactiver la vérification de l'orthographe. | `+/mute spell toggle+`
-| kbd:[Alt+=] | Activer/désactiver les filtres. | `+/filter toggle+`
-| kbd:[Alt+-] | Activer/désactiver les filtres dans le tampon courant. | `+/filter toggle @+`
+| Touche                 | Description | Commande
+| kbd:[Alt+m]            | Activer/désactiver la souris. | `+/mouse toggle+`
+| kbd:[Alt+s]            | Activer/désactiver la vérification de l'orthographe. | `+/mute spell toggle+`
+| kbd:[Alt+=]            | Activer/désactiver les filtres. | `+/filter toggle+`
+| kbd:[Alt+-]            | Activer/désactiver les filtres dans le tampon courant. | `+/filter toggle @+`
+| kbd:[Alt+Ctrl+l] (`L`) | Basculer entre les commandes distantes et locales sur un tampon distant (relay "api"). | `+/remote togglecmd+`
 |===
 
 [[key_bindings_search_context]]
@@ -2047,27 +2066,27 @@ Exemple de tampon fset affichant les options commençant par `weechat.look` :
 [subs="quotes"]
 ....
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│1.weechat│1/121 | Filter: weechat.look.* | Sort: ~name | Key(input): alt+space=toggle │
-│2.fset   │weechat.look.bare_display_exit_on_input: exit the bare display mode on any c│
-│         │hanges in input [default: on]                                               │
+│1.weechat│7/125 | Filtre : weechat.look.* | Tri : ~name | Touche(entrée) : alt+space>>│
+│2.fset   │weechat.look.bare_display_exit_on_input : sortir du mode d'affichage dépouil│
+│         │lé ("bare") sur tout changement dans la ligne de commande [défaut : on]     │
 │         │----------------------------------------------------------------------------│
-│         │  weechat.look.align_end_of_lines                   enum     message        │
-│         │  weechat.look.align_multiline_words                boolean  on             │
-│         │  weechat.look.bar_more_down                        string   "++"           │
-│         │  weechat.look.bar_more_left                        string   "<<"           │
-│         │  weechat.look.bar_more_right                       string   ">>"           │
-│         │  weechat.look.bar_more_up                          string   "--"           │
-│         │##  weechat.look.bare_display_exit_on_input           boolean  on             ##│
-│         │  weechat.look.bare_display_time_format             string   "%H:%M"        │
-│         │  weechat.look.buffer_auto_renumber                 boolean  on             │
-│         │  weechat.look.buffer_notify_default                enum     all            │
-│         │  weechat.look.buffer_position                      enum     end            │
-│         │  weechat.look.buffer_search_case_sensitive         boolean  off            │
-│         │  weechat.look.buffer_search_force_default          boolean  off            │
-│         │  weechat.look.buffer_search_regex                  boolean  off            │
-│         │  weechat.look.buffer_search_where                  enum     prefix_message │
-│         │  weechat.look.buffer_time_format                   string   "%H:%M:%S"     │
-│         │  weechat.look.buffer_time_same                     string   ""             │
+│         │  weechat.look.align_end_of_lines              énuméré  message             │
+│         │  weechat.look.align_multiline_words           booléen  on                  │
+│         │  weechat.look.bar_more_down                   chaîne   "++"                │
+│         │  weechat.look.bar_more_left                   chaîne   "<<"                │
+│         │  weechat.look.bar_more_right                  chaîne   ">>"                │
+│         │  weechat.look.bar_more_up                     chaîne   "--"                │
+│         │##  weechat.look.bare_display_exit_on_input      booléen  on                  ##│
+│         │  weechat.look.bare_display_time_format        chaîne   "%H:%M"             │
+│         │  weechat.look.buffer_auto_renumber            booléen  on                  │
+│         │  weechat.look.buffer_notify_default           énuméré  all                 │
+│         │  weechat.look.buffer_position                 énuméré  end                 │
+│         │  weechat.look.buffer_search_case_sensitive    booléen  off                 │
+│         │  weechat.look.buffer_search_force_default     booléen  off                 │
+│         │  weechat.look.buffer_search_history           énuméré  local               │
+│         │  weechat.look.buffer_search_regex             booléen  off                 │
+│         │  weechat.look.buffer_search_where             énuméré  prefix_message      │
+│         │  weechat.look.buffer_time_format              chaîne   "%H:%M:%S"          │
 │         │[12:55] [2] [fset] 2:fset                                                   │
 │         │█                                                                           │
 └──────────────────────────────────────────────────────────────────────────────────────┘
@@ -2876,8 +2895,9 @@ options dans la section "option" de la configuration aspell.
 Le nom de l'option est une option de configuration aspell. La liste des options
 peut être trouvée par la commande suivante sous le shell :
 
+[source,shell]
 ----
-$ aspell config
+aspell config
 ----
 
 Par exemple, pour activer l'option "ignore-case" :
@@ -3339,7 +3359,7 @@ Les données sécurisées peuvent être utilisées dans quelques options qui peu
 contenir des données sensibles comme un mot de passe, en utilisant ce format :
 "${sec.data.xxx}" où "xxx" est le nom de la donnée sécurisée (utilisé dans la
 commande `/secure set xxx ...`). +
-Pour une liste complète des options supportées, voir `/help secure`.
+Pour une liste complète des options supportées, voir la commande <<command_weechat_secure,/secure>>.
 
 Pour utiliser le mot de passe _libera_, par exemple avec
 <<irc_sasl_authentication,l'authentification SASL>> :
@@ -3465,8 +3485,9 @@ irc[6][s]://[pseudo[:mot_passe]@]irc.example.org[:port][/canal][,canal[...]]
 Exemple pour rejoindre _#weechat_ et _#weechat-fr_ sur le serveur
 _irc.libera.chat_, port par défaut (6667), avec le pseudo _alice_ :
 
+[source,shell]
 ----
-$ weechat irc://alice@irc.libera.chat/#weechat,#weechat-fr
+weechat irc://alice@irc.libera.chat/#weechat,#weechat-fr
 ----
 
 [[irc_servers]]
@@ -3482,8 +3503,11 @@ Par exemple pour vous connecter à https://libera.chat/[libera.chat ^↗^^] ave
 (communications chiffrées) :
 
 ----
-/server add libera irc.libera.chat/6697 -tls
+/server add libera irc.libera.chat
 ----
+
+[NOTE]
+Le port par défaut est 6697 et TLS (communications chiffrées) est activé.
 
 Vous pouvez demander à WeeChat de se connecter automatiquement à ce serveur
 au démarrage :
@@ -3527,51 +3551,52 @@ Par exemple si vous avez créé le serveur _libera_ avec les commandes ci-dessus
 vous verrez ceci avec la commande `/fset libera` :
 
 ....
-irc.server.libera.addresses             string   "irc.libera.chat/6697"
-irc.server.libera.anti_flood_prio_high  integer  null -> 2
-irc.server.libera.anti_flood_prio_low   integer  null -> 2
-irc.server.libera.autoconnect           boolean  on
-irc.server.libera.autojoin              string   null -> ""
-irc.server.libera.autojoin_dynamic      boolean  null -> off
-irc.server.libera.autoreconnect         boolean  null -> on
-irc.server.libera.autoreconnect_delay   integer  null -> 10
-irc.server.libera.autorejoin            boolean  null -> off
-irc.server.libera.autorejoin_delay      integer  null -> 30
-irc.server.libera.away_check            integer  null -> 0
-irc.server.libera.away_check_max_nicks  integer  null -> 25
-irc.server.libera.capabilities          string   null -> "*"
-irc.server.libera.charset_message       enum     null -> message
-irc.server.libera.command               string   null -> ""
-irc.server.libera.command_delay         integer  null -> 0
-irc.server.libera.connection_timeout    integer  null -> 60
-irc.server.libera.default_chantypes     string   null -> "#&"
-irc.server.libera.ipv6                  boolean  null -> on
-irc.server.libera.local_hostname        string   null -> ""
-irc.server.libera.msg_kick              string   null -> ""
-irc.server.libera.msg_part              string   null -> "WeeChat ${info:version}"
-irc.server.libera.msg_quit              string   null -> "WeeChat ${info:version}"
-irc.server.libera.nicks                 string   null -> "alice,alice1,alice2,alice3,alice4"
-irc.server.libera.nicks_alternate       boolean  null -> on
-irc.server.libera.notify                string   null -> ""
-irc.server.libera.password              string   null -> ""
-irc.server.libera.proxy                 string   null -> ""
-irc.server.libera.realname              string   null -> ""
-irc.server.libera.sasl_fail             enum     null -> reconnect
-irc.server.libera.sasl_key              string   null -> ""
-irc.server.libera.sasl_mechanism        enum     null -> plain
-irc.server.libera.sasl_password         string   "${sec.data.libera}"
-irc.server.libera.sasl_timeout          integer  null -> 15
-irc.server.libera.sasl_username         string   "alice"
-irc.server.libera.split_msg_max_length  integer  null -> 512
-irc.server.libera.tls                   boolean  on
-irc.server.libera.tls_cert              string   null -> ""
-irc.server.libera.tls_dhkey_size        integer  null -> 2048
-irc.server.libera.tls_fingerprint       string   null -> ""
-irc.server.libera.tls_password          string   null -> ""
-irc.server.libera.tls_priorities        string   null -> "NORMAL:-VERS-SSL3.0"
-irc.server.libera.tls_verify            boolean  null -> on
-irc.server.libera.usermode              string   null -> ""
-irc.server.libera.username              string   null -> "alice"
+irc.server.libera.addresses             chaîne   "irc.libera.chat"
+irc.server.libera.anti_flood            entier   null -> 2000
+irc.server.libera.autoconnect           booléen  on
+irc.server.libera.autojoin              chaîne   null -> ""
+irc.server.libera.autojoin_delay        entier   null -> 0
+irc.server.libera.autojoin_dynamic      booléen  null -> off
+irc.server.libera.autoreconnect         booléen  null -> on
+irc.server.libera.autoreconnect_delay   entier   null -> 10
+irc.server.libera.autorejoin            booléen  null -> off
+irc.server.libera.autorejoin_delay      entier   null -> 30
+irc.server.libera.away_check            entier   null -> 0
+irc.server.libera.away_check_max_nicks  entier   null -> 25
+irc.server.libera.capabilities          chaîne   null -> "*"
+irc.server.libera.charset_message       énuméré  null -> message
+irc.server.libera.command               chaîne   null -> ""
+irc.server.libera.command_delay         entier   null -> 0
+irc.server.libera.connection_timeout    entier   null -> 60
+irc.server.libera.default_chantypes     chaîne   null -> "#&"
+irc.server.libera.ipv6                  énuméré  null -> auto
+irc.server.libera.local_hostname        chaîne   null -> ""
+irc.server.libera.msg_kick              chaîne   null -> ""
+irc.server.libera.msg_part              chaîne   null -> "WeeChat ${info:version}"
+irc.server.libera.msg_quit              chaîne   null -> "WeeChat ${info:version}"
+irc.server.libera.nicks                 chaîne   null -> "${username},${username}2,${username}3,${username}4,${username}5"
+irc.server.libera.nicks_alternate       booléen  null -> on
+irc.server.libera.notify                chaîne   null -> ""
+irc.server.libera.password              chaîne   null -> ""
+irc.server.libera.proxy                 chaîne   null -> ""
+irc.server.libera.realname              chaîne   null -> ""
+irc.server.libera.registered_mode       chaîne   null -> "r"
+irc.server.libera.sasl_fail             énuméré  null -> reconnect
+irc.server.libera.sasl_key              chaîne   null -> ""
+irc.server.libera.sasl_mechanism        énuméré  null -> plain
+irc.server.libera.sasl_password         chaîne   "${sec.data.libera}"
+irc.server.libera.sasl_timeout          entier   null -> 15
+irc.server.libera.sasl_username         chaîne   "alice"
+irc.server.libera.split_msg_max_length  entier   null -> 512
+irc.server.libera.tls                   booléen  null -> on
+irc.server.libera.tls_cert              chaîne   null -> ""
+irc.server.libera.tls_dhkey_size        entier   null -> 2048
+irc.server.libera.tls_fingerprint       chaîne   null -> ""
+irc.server.libera.tls_password          chaîne   null -> ""
+irc.server.libera.tls_priorities        chaîne   null -> "NORMAL"
+irc.server.libera.tls_verify            booléen  null -> on
+irc.server.libera.usermode              chaîne   null -> ""
+irc.server.libera.username              chaîne   null -> "${username}"
 ....
 
 Par exemple si vous voulez vous connecter automatiquement à tous les serveurs
@@ -3624,9 +3649,10 @@ et peut échouer, même si cela pouvait être OK dans les versions inférieures 
 
 * Importer le certificat sous le shell :
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ wget -O ~/.config/weechat/tls/CAs.pem https://www.spi-inc.org/ca/spi-cacert.crt
+mkdir -p ~/.config/weechat/tls
+wget -O ~/.config/weechat/tls/CAs.pem https://www.spi-inc.org/ca/spi-cacert.crt
 ----
 
 [NOTE]
@@ -3647,10 +3673,11 @@ Il est possible de concaténer plusieurs certificats dans le fichier CAs.pem.
 
 * Créer le certificat sous le shell :
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ cd ~/.config/weechat/tls
-$ openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
+mkdir -p ~/.config/weechat/tls
+cd ~/.config/weechat/tls
+openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
 ----
 
 [NOTE]
@@ -3700,8 +3727,9 @@ connexion).
 
 Vous pouvez générer la clé avec cette commande :
 
+[source,shell]
 ----
-$ openssl ecparam -genkey -name prime256v1 -out ~/.config/weechat/ecdsa.pem
+openssl ecparam -genkey -name prime256v1 -out ~/.config/weechat/ecdsa.pem
 ----
 
 [NOTE]
@@ -3710,8 +3738,9 @@ config WeeChat qui peut aussi être par exemple `~/.weechat`.
 
 Récupérez la clé publique (encodée en base64) avec cette commande :
 
+[source,shell]
 ----
-$ openssl ec -noout -text -conv_form compressed -in ~/.config/weechat/ecdsa.pem | grep '^pub:' -A 3 | tail -n 3 | tr -d ' \n:' | xxd -r -p | base64
+openssl ec -noout -text -conv_form compressed -in ~/.config/weechat/ecdsa.pem | grep '^pub:' -A 3 | tail -n 3 | tr -d ' \n:' | xxd -r -p | base64
 ----
 
 Connectez-vous au serveur, identifiez vous (par exemple avec
@@ -3781,8 +3810,9 @@ sur Internet.
 
 En premier lieu, installez Tor. Pour Debian (et dérivés) :
 
+[source,shell]
 ----
-$ sudo apt-get install tor
+sudo apt-get install tor
 ----
 
 Sous WeeChat vous devez ajouter un proxy socks5 pour le service Tor (le nom/IP
@@ -4215,7 +4245,7 @@ des clés, par exemple si `#canal1` requiert une clé mais pas `#canal2`:
 /set irc.server.libera.autojoin "#canal1,#canal2 cle1"
 ----
 
-Pour de l'aide sur le format, voir `/help irc.server.libera.autojoin`.
+Pour de l'aide sur le format, voir l'option <<option_irc.server_default.autojoin,irc.server_default.autojoin>>.
 
 [[irc_private_messages]]
 === Messages privés
@@ -4264,7 +4294,7 @@ pour cacher les lignes sur les tampons, par exemple :
 ----
 
 Il est possible de créer un filtre pour un canal seulement ou plusieurs canaux
-commençant par le même nom (voir `/help filter`) :
+commençant par le même nom (voir la commande <<command_weechat_filter,/filter>>) :
 
 ----
 /filter add irc_smart_weechat irc.libera.#weechat* irc_smart_filter *
@@ -4723,10 +4753,11 @@ Le chemin par défaut vers le certificat/clé est défini par l'option
 
 Vous pouvez créer le certificat et la clé privée avec les commandes suivantes :
 
+[source,shell]
 ----
-$ mkdir -p ~/.config/weechat/tls
-$ cd ~/.config/weechat/tls
-$ openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
+mkdir -p ~/.config/weechat/tls
+cd ~/.config/weechat/tls
+openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
 ----
 
 [NOTE]
@@ -4811,6 +4842,14 @@ Pour vous connecter à un relai _api_ avec WeeChat :
 /remote connect weechat
 ----
 
+Pour vous connecter à un relai _api_ tournant ailleurs avec WeeChat
+(TLS est fortement recommandé) :
+
+----
+/remote add weechat https://example.com:9000 -password=mypassword
+/remote connect weechat
+----
+
 [NOTE]
 Le WeeChat distant doit exposer exactement la même version d'API que le WeeChat
 local, il est donc fortement recommandé d'utiliser exactement la même version
@@ -4832,10 +4871,10 @@ protocole.
 Par exemple :
 
 ----
-/relay add weechat 9000
+/relay add weechat 9500
 ----
 
-Maintenant vous pouvez vous connecter sur le port 9000 avec une interface
+Maintenant vous pouvez vous connecter sur le port 9500 avec une interface
 distante en utilisant le mot de passe "motdepasse".
 
 [[relay_websocket]]
@@ -4855,10 +4894,10 @@ JavaScript :
 
 [source,javascript]
 ----
-websocket = new WebSocket("ws://server.com:9000/weechat");
+websocket = new WebSocket("ws://example.com:9500/weechat");
 ----
 
-Le port (9000 dans l'exemple) est le port défini dans l'extension Relay.
+Le port (9500 dans l'exemple) est le port défini dans l'extension Relay.
 
 L'URI doit se terminer par "/weechat" pour les protocoles _irc_ et _weechat_ et
 "/api" pour le protocole _api_.
@@ -4881,8 +4920,9 @@ _/run/user/1000/weechat/relay_socket_. Cela est utile pour autoriser le
 
 Avec OpenSSH :
 
+[source,shell]
 ----
-$ ssh -L 9000:.weechat/relay_socket user@hostname
+ssh -L 9000:.weechat/relay_socket user@hostname
 ----
 
 Cela redirige les clients relay locaux qui se connectent au port 9000 vers
@@ -4970,34 +5010,39 @@ Quelques exemples :
 
 * Changer le pseudo sur libera en "autrepseudo" :
 
+[source,shell]
 ----
-$ echo 'irc.server.libera */nick autrepseudo' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.server.libera */nick autrepseudo' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * Envoyer un message sur le canal IRC #weechat :
 
+[source,shell]
 ----
-$ echo 'irc.libera.#weechat *bonjour !' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.libera.#weechat *bonjour !' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * Envoyer un message multi-lignes sur le canal IRC #test, si la capacité
   "draft/multiline" est activée sur le serveur ergo :
 
+[source,shell]
 ----
-$ echo 'irc.ergo.#test \bonjour\n...sur deux lignes !' >/run/user/1000/weechat/weechat_fifo_12345
+echo 'irc.ergo.#test \bonjour\n...sur deux lignes !' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * Envoyer un message sur le tampon courant :
 
+[source,shell]
 ----
-$ echo '*bonjour !' >/run/user/1000/weechat/weechat_fifo_12345
+echo '*bonjour !' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 * Envoyer deux commandes pour décharger/recharger les scripts Python (vous devez
   les séparer par "\n") :
 
+[source,shell]
 ----
-$ printf '%b' '*/python unload\n*/python autoload\n' >/run/user/1000/weechat/weechat_fifo_12345
+printf '%b' '*/python unload\n*/python autoload\n' >/run/user/1000/weechat/weechat_fifo_12345
 ----
 
 [[fifo_commands]]
@@ -5935,7 +5980,7 @@ désactivé par défaut. +
 Pour l'activer, tapez cette commande :
 
 ----
-/set script.scripts.download_enabled on
+/script enable
 ----
 
 Vous pouvez alors télécharger la liste des scripts et les afficher dans un tampon
@@ -5945,33 +5990,33 @@ avec la commande <<command_script_script,/script>> :
 :x: *
 ....
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│1.weechat│368/368 scripts (filter: {x}) | Sort: i,p,n | Alt+key/input: i=install, r=remove, l=load, L=reload, u=│
-│2.scripts│{x}      autosort.py                 3.9     2020-10-11 | Automatically keep buffers grouped by server│
-│         │{x}      multiline.pl                0.6.3   2016-01-02 | Multi-line edit box, also supports editing o│
-│         │{x}      highmon.pl                  2.7     2020-06-21 | Adds a highlight monitor buffer.            │
-│         │##{x}ia r  grep.py               0.8.5 0.8.5   2021-05-11 | Search regular expression in buffers or log ##│
-│         │{x}      autojoin.py                 0.3.1   2019-10-06 | Configure autojoin for all servers according│
-│         │{x}      colorize_nicks.py           28      2021-03-06 | Use the weechat nick colors in the chat area│
-│         │{x}ia r  go.py                 2.7   2.7     2021-05-26 | Quick jump to buffers.                      │
-│         │{x}      text_item.py                0.9     2019-05-25 | Add bar items with plain text.              │
-│         │       aesthetic.py                1.0.6   2020-10-25 | Make messages more A E S T H E T I C A L L Y│
-│         │       aformat.py                  0.2     2018-06-21 | Alternate text formatting, useful for relays│
-│         │       alternatetz.py              0.3     2018-11-11 | Add an alternate timezone item.             │
-│         │       amarok2.pl                  0.7     2012-05-08 | Amarok 2 control and now playing script.    │
-│         │       amqp_notify.rb              0.1     2011-01-12 | Send private messages and highlights to an A│
-│         │       announce_url_title.py       19      2021-06-05 | Announce URL title to user or to channel.   │
-│         │       anotify.py                  1.0.2   2020-05-16 | Notifications of private messages, highlight│
-│         │       anti_password.py            1.2.1   2021-03-13 | Prevent a password from being accidentally s│
-│         │       apply_corrections.py        1.3     2018-06-21 | Display corrected text when user sends s/typ│
-│         │       arespond.py                 0.1.1   2020-10-11 | Simple autoresponder.                       │
-│         │       atcomplete.pl               0.001   2016-10-29 | Tab complete nicks when prefixed with "@".  │
-│         │       audacious.pl                0.3     2009-05-03 | Display which song Audacious is currently pl│
-│         │       auth.rb                     0.3     2014-05-30 | Automatically authenticate with NickServ usi│
-│         │       auto_away.py                0.4     2018-11-11 | A simple auto-away script.                  │
-│         │       autoauth.py                 1.3     2021-11-07 | Permits to auto-authenticate when changing n│
-│         │       autobump.py                 0.1.0   2019-06-14 | Bump buffers upon activity.                 │
-│         │       autoconf.py                 0.4     2021-05-11 | Auto save/load changed options in a .weerc f│
-│         │       autoconnect.py              0.3.3   2019-10-06 | Reopen servers and channels opened last time│
+│1.weechat│322/322 scripts (filtre : {x}) | Tri : i,p,n | Alt+touche/entrée : i=installer, r=supprimer, l=charg>>│
+│2.scripts│{x}      autosort.py                     3.10    2023-12-31 | Garder automatiquement les tampons group│
+│         │{x}      highmon.pl                      2.7     2020-06-21 | Ajouter un tampon moniteur de highlights│
+│         │{x}ia r  grep.py                   0.8.6 0.8.6   2022-11-11 | Recherche d'expression régulière dans le│
+│         │{x}      colorize_nicks.py               32      2023-10-30 | Utiliser la couleur des pseudos weechat │
+│         │##{x}ia r  go.py                     3.0.1 3.0.1   2024-05-30 | Déplacement rapide dans les tampons.    ##│
+│         │       aesthetic.py                    1.0.6   2020-10-25 | Affiche des messages de manière plus E S│
+│         │       aformat.py                      0.2     2018-06-21 | Formatage de texte alternatif, pratique │
+│         │       alternatetz.py                  0.4     2022-01-25 | Ajouter un objet de barre avec un fuseau│
+│         │       amarok2.pl                      0.7     2012-05-08 | Contrôler et afficher la musique jouée p│
+│         │       amqp_notify.rb                  0.1     2011-01-12 | Envoyer les messages privés et highlight│
+│         │       announce_url_title.py           19      2021-06-05 | Annoncer le titre de l'URL à l'utilisate│
+│         │       anotify.py                      1.0.2   2020-05-16 | Notifications des messages privés, highl│
+│         │       anti_password.py                1.2.1   2021-03-13 | Empêcher un mot de passe d'être envoyé a│
+│         │       apply_corrections.py            1.3     2018-06-21 | Afficher le texte corrigé quand un utili│
+│         │       arespond.py                     0.1.2   2022-01-25 | Simple auto-réponse.                    │
+│         │       atcomplete.pl                   0.001   2016-10-29 | Complétion avec Tab des pseudos préfixés│
+│         │       audacious.pl                    0.3     2009-05-03 | Afficher la chanson actuellement jouée p│
+│         │       auth.rb                         0.3     2014-05-30 | S'authentifier automatiquement avec Nick│
+│         │       auto_away.py                    0.4     2018-11-11 | Un script simple d'auto absence (away). │
+│         │       autoauth.py                     1.3     2021-11-07 | Identification automatique en cas de cha│
+│         │       autobump.py                     0.1.0   2019-06-14 | Trier les tampons selon l'activité.     │
+│         │       autoconf.py                     0.4     2021-05-11 | Charger/sauver automatiquement les optio│
+│         │       autoconnect.py                  0.3.3   2019-10-06 | Réouvrir les serveurs et canaux ouverts │
+│         │       autojoin_on_invite.py           0.9     2022-10-25 | Rejoindre automatiquement les canaux où │
+│         │       automarkbuffer.py               1.0     2015-03-31 | Marquer les tampons comme lus s'il n'y a│
+│         │       automerge.py                    0.2     2018-03-03 | Fusionner automatiquement les tampons se│
 │         │[12:55] [2] [script] 2:scripts                                                                      │
 │         │█                                                                                                   │
 └──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

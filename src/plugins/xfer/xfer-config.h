@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -57,8 +57,8 @@ extern struct t_config_option *xfer_config_file_download_temporary_suffix;
 extern struct t_config_option *xfer_config_file_upload_path;
 extern struct t_config_option *xfer_config_file_use_nick_in_filename;
 
-extern int xfer_config_init ();
-extern int xfer_config_read ();
-extern int xfer_config_write ();
+extern int xfer_config_init (void);
+extern int xfer_config_read (void);
+extern int xfer_config_write (void);
 
 #endif /* WEECHAT_PLUGIN_XFER_CONFIG_H */

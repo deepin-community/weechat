@@ -2,6 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: en
+include::includes/attributes-en.adoc[]
 
 This manual documents WeeChat chat client, it is part of WeeChat.
 
@@ -326,6 +327,7 @@ WeeChat "core" is located in following directories:
 |    relay/                          | Relay plugin (IRC proxy and relay for remote interfaces).
 |       relay.c                      | Main relay functions.
 |       relay-auth.c                 | Clients authentication.
+|       relay-bar-item.c             | Relay bar items.
 |       relay-buffer.c               | Relay buffer.
 |       relay-client.c               | Clients of relay.
 |       relay-command.c              | Relay commands.
@@ -422,10 +424,11 @@ WeeChat "core" is located in following directories:
 |          test-core-crypto.cpp              | Tests: cryptographic functions.
 |          test-core-dir.cpp                 | Tests: directory/file functions.
 |          test-core-eval.cpp                | Tests: evaluation of expressions.
-|          test-core-hashtble.cpp            | Tests: hashtables.
+|          test-core-hashtable.cpp           | Tests: hashtables.
 |          test-core-hdata.cpp               | Tests: hdata.
 |          test-core-hook.cpp                | Tests: hooks.
 |          test-core-infolist.cpp            | Tests: infolists.
+|          test-core-input.cpp               | Tests: input functions.
 |          test-core-list.cpp                | Tests: lists.
 |          test-core-network.cpp             | Tests: network functions.
 |          test-core-secure.cpp              | Tests: secured data.
@@ -502,6 +505,7 @@ WeeChat "core" is located in following directories:
 |          relay/                            | Root of unit tests for Relay plugin.
 |             test-relay-auth.cpp            | Tests: clients authentication.
 |             test-relay-http.cpp            | Tests: HTTP functions for Relay plugin.
+|             test-relay-raw.cpp             | Tests: raw messages functions for Relay plugin.
 |             test-relay-remote.cpp          | Tests: remote functions for Relay plugin.
 |             test-relay-websocket.cpp       | Tests: websocket functions for Relay plugin.
 |             api/                           | Root of unit tests for Relay "api" protocol.
@@ -531,7 +535,8 @@ Documentation files:
 |       weechat_faq.XX.adoc                     | link:weechat_faq.en.html[FAQ ^↗^^].
 |       weechat_plugin_api.XX.adoc              | link:weechat_plugin_api.en.html[Plugin API reference ^↗^^].
 |       weechat_quickstart.XX.adoc              | link:weechat_quickstart.en.html[Quickstart guide ^↗^^].
-|       weechat_relay_protocol.XX.adoc          | link:weechat_relay_protocol.en.html[Relay protocol ^↗^^] (for remote interfaces).
+|       weechat_relay_api.XX.adoc               | link:weechat_relay_api.en.html[Relay "api" protocol ^↗^^] (for remote interfaces).
+|       weechat_relay_weechat.XX.adoc           | link:weechat_relay_weechat.en.html[Relay "weechat" protocol ^↗^^] (for remote interfaces).
 |       weechat_scripting.XX.adoc               | link:weechat_scripting.en.html[Scripting guide ^↗^^].
 |       weechat_user.XX.adoc                    | link:weechat_user.en.html[User's guide ^↗^^].
 |       includes/                               | Files included in documentation.
@@ -572,7 +577,7 @@ Example in C:
 /*
  * weechat.c - core functions for WeeChat
  *
- * Copyright (C) 2024 Your Name <your@email.com>
+ * Copyright (C) 2025 Your Name <your@email.com>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1045,16 +1050,16 @@ _src/gui/gui-color.h_):
 | 14   | weechat.color.chat_nick
 | 15   | weechat.color.chat_nick_self
 | 16   | weechat.color.chat_nick_other
-| 17   | _(not used any more since WeeChat 0.3.4)_
-| 18   | _(not used any more since WeeChat 0.3.4)_
-| 19   | _(not used any more since WeeChat 0.3.4)_
-| 20   | _(not used any more since WeeChat 0.3.4)_
-| 21   | _(not used any more since WeeChat 0.3.4)_
-| 22   | _(not used any more since WeeChat 0.3.4)_
-| 23   | _(not used any more since WeeChat 0.3.4)_
-| 24   | _(not used any more since WeeChat 0.3.4)_
-| 25   | _(not used any more since WeeChat 0.3.4)_
-| 26   | _(not used any more since WeeChat 0.3.4)_
+| 17   | _(not used anymore since WeeChat 0.3.4)_
+| 18   | _(not used anymore since WeeChat 0.3.4)_
+| 19   | _(not used anymore since WeeChat 0.3.4)_
+| 20   | _(not used anymore since WeeChat 0.3.4)_
+| 21   | _(not used anymore since WeeChat 0.3.4)_
+| 22   | _(not used anymore since WeeChat 0.3.4)_
+| 23   | _(not used anymore since WeeChat 0.3.4)_
+| 24   | _(not used anymore since WeeChat 0.3.4)_
+| 25   | _(not used anymore since WeeChat 0.3.4)_
+| 26   | _(not used anymore since WeeChat 0.3.4)_
 | 27   | weechat.color.chat_host
 | 28   | weechat.color.chat_delimiters
 | 29   | weechat.color.chat_highlight
@@ -1170,7 +1175,7 @@ server->hook_timer_sasl = weechat_hook_timer (timeout * 1000,
 
 Git repository is on https://github.com/weechat/weechat[GitHub ^↗^^].
 
-Any patch for bug or new feature must be done on master branch, preferred way
+Any patch for bug or new feature must be done on branch `main`, preferred way
 is a GitHub pull request. A patch can also be sent by e-mail
 (made with `git diff` or `git format-patch`).
 
@@ -1187,15 +1192,15 @@ Where _component_ is one of following:
 | Component | Files | Description
 
 | core
-| AUTHORS.adoc +
-  ChangeLog.adoc +
-  Contributing.adoc +
+| AUTHORS.md +
+  CHANGELOG.md +
+  CONTRIBUTING.md +
   .github/FUNDING.yml +
   .github/ISSUE_TEMPLATE/* +
   icons/* +
   po/* +
-  README.adoc +
-  ReleaseNotes.adoc +
+  README.md +
+  UPGRADING.md +
   src/core/* +
   src/gui/* +
   version.sh +
@@ -1252,8 +1257,9 @@ Where _component_ is one of following:
 | Plugin API reference
 
 | doc/relay
-| doc/xx/weechat_relay_protocol.xx.adoc
-| Relay protocol
+| doc/xx/weechat_relay_api.xx.adoc +
+  doc/xx/weechat_relay_weechat.xx.adoc
+| Relay protocols
 
 | doc/dev
 | doc/xx/weechat_dev.en.adoc
@@ -1297,9 +1303,10 @@ Gettext files are in directory _po/_.
 If you want to initialize a new language, use command `msginit`. For example to
 create a file which is ready to translate to Dutch:
 
+[source,shell]
 ----
-$ cd po
-$ msginit -i weechat.pot -l nl_NL -o nl.po
+cd po
+msginit -i weechat.pot -l nl_NL -o nl.po
 ----
 
 Base language for WeeChat is English, so you must of course perfectly understand
@@ -1308,8 +1315,9 @@ English in order to translate to your language.
 After changes in sources, you can regenerate all translations files: run this
 command in the CMake "build" directory:
 
+[source,shell]
 ----
-$ make translations && make update-po
+make translations && make update-po
 ----
 
 Then you can edit .po files (if you can translate in a language).
@@ -1317,8 +1325,9 @@ Then you can edit .po files (if you can translate in a language).
 When done, you *have* to check your file with
 https://github.com/flashcode/msgcheck[msgcheck ^↗^^]:
 
+[source,shell]
 ----
-$ msgcheck.py xx.po
+msgcheck.py xx.po
 ----
 
 And then you can recompile WeeChat to use the new translations.
@@ -1355,5 +1364,5 @@ warnings, ... These words must be kept unchanged:
 When there is a name after `+<<link_name>>+`, then you must translate it:
 
 ----
-<<link_name,this text must be translated>>
+<<link_name,this text should be translated>>
 ----

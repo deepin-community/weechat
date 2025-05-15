@@ -1,7 +1,7 @@
 /*
  * irc-list.c - functions for IRC list buffer
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include "../weechat-plugin.h"
@@ -505,6 +506,12 @@ irc_list_display_line (struct t_irc_server *server, int line)
     ptr_channel = (struct t_irc_list_channel *)weechat_arraylist_get (
         server->list->filter_channels, line);
 
+    if (!ptr_channel)
+    {
+        weechat_printf_y (server->list->buffer, line, "");
+        return;
+    }
+
     /* line color */
     if (line == server->list->selected_line)
     {
@@ -550,22 +557,33 @@ irc_list_display_line (struct t_irc_server *server, int line)
 void
 irc_list_buffer_refresh (struct t_irc_server *server, int clear)
 {
-    int num_channels, i;
+    int num_channels, num_filter_channels, i;
 
     if (!server || !server->list->buffer)
         return;
 
-    num_channels = weechat_arraylist_size (server->list->filter_channels);
+    num_channels = weechat_arraylist_size (server->list->channels);
+    num_filter_channels = weechat_arraylist_size (server->list->filter_channels);
 
-    if (clear)
+    if (clear || (num_channels == 0))
     {
         weechat_buffer_clear (server->list->buffer);
         server->list->selected_line = 0;
     }
 
-    for (i = 0; i < num_channels; i++)
+    if (num_channels == 0)
     {
-        irc_list_display_line (server, i);
+        weechat_printf_y (
+            server->list->buffer, 1,
+            "%s",
+            _("Empty list of channels, try \"$\" to refresh list"));
+    }
+    else
+    {
+        for (i = 0; i < num_filter_channels; i++)
+        {
+            irc_list_display_line (server, i);
+        }
     }
 
     irc_list_buffer_set_title (server);
@@ -1044,6 +1062,83 @@ irc_list_hsignal_redirect_list_cb (const void *pointer,
 }
 
 /*
+ * Exports channels currently displayed in /list buffer.
+ *
+ * Returns:
+ *   1: export OK
+ *   0: error
+ */
+
+int
+irc_list_export (struct t_irc_server *server, const char *filename)
+{
+    int num_filter_channels, i;
+    char *filename2, *line;
+    FILE *file;
+    struct t_irc_list_channel *ptr_channel;
+    struct t_hashtable *hashtable_pointers, *hashtable_extra_vars;
+
+    if (!server || !server->list->buffer)
+        return 0;
+
+    filename2 = weechat_string_expand_home (filename);
+    if (!filename2)
+        return 0;
+
+    file = fopen (filename2, "w");
+    if (!file)
+    {
+        free (filename2);
+        return 0;
+    }
+
+    fchmod (fileno (file), 0600);
+
+    hashtable_pointers = weechat_hashtable_new (
+        8,
+        WEECHAT_HASHTABLE_STRING,
+        WEECHAT_HASHTABLE_POINTER,
+        NULL, NULL);
+    hashtable_extra_vars = weechat_hashtable_new (
+        128,
+        WEECHAT_HASHTABLE_STRING,
+        WEECHAT_HASHTABLE_STRING,
+        NULL, NULL);
+
+    weechat_hashtable_set (hashtable_pointers, "irc_server", server);
+
+    num_filter_channels = weechat_arraylist_size (server->list->filter_channels);
+    for (i = 0; i < num_filter_channels; i++)
+    {
+        ptr_channel = (struct t_irc_list_channel *)weechat_arraylist_get (
+            server->list->filter_channels, i);
+        if (!ptr_channel)
+            continue;
+
+        weechat_hashtable_set (hashtable_pointers, "irc_list_channel", ptr_channel);
+
+        irc_list_add_channel_in_hashtable (hashtable_extra_vars, ptr_channel);
+
+        line = weechat_string_eval_expression (
+            weechat_config_string (irc_config_look_list_buffer_format_export),
+            hashtable_pointers,
+            hashtable_extra_vars,
+            NULL);
+        if (line && line[0])
+            fprintf (file, "%s\n", line);
+        free (line);
+    }
+
+    fclose (file);
+
+    weechat_hashtable_free (hashtable_pointers);
+    weechat_hashtable_free (hashtable_extra_vars);
+    free (filename2);
+
+    return 1;
+}
+
+/*
  * Resets lists used by list buffer.
  */
 
@@ -1072,7 +1167,7 @@ irc_list_reset (struct t_irc_server *server)
  */
 
 struct t_irc_list *
-irc_list_alloc ()
+irc_list_alloc (void)
 {
     struct t_irc_list *list;
 
@@ -1216,7 +1311,6 @@ irc_list_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
 {
     const char *ptr_key, *ptr_chat_line_y, *ptr_buffer_pointer;
     struct t_gui_buffer *ptr_buffer;
-    unsigned long value;
     char str_command[1024];
     int rc;
 
@@ -1232,10 +1326,9 @@ irc_list_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
     if (!ptr_key || !ptr_buffer_pointer || !ptr_chat_line_y)
         return WEECHAT_RC_OK;
 
-    rc = sscanf (ptr_buffer_pointer, "%lx", &value);
+    rc = sscanf (ptr_buffer_pointer, "%p", &ptr_buffer);
     if ((rc == EOF) || (rc == 0))
         return WEECHAT_RC_OK;
-    ptr_buffer = (struct t_gui_buffer *)value;
     if (!ptr_buffer)
         return WEECHAT_RC_OK;
 
@@ -1255,7 +1348,7 @@ irc_list_mouse_hsignal_cb (const void *pointer, void *data, const char *signal,
  */
 
 void
-irc_list_init ()
+irc_list_init (void)
 {
     struct t_hashtable *keys;
 
@@ -1316,7 +1409,7 @@ irc_list_init ()
  */
 
 void
-irc_list_end ()
+irc_list_end (void)
 {
     if (irc_list_filter_hashtable_pointers)
     {

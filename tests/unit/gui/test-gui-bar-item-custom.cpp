@@ -1,7 +1,7 @@
 /*
  * test-gui-bar-item-custom.cpp - test custom bar item functions
  *
- * Copyright (C) 2022-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2022-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -266,11 +266,11 @@ TEST(GuiBarItemCustom, Callback)
     /* change conditions so that it becomes false on first buffer */
     config_file_option_set (new_item->options[GUI_BAR_ITEM_CUSTOM_OPTION_CONDITIONS],
                             "${buffer.number} == 2", 1);
-    POINTERS_EQUAL(NULL,
-                   gui_bar_item_custom_callback (new_item, NULL,
-                                                 new_item->bar_item,
-                                                 gui_windows, gui_buffers,
-                                                 NULL));
+    STRCMP_EQUAL(NULL,
+                 gui_bar_item_custom_callback (new_item, NULL,
+                                               new_item->bar_item,
+                                               gui_windows, gui_buffers,
+                                               NULL));
 
     gui_bar_item_custom_free (new_item);
 }

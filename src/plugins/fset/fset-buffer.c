@@ -1,7 +1,7 @@
 /*
  * fset-buffer.c - buffer for Fast Set plugin
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -42,7 +42,7 @@ struct t_hashtable *fset_buffer_hashtable_extra_vars = NULL;
  */
 
 void
-fset_buffer_set_title ()
+fset_buffer_set_title (void)
 {
     int num_options;
     char str_marked[32], str_title[8192];
@@ -896,7 +896,7 @@ int
 fset_buffer_display_option_predefined_format (struct t_fset_option *fset_option)
 {
     int selected_line, value_undef, value_changed, format_number;
-    int add_quotes, add_quotes_parent, length_value;
+    int add_quotes, add_quotes_parent;
     char str_marked[128], str_name[4096], str_type[128], *str_value;
     char str_color_line[128], str_color_value[128], str_color_quotes[128];
     char str_color_name[512];
@@ -1011,43 +1011,39 @@ fset_buffer_display_option_predefined_format (struct t_fset_option *fset_option)
                   fset_option->value,
                   str_color_quotes);
     }
-    length_value = (fset_option->value) ?
-        strlen (fset_option->value) + 256 : 4096;
-    str_value = malloc (length_value);
-    if (str_value)
+    if (value_undef && fset_option->parent_value)
     {
-        if (value_undef && fset_option->parent_value)
-        {
-            add_quotes_parent = (fset_option->parent_value && (fset_option->type == FSET_OPTION_TYPE_STRING)) ? 1 : 0;
-            snprintf (str_value, length_value,
-                      "%s%s%s%s%s%s%s -> %s%s%s%s%s%s%s",
-                      (add_quotes) ? str_color_quotes : "",
-                      (add_quotes) ? "\"" : "",
-                      str_color_value,
-                      (fset_option->value) ? fset_option->value : FSET_OPTION_VALUE_NULL,
-                      (add_quotes) ? str_color_quotes : "",
-                      (add_quotes) ? "\"" : "",
-                      weechat_color ("default"),
-                      (add_quotes_parent) ? weechat_color (weechat_config_string (fset_config_color_quotes[selected_line])) : "",
-                      (add_quotes_parent) ? "\"" : "",
-                      weechat_color (weechat_config_string (fset_config_color_parent_value[selected_line])),
-                      (fset_option->parent_value) ? fset_option->parent_value : FSET_OPTION_VALUE_NULL,
-                      (add_quotes_parent) ? weechat_color (weechat_config_string (fset_config_color_quotes[selected_line])) : "",
-                      (add_quotes_parent) ? "\"" : "",
-                      str_color_name);
-        }
-        else
-        {
-            snprintf (str_value, length_value,
-                      "%s%s%s%s%s%s%s",
-                      (add_quotes) ? str_color_quotes : "",
-                      (add_quotes) ? "\"" : "",
-                      str_color_value,
-                      (fset_option->value) ? fset_option->value : FSET_OPTION_VALUE_NULL,
-                      (add_quotes) ? str_color_quotes : "",
-                      (add_quotes) ? "\"" : "",
-                      str_color_name);
-        }
+        add_quotes_parent = (fset_option->parent_value && (fset_option->type == FSET_OPTION_TYPE_STRING)) ? 1 : 0;
+        weechat_asprintf (
+            &str_value,
+            "%s%s%s%s%s%s%s -> %s%s%s%s%s%s%s",
+            (add_quotes) ? str_color_quotes : "",
+            (add_quotes) ? "\"" : "",
+            str_color_value,
+            (fset_option->value) ? fset_option->value : FSET_OPTION_VALUE_NULL,
+            (add_quotes) ? str_color_quotes : "",
+            (add_quotes) ? "\"" : "",
+            weechat_color ("default"),
+            (add_quotes_parent) ? weechat_color (weechat_config_string (fset_config_color_quotes[selected_line])) : "",
+            (add_quotes_parent) ? "\"" : "",
+            weechat_color (weechat_config_string (fset_config_color_parent_value[selected_line])),
+            (fset_option->parent_value) ? fset_option->parent_value : FSET_OPTION_VALUE_NULL,
+            (add_quotes_parent) ? weechat_color (weechat_config_string (fset_config_color_quotes[selected_line])) : "",
+            (add_quotes_parent) ? "\"" : "",
+            str_color_name);
+    }
+    else
+    {
+        weechat_asprintf (
+            &str_value,
+            "%s%s%s%s%s%s%s",
+            (add_quotes) ? str_color_quotes : "",
+            (add_quotes) ? "\"" : "",
+            str_color_value,
+            (fset_option->value) ? fset_option->value : FSET_OPTION_VALUE_NULL,
+            (add_quotes) ? str_color_quotes : "",
+            (add_quotes) ? "\"" : "",
+            str_color_name);
     }
 
     weechat_printf_y (
@@ -1241,7 +1237,7 @@ fset_buffer_get_window_info (struct t_gui_window *window,
  */
 
 void
-fset_buffer_check_line_outside_window ()
+fset_buffer_check_line_outside_window (void)
 {
     struct t_gui_window *window;
     int start_line_y, chat_height, format_number, lines_per_option;
@@ -1481,7 +1477,7 @@ fset_buffer_close_cb (const void *pointer, void *data,
  */
 
 void
-fset_buffer_set_callbacks ()
+fset_buffer_set_callbacks (void)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -1557,7 +1553,7 @@ fset_buffer_set_keys (struct t_hashtable *hashtable)
  */
 
 void
-fset_buffer_set_localvar_filter ()
+fset_buffer_set_localvar_filter (void)
 {
     if (!fset_buffer)
         return;
@@ -1571,7 +1567,7 @@ fset_buffer_set_localvar_filter ()
  */
 
 void
-fset_buffer_open ()
+fset_buffer_open (void)
 {
     struct t_hashtable *buffer_props;
 
@@ -1616,7 +1612,7 @@ fset_buffer_open ()
  */
 
 int
-fset_buffer_init ()
+fset_buffer_init (void)
 {
     fset_buffer_set_callbacks ();
 
@@ -1650,7 +1646,7 @@ fset_buffer_init ()
  */
 
 void
-fset_buffer_end ()
+fset_buffer_end (void)
 {
     if (fset_buffer)
     {

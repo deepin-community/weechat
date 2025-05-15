@@ -1,7 +1,7 @@
 /*
  * relay-config.c - relay configuration options (file relay.conf)
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -59,6 +59,7 @@ struct t_config_section *relay_config_section_remote = NULL;
 struct t_config_option *relay_config_look_auto_open_buffer = NULL;
 struct t_config_option *relay_config_look_display_clients = NULL;
 struct t_config_option *relay_config_look_raw_messages = NULL;
+struct t_config_option *relay_config_look_raw_messages_max_length = NULL;
 
 /* relay config, color section */
 
@@ -91,6 +92,7 @@ struct t_config_option *relay_config_network_tls_priorities = NULL;
 struct t_config_option *relay_config_network_totp_secret = NULL;
 struct t_config_option *relay_config_network_totp_window = NULL;
 struct t_config_option *relay_config_network_websocket_allowed_origins = NULL;
+struct t_config_option *relay_config_network_websocket_permessage_deflate = NULL;
 
 /* relay config, irc section */
 
@@ -103,7 +105,11 @@ struct t_config_option *relay_config_irc_backlog_time_format = NULL;
 
 /* relay config, api section */
 
+struct t_config_option *relay_config_api_remote_autoreconnect_delay_growing = NULL;
+struct t_config_option *relay_config_api_remote_autoreconnect_delay_max = NULL;
 struct t_config_option *relay_config_api_remote_get_lines = NULL;
+struct t_config_option *relay_config_api_remote_input_cmd_local = NULL;
+struct t_config_option *relay_config_api_remote_input_cmd_remote = NULL;
 
 /* other */
 
@@ -1039,19 +1045,17 @@ relay_config_create_remote_option (const char *remote_name, int index_option,
                                    const char *value)
 {
     struct t_config_option *ptr_option;
-    int length;
     char *option_name;
 
     ptr_option = NULL;
 
-    length = strlen (remote_name) + 1 +
-        strlen (relay_remote_option_string[index_option]) + 1;
-    option_name = malloc (length);
-    if (!option_name)
+    if (weechat_asprintf (&option_name,
+                          "%s.%s",
+                          remote_name,
+                          relay_remote_option_string[index_option]) < 0)
+    {
         return NULL;
-
-    snprintf (option_name, length, "%s.%s",
-              remote_name, relay_remote_option_string[index_option]);
+    }
 
     switch (index_option)
     {
@@ -1071,8 +1075,17 @@ relay_config_create_remote_option (const char *remote_name, int index_option,
             ptr_option = weechat_config_new_option (
                 relay_config_file, relay_config_section_remote,
                 option_name, "boolean",
-                N_("auto-connect to the remote relay"),
+                N_("automatically connect to the remote relay"),
                 NULL, 0, 0, value, NULL, 0,
+                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            break;
+        case RELAY_REMOTE_OPTION_AUTORECONNECT_DELAY:
+            ptr_option = weechat_config_new_option (
+                relay_config_file, relay_config_section_remote,
+                option_name, "integer",
+                N_("automatically reconnect to the remote relay after this delay, "
+                   "in seconds (0 = disable automatic reconnection)"),
+                NULL, 0, 65535, value, NULL, 0,
                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             break;
         case RELAY_REMOTE_OPTION_PROXY:
@@ -1143,7 +1156,7 @@ relay_config_create_option_temp (struct t_relay_remote *temp_remote,
  */
 
 void
-relay_config_use_temp_remotes ()
+relay_config_use_temp_remotes (void)
 {
     struct t_relay_remote *ptr_temp_remote, *next_temp_remote;
     int i, num_options_ok;
@@ -1401,7 +1414,7 @@ relay_config_update_cb (const void *pointer, void *data,
  */
 
 int
-relay_config_init ()
+relay_config_init (void)
 {
     relay_config_file = weechat_config_new (RELAY_CONFIG_PRIO_NAME,
                                             &relay_config_reload, NULL, NULL);
@@ -1432,7 +1445,7 @@ relay_config_init ()
             "auto_open_buffer", "string",
             N_("auto open relay buffer when a new client is connecting "
                "using one of these protocols (comma-separated list); "
-               "allowed protocols: \"irc\", \"weechat\", \"api\""),
+               "allowed protocols: \"api\", \"irc\", \"weechat\""),
             NULL, 0, 0, "irc,weechat", NULL, 0,
             NULL, NULL, NULL,
             &relay_config_change_auto_open_buffer_cb, NULL, NULL,
@@ -1442,7 +1455,7 @@ relay_config_init ()
             "display_clients", "string",
             N_("display messages when clients connect/disconnect from relay "
                "using one of these protocols (comma-separated list); "
-               "allowed protocols: \"irc\", \"weechat\", \"api\""),
+               "allowed protocols: \"api\", \"irc\", \"weechat\""),
             NULL, 0, 0, "irc,weechat", NULL, 0,
             NULL, NULL, NULL,
             &relay_config_change_display_clients_cb, NULL, NULL,
@@ -1454,6 +1467,13 @@ relay_config_init ()
                "is closed (messages will be displayed when opening raw data "
                "buffer)"),
             NULL, 0, 65535, "256", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        relay_config_look_raw_messages_max_length = weechat_config_new_option (
+            relay_config_file, relay_config_section_look,
+            "raw_messages_max_length", "integer",
+            N_("max number of chars to display in raw messages (very long "
+               "messages can cause slowness); 0 = display whole messages"),
+            NULL, 0, INT_MAX, "4096", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
@@ -1562,8 +1582,8 @@ relay_config_init ()
             relay_config_file, relay_config_section_network,
             "allowed_ips", "string",
             N_("POSIX extended regular expression with IPs allowed to use relay "
-               "(case insensitive, use \"(?-i)\" at beginning to make it case "
-               "sensitive), example: "
+               "(case-insensitive, use \"(?-i)\" at beginning to make it "
+               "case-sensitive), example: "
                "\"^(123\\.45\\.67\\.89|192\\.160\\..*)$\""),
             NULL, 0, 0, "", NULL, 0,
             NULL, NULL, NULL,
@@ -1599,8 +1619,8 @@ relay_config_init ()
             relay_config_file, relay_config_section_network,
             "commands", "string",
             N_("comma-separated list of commands allowed/denied when input "
-               "data (text or command) is received from a client (weechat "
-               "and api protocols); "
+               "data (text or command) is received from a client (\"api\" and "
+               "\"weechat\" protocols); "
                "\"*\" means any command, a name beginning with \"!\" is "
                "a negative value to prevent a command from being executed, "
                "wildcard \"*\" is allowed in names; this option should be set "
@@ -1614,8 +1634,8 @@ relay_config_init ()
         relay_config_network_compression = weechat_config_new_option (
             relay_config_file, relay_config_section_network,
             "compression", "integer",
-            N_("compression of messages sent to clients with weechat and "
-               "api protocols: 0 = disable compression, "
+            N_("compression of messages sent to clients with \"api\" and "
+               "\"weechat\" protocols: 0 = disable compression, "
                "1 = low compression / fast ... 100 = best compression / slow; "
                "the value is a percentage converted to 1-9 for zlib and 1-19 "
                "for zstd; the default value is recommended, it offers a good "
@@ -1685,7 +1705,7 @@ relay_config_init ()
             relay_config_file, relay_config_section_network,
             "time_window", "integer",
             N_("number of seconds to allow before and after the current time "
-               "for the hash of time + password in api protocol"),
+               "for the hash of time + password in \"api\" protocol"),
             NULL, 0, 256, "5", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         relay_config_network_tls_cert_key = weechat_config_new_option (
@@ -1715,7 +1735,7 @@ relay_config_init ()
             "totp_secret", "string",
             N_("secret for the generation of the Time-based One-Time Password "
                "(TOTP), encoded in base32 (only letters and digits from 2 to 7); "
-               "it is used as second factor in weechat and api protocols, "
+               "it is used as second factor in \"api\" and \"weechat\" protocols, "
                "in addition to the password, which must not be empty "
                "(empty value means no TOTP is required) "
                "(note: content is evaluated, see /help eval)"),
@@ -1739,13 +1759,27 @@ relay_config_init ()
             relay_config_file, relay_config_section_network,
             "websocket_allowed_origins", "string",
             N_("POSIX extended regular expression with origins allowed in "
-               "websockets (case insensitive, use \"(?-i)\" at beginning to "
-               "make it case sensitive), example: "
+               "websockets (case-insensitive, use \"(?-i)\" at beginning to "
+               "make it case-sensitive), example: "
                "\"^https?://(www\\.)?example\\.(com|org)\""),
             NULL, 0, 0, "", NULL, 0,
             NULL, NULL, NULL,
             &relay_config_change_network_websocket_allowed_origins, NULL, NULL,
             NULL, NULL, NULL);
+        relay_config_network_websocket_permessage_deflate = weechat_config_new_option (
+            relay_config_file, relay_config_section_network,
+            "websocket_permessage_deflate", "boolean",
+            N_("enable websocket extension \"permessage-deflate\" to compress "
+               "websocket frames (\"api\" protocol only); "
+               "if disabled, WeeChat (as server) will not enable "
+               "permessage-deflate even if the client supports it, and when "
+               "connecting to a remote WeeChat (api relay only), "
+               "permessage-deflate support is not advertised by WeeChat; "
+               "it is recommended to keep this option enabled, and you should "
+               "disable it only if you have troubles with this extension, "
+               "either with WeeChat or the client"),
+            NULL, 0, 100, "on", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
     /* section irc */
@@ -1819,12 +1853,42 @@ relay_config_init ()
         NULL, NULL, NULL);
     if (relay_config_section_api)
     {
+        relay_config_api_remote_autoreconnect_delay_growing = weechat_config_new_option (
+            relay_config_file, relay_config_section_api,
+            "remote_autoreconnect_delay_growing", "integer",
+            N_("growing factor for autoreconnect delay to remote relay (1 = always "
+               "same delay, 2 = delay*2 for each retry, etc.)"),
+            NULL, 1, 100, "2", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        relay_config_api_remote_autoreconnect_delay_max = weechat_config_new_option (
+            relay_config_file, relay_config_section_api,
+            "remote_autoreconnect_delay_max", "integer",
+            N_("maximum autoreconnect delay to remote relay (in seconds, 0 = no "
+               "maximum)"),
+            NULL, 0, 3600 * 24 * 7, "600", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         relay_config_api_remote_get_lines = weechat_config_new_option (
             relay_config_file, relay_config_section_api,
             "remote_get_lines", "integer",
             N_("number of lines to retrieve on each buffer when connecting "
                "to a remote relay"),
             NULL, 0, INT_MAX, "1000", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        relay_config_api_remote_input_cmd_local = weechat_config_new_option (
+            relay_config_file, relay_config_section_api,
+            "remote_input_cmd_local", "string",
+            N_("text displayed after user input when the command would be "
+               "executed locally (NOT sent to the remote WeeChat) "
+               "(note: content is evaluated, see /help eval)"),
+            NULL, 0, 0, "   ${color:green}<local cmd>", NULL, 0,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        relay_config_api_remote_input_cmd_remote = weechat_config_new_option (
+            relay_config_file, relay_config_section_api,
+            "remote_input_cmd_remote", "string",
+            N_("text displayed after user input when the command would be "
+               "executed on the remote WeeChat (NOT executed locally) "
+               "(note: content is evaluated, see /help eval)"),
+            NULL, 0, 0, "   ${color:red}<remote cmd>", NULL, 0,
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
@@ -1867,7 +1931,7 @@ relay_config_init ()
  */
 
 int
-relay_config_read ()
+relay_config_read (void)
 {
     int rc;
 
@@ -1889,7 +1953,7 @@ relay_config_read ()
  */
 
 int
-relay_config_write ()
+relay_config_write (void)
 {
     return weechat_config_write (relay_config_file);
 }
@@ -1899,7 +1963,7 @@ relay_config_write ()
  */
 
 void
-relay_config_free ()
+relay_config_free (void)
 {
     weechat_config_free (relay_config_file);
     relay_config_file = NULL;

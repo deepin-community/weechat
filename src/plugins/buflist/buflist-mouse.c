@@ -1,7 +1,7 @@
 /*
  * buflist-mouse.c - mouse actions for buflist
  *
- * Copyright (C) 2003-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -155,7 +155,7 @@ end:
     }
 
     /* add pointer and plugin name */
-    snprintf (str_value, sizeof (str_value), "%p", ptr_buffer);
+    snprintf (str_value, sizeof (str_value), "0x%lx", (unsigned long)ptr_buffer);
     weechat_hashtable_set (info, "pointer", str_value);
     weechat_hashtable_set (info, "plugin",
                            weechat_buffer_get_string (ptr_buffer, "plugin"));
@@ -333,7 +333,6 @@ buflist_hsignal_cb (const void *pointer, void *data, const char *signal,
     struct t_gui_buffer *ptr_buffer;
     char *error, str_command[1024];
     long number, number2;
-    unsigned long value;
     int rc, current_buffer_number;
 
     /* make C compiler happy */
@@ -353,10 +352,9 @@ buflist_hsignal_cb (const void *pointer, void *data, const char *signal,
         return WEECHAT_RC_OK;
     }
 
-    rc = sscanf (ptr_pointer, "%lx", &value);
+    rc = sscanf (ptr_pointer, "%p", &ptr_buffer);
     if ((rc == EOF) || (rc == 0))
         return WEECHAT_RC_OK;
-    ptr_buffer = (struct t_gui_buffer *)value;
 
     error = NULL;
     number = strtol (ptr_number, &error, 10);
@@ -439,7 +437,7 @@ buflist_hsignal_cb (const void *pointer, void *data, const char *signal,
  */
 
 int
-buflist_mouse_init ()
+buflist_mouse_init (void)
 {
     int i;
 
@@ -460,6 +458,6 @@ buflist_mouse_init ()
  */
 
 void
-buflist_mouse_end ()
+buflist_mouse_end (void)
 {
 }

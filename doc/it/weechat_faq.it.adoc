@@ -2,7 +2,7 @@
 :author: Sébastien Helleu
 :email: flashcode@flashtux.org
 :lang: it
-:toc-title: Indice
+include::includes/attributes-it.adoc[]
 
 // TRANSLATION MISSING
 Translators:
@@ -62,6 +62,7 @@ If you still have issues, please report them to the developers.
 It is recommended to use https://brew.sh/[Homebrew ^↗^^],
 you can get help with:
 
+[source,shell]
 ----
 brew info weechat
 ----
@@ -69,6 +70,7 @@ brew info weechat
 // TRANSLATION MISSING
 You can install WeeChat with this command:
 
+[source,shell]
 ----
 brew install weechat
 ----
@@ -348,10 +350,15 @@ just the contents of the currently selected window, without any formatting.
 rxvt-unicode, konsole, gnome-terminal, ...). La combinazione tasti in
 generale è kbd:[Ctrl] + kbd:[Alt] + selezione mouse.
 
+// TRANSLATION MISSING
+You can toggle nicklist and make it visible only when needed, with key
+kbd:[Alt+Shift+N].
+
 Un'altra soluzione è spostare la lista nick in alto o in basso, per esempio:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 [[urls]]
@@ -364,10 +371,14 @@ You can use the bare display (default key: kbd:[Alt+l] (`L`)).
 To make opening URLs easier, you can:
 
 // TRANSLATION MISSING
+* toggle nicklist and make it visible only when needed, with key kbd:[Alt+Shift+N]
+
+// TRANSLATION MISSING
 * move nicklist to top:
 
 ----
 /set weechat.bar.nicklist.position top
+/set weechat.bar.nicklist.size_max 8
 ----
 
 // TRANSLATION MISSING
@@ -424,6 +435,7 @@ There is no option in WeeChat to change the timezone, the environment variable
 // TRANSLATION MISSING
 In your shell initialization file or on command line, before starting WeeChat:
 
+[source,shell]
 ----
 export TZ=Europe/Rome
 ----
@@ -750,8 +762,9 @@ In base al terminale usato, il mouse potrebbe non essere supportato.
 
 È possibile testare il supporto al mouse nel terminale:
 
+[source,shell]
 ----
-$ printf '\033[?1002h'
+printf '\033[?1002h'
 ----
 
 E poi cliccare sul primo carattere del terminale (in alto a sinistra. Dovrebbe
@@ -759,8 +772,9 @@ essere possibile vedere  !!#!!".
 
 Per disabilitare il mouse nel terminale:
 
+[source,shell]
 ----
-$ printf '\033[?1002l'
+printf '\033[?1002l'
 ----
 
 [[mouse_coords]]
@@ -818,7 +832,7 @@ should be, you can specify the fingerprint (SHA-512, SHA-256 or SHA-1):
 Provare una stringa di priorità diversa, sostituendo "xxx" con il nome del server:
 
 ----
-/set irc.server.xxx.tls_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
+/set irc.server.xxx.tls_priorities "NORMAL:%COMPAT"
 ----
 
 [[irc_tls_libera]]
@@ -1090,14 +1104,15 @@ Gli script non sono compatibili con altri client IRC.
 
 // TRANSLATION MISSING
 [[scripts_update]]
-=== The command "/script update" can not read scripts, how to fix that?
+=== The command "/script update" cannot read scripts, how to fix that?
 
 First check questions about TLS connection in this FAQ.
 
 If still not working, try to manually delete the scripts file (in your shell):
 
+[source,shell]
 ----
-$ rm ~/.cache/weechat/script/plugins.xml.gz
+rm ~/.cache/weechat/script/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1122,9 +1137,10 @@ have to update manually the file yourself to get updates):
 
 * in your shell, with curl installed:
 
+[source,shell]
 ----
-$ cd ~/.cache/weechat/script
-$ curl -O https://weechat.org/files/plugins.xml.gz
+cd ~/.cache/weechat/script
+curl -O https://weechat.org/files/plugins.xml.gz
 ----
 
 // TRANSLATION MISSING
@@ -1132,6 +1148,7 @@ If you're running macOS and the downloaded file has a size of 0 bytes,
 try to set this variable in your shell initialization file or on command line,
 before starting WeeChat:
 
+[source,shell]
 ----
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ----
@@ -1322,6 +1339,7 @@ See https://weechat.org/about/support/[this page ^↗^^].
 Quando viene eseguito WeeChat all'interno di gdb, potrebbe verificarsi
 questo errore:
 
+[source,shell]
 ----
 $ gdb /path/to/weechat
 (gdb) run
@@ -1332,6 +1350,7 @@ Cannot find new threads: generic error
 Per correggerlo, è possibile eseguire gdb con questo comando (sostituire il
 path di libpthread e WeeChat con i path del proprio sistema):
 
+[source,shell]
 ----
 $ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat
 (gdb) run
@@ -1341,7 +1360,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat
 === Qual è la lista delle piattaforme supportate da WeeChat? Verrà effettuato il port su altri sistemi operativi?
 
 // TRANSLATION MISSING
-WeeChat runs fine on most Linux/BSD distributions, GNU/Hurd, Mac OS and Windows
+WeeChat runs fine on most Linux/BSD distributions, GNU/Hurd, macOS and Windows
 (Cygwin and Windows Subsystem for Linux).
 
 Facciamo del nostro meglio per portarlo su più piattaforme possibili. L'aiuto

@@ -1,7 +1,7 @@
 /*
  * test-gui-key.cpp - test key functions
  *
- * Copyright (C) 2023-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2023-2025 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -52,26 +52,10 @@ extern struct t_gui_key *gui_key_search_part (struct t_gui_buffer *buffer, int c
     key_name_alias = NULL;                                              \
     LONGS_EQUAL(__rc,                                                   \
                 gui_key_expand (__key, &key_name, &key_name_alias));    \
-    if (__key_name == NULL)                                             \
-    {                                                                   \
-        POINTERS_EQUAL(NULL, key_name);                                 \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        STRCMP_EQUAL(__key_name, key_name);                             \
-    }                                                                   \
-    if (__key_name_alias == NULL)                                       \
-    {                                                                   \
-        POINTERS_EQUAL(NULL, key_name_alias);                           \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        STRCMP_EQUAL(__key_name_alias, key_name_alias);                 \
-    }                                                                   \
-    if (key_name)                                                       \
-        free (key_name);                                                \
-    if (key_name_alias)                                                 \
-        free (key_name_alias);
+    STRCMP_EQUAL(__key_name, key_name);                                 \
+    STRCMP_EQUAL(__key_name_alias, key_name_alias);                     \
+    free (key_name);                                                    \
+    free (key_name_alias);
 
 TEST_GROUP(GuiKey)
 {
@@ -290,7 +274,7 @@ TEST(GuiKey, Expand)
     WEE_CHECK_EXP_KEY(1, "meta-meta-meta-z", "meta-meta-meta-z", "\001[\001[\001[z");
     WEE_CHECK_EXP_KEY(1, "meta-meta-meta-_", "meta-meta-meta-_", "\001[\001[\001[_");
 
-    /* sihft-tab */
+    /* shift-tab */
     WEE_CHECK_EXP_KEY(1, "meta-[Z", "shift-tab", "\001[[Z");
 
     /* arrows */
@@ -975,7 +959,7 @@ TEST(GuiKey, IsSafe)
     LONGS_EQUAL(0, gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, "comma"));
     LONGS_EQUAL(0, gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, "space"));
 
-    /* NOT safe: starts with capital letter (keys are case sensitive) */
+    /* NOT safe: starts with capital letter (keys are case-sensitive) */
     LONGS_EQUAL(0, gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, "Ctrl-a"));
     LONGS_EQUAL(0, gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, "Meta-a"));
     LONGS_EQUAL(0, gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, "Shift-home"));
@@ -1164,7 +1148,7 @@ TEST(GuiKey, New)
     STRCMP_EQUAL("meta-c", ptr_key->chunks[2]);
     LONGS_EQUAL(GUI_KEY_FOCUS_ANY, ptr_key->area_type[0]);
     LONGS_EQUAL(GUI_KEY_FOCUS_ANY, ptr_key->area_type[1]);
-    POINTERS_EQUAL(NULL, ptr_key->area_key);
+    STRCMP_EQUAL(NULL, ptr_key->area_key);
     STRCMP_EQUAL("/mute", ptr_key->command);
     LONGS_EQUAL(0, ptr_key->score);
     gui_key_free (GUI_KEY_CONTEXT_DEFAULT,

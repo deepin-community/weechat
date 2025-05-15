@@ -1,7 +1,7 @@
 /*
  * weechat-guile-api.c - guile API functions
  *
- * Copyright (C) 2011-2024 Sébastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2025 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -621,7 +621,7 @@ weechat_guile_api_mkdir_parents (SCM directory, SCM mode)
 }
 
 SCM
-weechat_guile_api_list_new ()
+weechat_guile_api_list_new (void)
 {
     const char *result;
     SCM return_value;
@@ -3541,7 +3541,7 @@ weechat_guile_api_unhook (SCM hook)
 }
 
 SCM
-weechat_guile_api_unhook_all ()
+weechat_guile_api_unhook_all (void)
 {
     API_INIT_FUNC(1, "unhook_all", API_RETURN_ERROR);
 
@@ -3707,7 +3707,7 @@ weechat_guile_api_buffer_search (SCM plugin, SCM name)
 }
 
 SCM
-weechat_guile_api_buffer_search_main ()
+weechat_guile_api_buffer_search_main (void)
 {
     const char *result;
     SCM return_value;
@@ -3720,7 +3720,7 @@ weechat_guile_api_buffer_search_main ()
 }
 
 SCM
-weechat_guile_api_current_buffer ()
+weechat_guile_api_current_buffer (void)
 {
     const char *result;
     SCM return_value;
@@ -3876,7 +3876,23 @@ weechat_guile_api_buffer_match_list (SCM buffer, SCM string)
 }
 
 SCM
-weechat_guile_api_current_window ()
+weechat_guile_api_line_search_by_id (SCM buffer, SCM id)
+{
+    const char *result;
+    SCM return_value;
+
+    API_INIT_FUNC(1, "line_search_by_id", API_RETURN_EMPTY);
+    if (!scm_is_string (buffer) || !scm_is_integer (id))
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    result = API_PTR2STR(weechat_line_search_by_id (API_STR2PTR(API_SCM_TO_STRING(buffer)),
+                                                    scm_to_int (id)));
+
+    API_RETURN_STRING(result);
+}
+
+SCM
+weechat_guile_api_current_window (void)
 {
     const char *result;
     SCM return_value;
@@ -4551,6 +4567,21 @@ weechat_guile_api_completion_get_string (SCM completion, SCM property)
 }
 
 SCM
+weechat_guile_api_completion_set (SCM completion, SCM property, SCM value)
+{
+    API_INIT_FUNC(1, "completion_set", API_RETURN_ERROR);
+    if (!scm_is_string (completion) || !scm_is_string (property)
+        || !scm_is_string (value))
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    weechat_completion_set (API_STR2PTR(API_SCM_TO_STRING(completion)),
+                            API_SCM_TO_STRING(property),
+                            API_SCM_TO_STRING(value));
+
+    API_RETURN_OK;
+}
+
+SCM
 weechat_guile_api_completion_list_add (SCM completion, SCM word,
                                        SCM nick_completion, SCM where)
 {
@@ -4621,7 +4652,7 @@ weechat_guile_api_info_get_hashtable (SCM info_name, SCM hash)
 }
 
 SCM
-weechat_guile_api_infolist_new ()
+weechat_guile_api_infolist_new (void)
 {
     const char *result;
     SCM return_value;
@@ -5557,6 +5588,7 @@ weechat_guile_api_module_init (void *data)
     API_DEF_FUNC(buffer_set, 3);
     API_DEF_FUNC(buffer_string_replace_local_var, 2);
     API_DEF_FUNC(buffer_match_list, 2);
+    API_DEF_FUNC(line_search_by_id, 2);
     API_DEF_FUNC(current_window, 0);
     API_DEF_FUNC(window_search_with_buffer, 1);
     API_DEF_FUNC(window_get_integer, 2);
@@ -5592,6 +5624,7 @@ weechat_guile_api_module_init (void *data)
     API_DEF_FUNC(completion_new, 1);
     API_DEF_FUNC(completion_search, 4);
     API_DEF_FUNC(completion_get_string, 2);
+    API_DEF_FUNC(completion_set, 3);
     API_DEF_FUNC(completion_list_add, 4);
     API_DEF_FUNC(completion_free, 1);
     API_DEF_FUNC(info_get, 2);
